@@ -1,0 +1,29 @@
+{
+    "name": "matycz/lemo-grid",
+    "description": "",
+    "type": "library",
+    "keywords": [
+        "zf2",
+        "jqGrid"
+    ],
+    "homepage": "https://github.com/MatyCZ/LemoGrid",
+    "authors": [
+        {
+            "name": "Matej Szendi",
+            "email": "matej.szendi@gmail.com",
+            "homepage": "http://lemo.cz/"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.10",
+        "zendframework/zendframework": "2.*"
+    },
+    "autoload": {
+        "psr-0": {
+            "LemoGrid": "src/"
+        },
+        "classmap": [
+            "./Module.php"
+        ]
+    }
+}
