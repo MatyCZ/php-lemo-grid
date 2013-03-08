@@ -12,10 +12,10 @@ namespace LemoBase\Grid\Adapter;
  */
 interface AdapterInterface
 {
-	/**
-	 * Get data from adapter
-	 *
-	 * @return array
-	 */
-	public function getData();
+    /**
+     * Get data from adapter
+     *
+     * @return array
+     */
+    public function getData();
 }

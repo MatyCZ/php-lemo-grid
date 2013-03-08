@@ -38,6 +38,14 @@ interface ColumnInterface
     public function getOptions();
 
     /**
+     * return the specified option
+     *
+     * @param string $option
+     * @return null|mixed
+     */
+    public function getOption($option);
+
+    /**
      * Set a single column attribute
      *
      * @param  string $key

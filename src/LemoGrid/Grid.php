@@ -2,12 +2,22 @@
 
 namespace LemoGrid;
 
+use LemoGrid\Adapter\AdapterInterface;
+use LemoGrid\Column\ColumnInterface;
 use Traversable;
+use Zend\Session\SessionManager;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\PriorityQueue;
 
 class Grid implements GridInterface
 {
+    /**
+     * Adapter
+     *
+     * @var AdapterInterface
+     */
+    protected $adapter;
+
     /**
      * @var array
      */
@@ -29,16 +39,16 @@ class Grid implements GridInterface
     protected $iterator;
 
     /**
-     * @var GridOptions
-     */
-    protected $options;
-
-    /**
-     * Grid adapter
+     * Grid name
      *
      * @var string
      */
-    protected $_adapter;
+    protected $name;
+
+    /**
+     * @var GridOptions
+     */
+    protected $options;
 
     /**
      * Grid metadata and attributes
@@ -46,27 +56,6 @@ class Grid implements GridInterface
      * @var array
      */
     protected $_attribs = array();
-
-    /**
-     * Column plugin manager
-     *
-     * @var ColumnPluginManager
-     */
-    protected static $_columnPluginManager = null;
-
-    /**
-     * Grid columns
-     *
-     * @var array
-     */
-    protected $_columns = array();
-
-    /**
-     * Grid order
-     *
-     * @var int|null
-     */
-    protected $_gridOrder;
 
     /**
      * Name of grid
@@ -109,7 +98,7 @@ class Grid implements GridInterface
     protected $serviceManager;
 
     /**
-     * @var \Zend\Session\SessionManager
+     * @var SessionManager
      */
     protected $_session = null;
 
@@ -189,14 +178,18 @@ class Grid implements GridInterface
      * Constructor
      *
      * @param  ServiceLocatorInterface            $serviceManager
+     * @param  null|AdapterInterface              $adapter
      * @param  null|array|Traversable|GridOptions $options
      * @return \LemoGrid\Grid
      */
-    public function __construct(ServiceLocatorInterface $serviceManager, $options = null)
+    public function __construct(ServiceLocatorInterface $serviceManager, AdapterInterface $adapter = null, $options = null)
     {
         $this->iterator = new PriorityQueue();
         $this->serviceManager = $serviceManager;
 
+        if (null !== $adapter) {
+            $this->setAdapter($adapter);
+        }
         if (null !== $options) {
             $this->setOptions($options);
         }
@@ -239,6 +232,29 @@ class Grid implements GridInterface
         }
 
         return $this->options;
+    }
+
+    /**
+     * Sets the grid adapter
+     *
+     * @param  AdapterInterface $adapter
+     * @return Grid
+     */
+    public function setAdapter(AdapterInterface $adapter)
+    {
+        $this->adapter = $adapter;
+
+        return $this;
+    }
+
+    /**
+     * Returns the grid adapter
+     *
+     * @return AdapterInterface|null
+     */
+    public function getAdapter()
+    {
+        return $this->adapter;
     }
 
     /**
@@ -286,7 +302,7 @@ class Grid implements GridInterface
         if (is_array($column)
         || ($column instanceof Traversable && !$column instanceof ColumnInterface)
         ) {
-            $factory = $this->getFormFactory();
+            $factory = $this->getGridFactory();
             $column = $factory->create($column);
         }
 
@@ -449,132 +465,32 @@ class Grid implements GridInterface
         }
     }
 
-    // Grid metadata:
-
     /**
-     * Set grid adapter
-     *
-     * @param  \LemoBase\Grid\Adapter\AbstractAdapter $adapter
-     * @return Grid
-     */
-    public function setAdapter(AdapterInterface $adapter)
-    {
-        $this->_adapter = $adapter;
-
-        return $this;
-    }
-
-    /**
-     * Return grid adapter.
-     *
-     * @return \LemoBase\Grid\Adapter\AbstractAdapter
-     */
-    public function getAdapter()
-    {
-        $this->_adapter->setGrid($this);
-
-        return $this->_adapter;
-    }
-
-    /**
-     * Get grid id
-     *
-     * @return string
-     */
-    public function getId()
-    {
-        $id = $this->getName();
-
-        // Bail early if no array notation detected
-        if (!strstr($id, '[')) {
-            return $id;
-        }
-
-        // Strip array notation
-        if ('[]' == substr($id, -2)) {
-            $id = substr($id, 0, strlen($id) - 2);
-        }
-        $id = str_replace('][', '-', $id);
-        $id = str_replace(array(']', '['), '-', $id);
-        $id = trim($id, '-');
-
-        return $id;
-    }
-
-    /**
-     * Filter a name to only allow valid variable characters
-     *
-     * @param  string $value
-     * @param  bool $allowBrackets
-     * @return string
-     */
-    public function filterName($value, $allowBrackets = false)
-    {
-        $charset = '^a-zA-Z0-9_\x7f-\xff';
-        if ($allowBrackets) {
-            $charset .= '\[\]';
-        }
-        return preg_replace('/[' . $charset . ']/', '', (string) $value);
-    }
-
-    /**
-     * Set grid name
+     * Set name
      *
      * @param  string $name
      * @return Grid
      */
     public function setName($name)
     {
-        $name = $this->filterName($name);
-        if ('' === (string)$name) {
-            throw new Exception\InvalidArgumentException('Invalid name provided; must contain only valid variable characters and be non-empty');
-        }
-
-        return $this->_name = $name;
+        return $this->name = (string) $name;
     }
 
     /**
-     * Get name attribute
+     * Get name
      *
-     * @return null|string
+     * @return string
      */
     public function getName()
     {
-        if (null == $this->_name) {
-            $this->setName('grid');
-        }
-
-        return $this->_name;
-    }
-
-    /**
-     * Set grid order
-     *
-     * @param  int $index
-     * @return Grid
-     */
-    public function setOrder($index)
-    {
-        $this->_gridOrder = (int) $index;
-
-        return $this;
-    }
-
-    /**
-     * Get form order
-     *
-     * @return int|null
-     */
-    public function getOrder()
-    {
-        return $this->_gridOrder;
+        return $this->name;
     }
 
     /**
      * Set query params
      *
      * @param array $params
-     * @return \LemoBase\Grid\Grid
+     * @return Grid
      */
     public function setQueryParams($params)
     {
@@ -670,227 +586,6 @@ class Grid implements GridInterface
         return $this->_source;
     }
 
-    // Column interaction:
-
-    /**
-     * Add a new column
-     *
-     * $column may be either a string column type, or an object of type
-     * LemoBase\Grid\Column. If a string element type is provided, $name must be
-     * provided, and $options may be optionally provided for configuring the
-     * element.
-     *
-     * If a LemoBase\Grid\Column is provided, $name may be optionally provided,
-     * and any provided $options will be ignored.
-     *
-     * @param  string|Column $column
-     * @param  string $name
-     * @param  array|Traversable $options
-     * @return Grid
-     */
-    public function addColumn($column, $name = null, $options = null)
-    {
-        if (is_string($column)) {
-            if (null === $name) {
-                throw new Exception\InvalidArgumentException('Columns specified by string must have an accompanying name');
-            }
-
-            $this->_columns[$name] = $this->createColumn($column, $name, $options);
-        } elseif ($column instanceof Column) {
-            if (null === $name) {
-                $name = $column->getName();
-            }
-
-            $this->_columns[$name] = $column;
-        }
-
-        $this->_order[$name] = $this->_columns[$name]->getOrder();
-        $this->_orderUpdated = true;
-
-        return $this;
-    }
-
-    /**
-     * Create an column
-     *
-     * Acts as a factory for creating columns. Columns created with this
-     * method will not be attached to the grid, but will contain column
-     * settings as specified in the grid object (including plugin loader
-     * prefix paths, etc.).
-     *
-     * @param  string $type
-     * @param  string $name
-     * @param  array|Traversable $options
-     * @return Column
-     */
-    public function createColumn($type, $name, $options = null)
-    {
-        if (!is_string($type)) {
-            throw new Exception\InvalidArgumentException('Column type must be a string indicating type');
-        }
-
-        if (!is_string($name)) {
-            throw new Exception\InvalidArgumentException('Column name must be a string');
-        }
-
-        if ($options instanceof Traversable) {
-            $options = IteratorToArray::convert($options);
-        }
-
-        $options['name'] = $name;
-
-        $column = $this->getColumnPluginManager()->get($type, $options);
-        $column->setGrid($this);
-
-        return $column;
-    }
-
-    /**
-     * Add multiple columns at once
-     *
-     * @param  array $columns
-     * @return Grid
-     */
-    public function addColumns(array $columns)
-    {
-        foreach ($columns as $key => $spec) {
-            $name = null;
-            if (!is_numeric($key)) {
-                $name = $key;
-            }
-
-            if (is_string($spec) || ($spec instanceof Column)) {
-                $this->addColumn($spec, $name);
-                continue;
-            }
-
-            if (is_array($spec)) {
-                $argc = count($spec);
-                $options = array();
-                if (isset($spec['type'])) {
-                    $type = $spec['type'];
-                    if (isset($spec['name'])) {
-                        $name = $spec['name'];
-                    }
-                    if (isset($spec['options'])) {
-                        $options = $spec['options'];
-                    }
-                    $this->addColumn($type, $name, $options);
-                } else {
-                    switch ($argc) {
-                        case 0:
-                            continue;
-                        case (1 <= $argc):
-                            $type = array_shift($spec);
-                        case (2 <= $argc):
-                            if (null === $name) {
-                                $name = array_shift($spec);
-                            } else {
-                                $options = array_shift($spec);
-                            }
-                        case (3 <= $argc):
-                            if (empty($options)) {
-                                $options = array_shift($spec);
-                            }
-                        default:
-                            $this->addColumn($type, $name, $options);
-                    }
-                }
-            }
-        }
-        return $this;
-    }
-
-    /**
-     * Set grid columns (overwrites existing columns)
-     *
-     * @param  array $columns
-     * @return Grid
-     */
-    public function setColumns(array $columns)
-    {
-        $this->clearColumns();
-        return $this->addColumns($columns);
-    }
-
-    /**
-     * Retrieve a single column
-     *
-     * @param  string $name
-     * @return Column|null
-     */
-    public function getColumn($name)
-    {
-        if (isset($this->_columns[$name])) {
-            return $this->_columns[$name];
-        }
-        return null;
-    }
-
-    /**
-     * Retrieve all columns
-     *
-     * @return array
-     */
-    public function getColumns()
-    {
-        return $this->_columns;
-    }
-
-    /**
-     * Remove column
-     *
-     * @param  string $name
-     * @return boolean
-     */
-    public function removeColumn($name)
-    {
-        $name = (string) $name;
-        if (isset($this->_columns[$name])) {
-            unset($this->_columns[$name]);
-            if (array_key_exists($name, $this->_order)) {
-                unset($this->_order[$name]);
-                $this->_orderUpdated = true;
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Remove all grid columns
-     *
-     * @return Grid
-     */
-    public function clearColumns()
-    {
-        foreach (array_keys($this->_columns) as $key) {
-            if (array_key_exists($key, $this->_order)) {
-                unset($this->_order[$key]);
-            }
-        }
-
-        $this->_columns     = array();
-        $this->_orderUpdated = true;
-
-        return $this;
-    }
-
-    /**
-     * Has grid column?
-     *
-     * @return bool
-     */
-    public function hasColumn($name)
-    {
-        if(isset($this->_columns[$name])) {
-            return true;
-        }
-
-        return false;
-    }
-
     /**
      * Set request instance
      *
@@ -942,7 +637,7 @@ class Grid implements GridInterface
      * @param  \Zend\View\Renderer\RendererInterface $view
      * @return Paginator
      */
-    public function setView(View\Renderer\RendererInterface $view = null)
+    public function setView(\Zend\View\Renderer\RendererInterface $view = null)
     {
         $this->_view = $view;
 
