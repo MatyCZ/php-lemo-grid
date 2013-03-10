@@ -4,88 +4,54 @@ namespace LemoGrid;
 
 use ArrayAccess;
 use Traversable;
-use Zend\InputFilter\Factory as InputFilterFactory;
-use Zend\InputFilter\InputFilterInterface;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Hydrator;
 
 class Factory
 {
     /**
-     * @var InputFilterFactory
+     * @var GridColumnManager
      */
-    protected $inputFilterFactory;
+    protected $gridColumnManager;
 
     /**
-     * @var FormColumnManager
+     * @param GridColumnManager $gridColumnManager
      */
-    protected $formColumnManager;
-
-    /**
-     * @param FormColumnManager $formColumnManager
-     */
-    public function __construct(FormColumnManager $formColumnManager = null)
+    public function __construct(GridColumnManager $gridColumnManager = null)
     {
-        if ($formColumnManager) {
-            $this->setFormColumnManager($formColumnManager);
+        if ($gridColumnManager) {
+            $this->setGridColumnManager($gridColumnManager);
         }
     }
 
     /**
-     * Set input filter factory to use when creating forms
+     * Set the grid column manager
      *
-     * @param  InputFilterFactory $inputFilterFactory
+     * @param  GridColumnManager $gridColumnManager
      * @return Factory
      */
-    public function setInputFilterFactory(InputFilterFactory $inputFilterFactory)
+    public function setGridColumnManager(GridColumnManager $gridColumnManager)
     {
-        $this->inputFilterFactory = $inputFilterFactory;
+        $this->gridColumnManager = $gridColumnManager;
         return $this;
     }
 
     /**
-     * Get current input filter factory
+     * Get grid column manager
      *
-     * If none provided, uses an unconfigured instance.
-     *
-     * @return InputFilterFactory
+     * @return GridColumnManager
      */
-    public function getInputFilterFactory()
+    public function getGridColumnManager()
     {
-        if (null === $this->inputFilterFactory) {
-            $this->setInputFilterFactory(new InputFilterFactory());
-        }
-        return $this->inputFilterFactory;
-    }
-
-    /**
-     * Set the form column manager
-     *
-     * @param  FormColumnManager $formColumnManager
-     * @return Factory
-     */
-    public function setFormColumnManager(FormColumnManager $formColumnManager)
-    {
-        $this->formColumnManager = $formColumnManager;
-        return $this;
-    }
-
-    /**
-     * Get form column manager
-     *
-     * @return FormColumnManager
-     */
-    public function getFormColumnManager()
-    {
-        if ($this->formColumnManager === null) {
-            $this->setFormColumnManager(new FormColumnManager());
+        if ($this->gridColumnManager === null) {
+            $this->setGridColumnManager(new GridColumnManager());
         }
 
-        return $this->formColumnManager;
+        return $this->gridColumnManager;
     }
 
     /**
-     * Create an column, fieldset, or form
+     * Create an column or grid
      *
      * Introspects the 'type' key of the provided $spec, and determines what
      * type is being requested; if none is provided, assumes the spec
@@ -98,16 +64,12 @@ class Factory
     public function create($spec)
     {
         $spec = $this->validateSpecification($spec, __METHOD__);
-        $type = isset($spec['type']) ? $spec['type'] : 'Zend\Form\Column';
+        $type = isset($spec['type']) ? $spec['type'] : 'LemoGrid\Column';
 
-        $column = $this->getFormColumnManager()->get($type);
+        $column = $this->getGridColumnManager()->get($type);
 
-        if ($column instanceof FormInterface) {
-            return $this->configureForm($column, $spec);
-        }
-
-        if ($column instanceof FieldsetInterface) {
-            return $this->configureFieldset($column, $spec);
+        if ($column instanceof GridInterface) {
+            return $this->configureGrid($column, $spec);
         }
 
         if ($column instanceof ColumnInterface) {
@@ -117,15 +79,14 @@ class Factory
         throw new Exception\DomainException(sprintf(
             '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
             __METHOD__,
-            'Zend\Form\ColumnInterface',
-            'Zend\Form\FieldsetInterface',
-            'Zend\Form\FormInterface',
+            'LemoGrid\ColumnInterface',
+            'LemoGrid\GridInterface',
             $type
         ));
     }
 
     /**
-     * Create an column
+     * Create a column
      *
      * @param  array $spec
      * @return ColumnInterface
@@ -133,37 +94,22 @@ class Factory
     public function createColumn($spec)
     {
         if (!isset($spec['type'])) {
-            $spec['type'] = 'Zend\Form\Column';
+            $spec['type'] = 'LemoGrid\Column';
         }
 
         return $this->create($spec);
     }
 
     /**
-     * Create a fieldset
+     * Create a grid
      *
      * @param  array $spec
      * @return ColumnInterface
      */
-    public function createFieldset($spec)
+    public function createGrid($spec)
     {
         if (!isset($spec['type'])) {
-            $spec['type'] = 'Zend\Form\Fieldset';
-        }
-
-        return $this->create($spec);
-    }
-
-    /**
-     * Create a form
-     *
-     * @param  array $spec
-     * @return ColumnInterface
-     */
-    public function createForm($spec)
-    {
-        if (!isset($spec['type'])) {
-            $spec['type'] = 'Zend\Form\Form';
+            $spec['type'] = 'LemoGrid\Grid';
         }
 
         return $this->create($spec);
@@ -173,7 +119,7 @@ class Factory
      * Configure an column based on the provided specification
      *
      * Specification can contain any of the following:
-     * - type: the Column class to use; defaults to \Zend\Form\Column
+     * - type: the Column class to use; defaults to \LemoGrid\Column
      * - name: what name to provide the column, if any
      * - options: an array, Traversable, or ArrayAccess object of column options
      * - attributes: an array, Traversable, or ArrayAccess object of column
@@ -205,79 +151,6 @@ class Factory
         }
 
         return $column;
-    }
-
-    /**
-     * Configure a fieldset based on the provided specification
-     *
-     * Specification can contain any of the following:
-     * - type: the Fieldset class to use; defaults to \Zend\Form\Fieldset
-     * - name: what name to provide the fieldset, if any
-     * - options: an array, Traversable, or ArrayAccess object of column options
-     * - attributes: an array, Traversable, or ArrayAccess object of column
-     *   attributes to assign
-     * - columns: an array or Traversable object where each entry is an array
-     *   or ArrayAccess object containing the keys:
-     *   - flags: (optional) array of flags to pass to FieldsetInterface::add()
-     *   - spec: the actual column specification, per {@link configureColumn()}
-     *
-     * @param  FieldsetInterface             $fieldset
-     * @param  array|Traversable|ArrayAccess $spec
-     * @throws Exception\DomainException
-     * @return FieldsetInterface
-     */
-    public function configureFieldset(FieldsetInterface $fieldset, $spec)
-    {
-        $spec     = $this->validateSpecification($spec, __METHOD__);
-        $fieldset = $this->configureColumn($fieldset, $spec);
-
-        if (isset($spec['object'])) {
-            $this->prepareAndInjectObject($spec['object'], $fieldset, __METHOD__);
-        }
-
-        if (isset($spec['hydrator'])) {
-            $this->prepareAndInjectHydrator($spec['hydrator'], $fieldset, __METHOD__);
-        }
-
-        if (isset($spec['columns'])) {
-            $this->prepareAndInjectColumns($spec['columns'], $fieldset, __METHOD__);
-        }
-
-        if (isset($spec['fieldsets'])) {
-            $this->prepareAndInjectFieldsets($spec['fieldsets'], $fieldset, __METHOD__);
-        }
-
-        return $fieldset;
-    }
-
-    /**
-     * Configure a form based on the provided specification
-     *
-     * Specification follows that of {@link configureFieldset()}, and adds the
-     * following keys:
-     *
-     * - input_filter: input filter instance, named input filter class, or
-     *   array specification for the input filter factory
-     * - hydrator: hydrator instance or named hydrator class
-     *
-     * @param  FormInterface                  $form
-     * @param  array|Traversable|ArrayAccess  $spec
-     * @return FormInterface
-     */
-    public function configureForm(FormInterface $form, $spec)
-    {
-        $spec = $this->validateSpecification($spec, __METHOD__);
-        $form = $this->configureFieldset($form, $spec);
-
-        if (isset($spec['input_filter'])) {
-            $this->prepareAndInjectInputFilter($spec['input_filter'], $form, __METHOD__);
-        }
-
-        if (isset($spec['validation_group'])) {
-            $this->prepareAndInjectValidationGroup($spec['validation_group'], $form, __METHOD__);
-        }
-
-        return $form;
     }
 
     /**
@@ -313,14 +186,14 @@ class Factory
     }
 
     /**
-     * Takes a list of column specifications, creates the columns, and injects them into the provided fieldset
+     * Takes a list of column specifications, creates the columns, and injects them into the provided grid
      *
      * @param  array|Traversable|ArrayAccess $columns
-     * @param  FieldsetInterface $fieldset
+     * @param  GridInterface $grid
      * @param  string $method Method invoking this one (for exception messages)
      * @return void
      */
-    protected function prepareAndInjectColumns($columns, FieldsetInterface $fieldset, $method)
+    protected function prepareAndInjectColumns($columns, GridInterface $grid, $method)
     {
         $columns = $this->validateSpecification($columns, $method);
 
@@ -329,212 +202,11 @@ class Factory
             $spec  = isset($columnSpecification['spec'])  ? $columnSpecification['spec']  : array();
 
             if (!isset($spec['type'])) {
-                $spec['type'] = 'Zend\Form\Column';
+                $spec['type'] = 'LemoGrid\Column';
             }
 
             $column = $this->create($spec);
-            $fieldset->add($column, $flags);
+            $grid->add($column, $flags);
         }
-    }
-
-    /**
-     * Takes a list of fieldset specifications, creates the fieldsets, and injects them into the master fieldset
-     *
-     * @param  array|Traversable|ArrayAccess $fieldsets
-     * @param  FieldsetInterface $masterFieldset
-     * @param  string $method Method invoking this one (for exception messages)
-     * @return void
-     */
-    public function prepareAndInjectFieldsets($fieldsets, FieldsetInterface $masterFieldset, $method)
-    {
-        $fieldsets = $this->validateSpecification($fieldsets, $method);
-
-        foreach ($fieldsets as $fieldsetSpecification) {
-            $flags = isset($fieldsetSpecification['flags']) ? $fieldsetSpecification['flags'] : array();
-            $spec  = isset($fieldsetSpecification['spec'])  ? $fieldsetSpecification['spec']  : array();
-
-            $fieldset = $this->createFieldset($spec);
-            $masterFieldset->add($fieldset, $flags);
-        }
-    }
-
-    /**
-     * Prepare and inject an object
-     *
-     * Takes a string indicating a class name, instantiates the class
-     * by that name, and injects the class instance as the bound object.
-     *
-     * @param  string           $objectName
-     * @param  FieldsetInterface $fieldset
-     * @param  string           $method
-     * @throws Exception\DomainException
-     * @return void
-     */
-    protected function prepareAndInjectObject($objectName, FieldsetInterface $fieldset, $method)
-    {
-        if (!is_string($objectName)) {
-            throw new Exception\DomainException(sprintf(
-                '%s expects string class name; received "%s"',
-                $method,
-                (is_object($objectName) ? get_class($objectName) : gettype($objectName))
-            ));
-        }
-
-        if (!class_exists($objectName)) {
-            throw new Exception\DomainException(sprintf(
-                '%s expects string class name to be a valid class name; received "%s"',
-                $method,
-                $objectName
-            ));
-        }
-
-        $fieldset->setObject(new $objectName);
-    }
-
-    /**
-     * Prepare and inject a named hydrator
-     *
-     * Takes a string indicating a hydrator class name (or a concrete instance), try first to instantiates the class
-     * by pulling it from service manager, and injects the hydrator instance into the form.
-     *
-     * @param  string|array|Hydrator\HydratorInterface $hydratorOrName
-     * @param  FieldsetInterface                       $fieldset
-     * @param  string                                  $method
-     * @return void
-     * @throws Exception\DomainException If $hydratorOrName is not a string, does not resolve to a known class, or
-     *                                   the class does not implement Hydrator\HydratorInterface
-     */
-    protected function prepareAndInjectHydrator($hydratorOrName, FieldsetInterface $fieldset, $method)
-    {
-        if (is_object($hydratorOrName) && $hydratorOrName instanceof Hydrator\HydratorInterface) {
-            $fieldset->setHydrator($hydratorOrName);
-            return;
-        }
-
-        if (is_array($hydratorOrName)) {
-            if (!isset($hydratorOrName['type'])) {
-                throw new Exception\DomainException(sprintf(
-                    '%s expects array specification to have a type value',
-                    $method
-                ));
-            }
-            $hydratorOptions = (isset($hydratorOrName['options'])) ? $hydratorOrName['options'] : array();
-            $hydratorOrName = $hydratorOrName['type'];
-        } else {
-            $hydratorOptions = array();
-        }
-
-        if (is_string($hydratorOrName)) {
-            $hydrator = $this->getHydratorFromName($hydratorOrName);
-        }
-
-        if (!$hydrator instanceof Hydrator\HydratorInterface) {
-            throw new Exception\DomainException(sprintf(
-                '%s expects a valid implementation of Zend\Form\Hydrator\HydratorInterface; received "%s"',
-                $method,
-                $hydratorOrName
-            ));
-        }
-
-        if (!empty($hydratorOptions) && $hydrator instanceof Hydrator\HydratorOptionsInterface) {
-            $hydrator->setOptions($hydratorOptions);
-        }
-
-        $fieldset->setHydrator($hydrator);
-    }
-
-    /**
-     * Prepare an input filter instance and inject in the provided form
-     *
-     * If the input filter specified is a string, assumes it is a class name,
-     * and attempts to instantiate it. If the class does not exist, or does
-     * not extend InputFilterInterface, an exception is raised.
-     *
-     * Otherwise, $spec is passed on to the attached InputFilter Factory
-     * instance in order to create the input filter.
-     *
-     * @param  string|array|Traversable $spec
-     * @param  FormInterface $form
-     * @param  string $method
-     * @return void
-     * @throws Exception\DomainException for unknown InputFilter class or invalid InputFilter instance
-     */
-    protected function prepareAndInjectInputFilter($spec, FormInterface $form, $method)
-    {
-        if (is_string($spec)) {
-            if (!class_exists($spec)) {
-                throw new Exception\DomainException(sprintf(
-                    '%s expects string input filter names to be valid class names; received "%s"',
-                    $method,
-                    $spec
-                ));
-            }
-            $filter = new $spec;
-            if (!$filter instanceof InputFilterInterface) {
-                throw new Exception\DomainException(sprintf(
-                    '%s expects a valid implementation of Zend\InputFilter\InputFilterInterface; received "%s"',
-                    $method,
-                    $spec
-                ));
-            }
-            $form->setInputFilter($filter);
-            return;
-        }
-
-        $factory = $this->getInputFilterFactory();
-        $filter  = $factory->createInputFilter($spec);
-        $form->setInputFilter($filter);
-    }
-
-    /**
-     * Prepare a validation group and inject in the provided form
-     *
-     * Takes an array of columns names
-     *
-     * @param  string|array|Traversable $spec
-     * @param  FormInterface $form
-     * @param  string $method
-     * @return void
-     * @throws Exception\DomainException if validation group given is not an array
-     */
-    protected function prepareAndInjectValidationGroup($spec, FormInterface $form, $method)
-    {
-        if (!is_array($spec)) {
-            if (!class_exists($spec)) {
-                throw new Exception\DomainException(sprintf(
-                    '%s expects an array for validation group; received "%s"',
-                    $method,
-                    $spec
-                ));
-            }
-        }
-
-        $form->setValidationGroup($spec);
-    }
-
-    /**
-     * Try to pull hydrator from service manager, or instantiates it from its name
-     *
-     * @param  string $hydratorName
-     * @return mixed
-     * @throws Exception\DomainException
-     */
-    protected function getHydratorFromName($hydratorName)
-    {
-        $serviceLocator = $this->getFormColumnManager()->getServiceLocator();
-
-        if ($serviceLocator && $serviceLocator->has($hydratorName)) {
-            return $serviceLocator->get($hydratorName);
-        }
-
-        if (!class_exists($hydratorName)) {
-            throw new Exception\DomainException(sprintf(
-                'Expects string hydrator name to be a valid class name; received "%s"',
-                $hydratorName
-            ));
-        }
-
-        $hydrator = new $hydratorName;
-        return $hydrator;
     }
 }

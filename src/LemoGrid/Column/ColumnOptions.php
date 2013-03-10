@@ -219,7 +219,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $align
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setAlign($align)
     {
@@ -238,7 +238,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $class
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setClass($class)
     {
@@ -257,7 +257,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $dateFormat
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setDateFormat($dateFormat)
     {
@@ -276,7 +276,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $defaultValue
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setDefaultValue($defaultValue)
     {
@@ -295,7 +295,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $editElement
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setEditElement($editElement)
     {
@@ -314,7 +314,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $editElementOptions
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setEditElementOptions($editElementOptions)
     {
@@ -333,7 +333,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $editOptions
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setEditOptions($editOptions)
     {
@@ -352,7 +352,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $editRules
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setEditRules($editRules)
     {
@@ -371,7 +371,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param mixed $format
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setFormat($format)
     {
@@ -390,7 +390,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $formatOptions
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setFormatOptions($formatOptions)
     {
@@ -409,7 +409,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $identifier
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIdentifier($identifier)
     {
@@ -432,7 +432,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isEditable
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsEditable($isEditable)
     {
@@ -451,7 +451,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isFixed
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsFixed($isFixed)
     {
@@ -470,7 +470,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isFrozen
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsFrozen($isFrozen)
     {
@@ -489,7 +489,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isHidden
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsHidden($isHidden)
     {
@@ -508,7 +508,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isResizable
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsResizable($isResizable)
     {
@@ -527,7 +527,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isHideable
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsHideable($isHideable)
     {
@@ -546,7 +546,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isSearchable
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsSearchable($isSearchable)
     {
@@ -565,7 +565,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $isSortable
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setIsSortable($isSortable)
     {
@@ -584,7 +584,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $label
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setLabel($label)
     {
@@ -603,7 +603,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $searchElement
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setSearchElement($searchElement)
     {
@@ -622,7 +622,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $searchUrl
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setSearchUrl($searchUrl)
     {
@@ -641,7 +641,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $searchOptions
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setSearchOptions($searchOptions)
     {
@@ -668,7 +668,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $sortType
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setSortType($sortType)
     {
@@ -687,7 +687,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param int $width
-     * @return AbstractColumn
+     * @return ColumnOptions
      */
     public function setWidth($width)
     {
