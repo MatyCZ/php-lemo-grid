@@ -2,6 +2,7 @@
 
 namespace LemoGrid;
 
+use LemoGrid\Column\ColumnInterface;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 use Zend\Stdlib\InitializableInterface;
@@ -19,9 +20,9 @@ class GridColumnManager extends AbstractPluginManager
      * @var array
      */
     protected $invokableClasses = array(
-        'column'        => 'LemoGrid\Column\Column',
-        'concat'        => 'LemoGrid\Column\Concat',
-        'url'           => 'LemoGrid\Column\Url',
+        'concat' => 'LemoGrid\Column\Concat',
+        'route'  => 'LemoGrid\Column\Route',
+        'text'   => 'LemoGrid\Column\Text',
     );
 
     /**

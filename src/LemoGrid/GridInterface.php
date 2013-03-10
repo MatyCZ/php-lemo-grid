@@ -4,6 +4,8 @@ namespace LemoGrid;
 
 use Countable;
 use IteratorAggregate;
+use LemoGrid\Column\ColumnInterface;
+use Traversable;
 
 interface GridInterface extends
     Countable,
@@ -16,9 +18,9 @@ interface GridInterface extends
      * $flags could contain metadata such as the alias under which to register
      * the column, order in which to prioritize it, etc.
      *
-     * @param  array|\Traversable|ColumnInterface $column Typically, only allow objects implementing ColumnInterface;
-     *                                                    however, keeping it flexible to allow a factory-based form
-     *                                                    implementation as well
+     * @param  array|Traversable|ColumnInterface $column Typically, only allow objects implementing ColumnInterface;
+     *                                                   however, keeping it flexible to allow a factory-based form
+     *                                                   implementation as well
      * @param  array $flags
      * @return GridInterface
      */
@@ -53,7 +55,7 @@ interface GridInterface extends
      *
      * Storage is an implementation detail of the concrete class.
      *
-     * @return array|\Traversable
+     * @return array|Traversable
      */
     public function getColumns();
 }

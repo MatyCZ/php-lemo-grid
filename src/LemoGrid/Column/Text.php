@@ -2,22 +2,21 @@
 
 namespace LemoGrid\Column;
 
-use LemoGrid\Column\ConcatOptions;
 use LemoGrid\Exception;
 use Traversable;
 
-class Concat extends AbstractColumn
+class Text extends AbstractColumn
 {
     /**
      * Column options
      *
-     * @var ConcatOptions
+     * @var TextOptions
      */
     protected $options;
 
     /**
      * @param null|string                        $name
-     * @param array|Traversable|ConcatOptions    $options
+     * @param array|Traversable|TextOptions      $options
      * @param array|Traversable|ColumnAttributes $attributes
      */
     public function __construct($name = null, $options = null, $attributes = null)
@@ -38,21 +37,21 @@ class Concat extends AbstractColumn
     /**
      * Set column options
      *
-     * @param  array|\Traversable|ConcatOptions $options
+     * @param  array|\Traversable|TextOptions $options
      * @throws Exception\InvalidArgumentException
-     * @return Concat
+     * @return Text
      */
     public function setOptions($options)
     {
-        if (!$options instanceof ConcatOptions) {
+        if (!$options instanceof TextOptions) {
             if (is_object($options) && !$options instanceof Traversable) {
                 throw new Exception\InvalidArgumentException(sprintf(
-                    'Expected instance of LemoGrid\Column\ConcatOptions; '
-                    . 'received "%s"', get_class($options))
+                        'Expected instance of LemoGrid\Column\TextOptions; '
+                            . 'received "%s"', get_class($options))
                 );
             }
 
-            $options = new ConcatOptions($options);
+            $options = new TextOptions($options);
         }
 
         $this->options = $options;
@@ -63,12 +62,12 @@ class Concat extends AbstractColumn
     /**
      * Get column options
      *
-     * @return ConcatOptions
+     * @return TextOptions
      */
     public function getOptions()
     {
         if (!$this->options) {
-            $this->setOptions(new ConcatOptions());
+            $this->setOptions(new TextOptions());
         }
 
         return $this->options;

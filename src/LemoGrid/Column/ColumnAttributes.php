@@ -4,7 +4,7 @@ namespace LemoGrid\Column;
 
 use Zend\Stdlib\AbstractOptions;
 
-class ColumnOptions extends AbstractOptions
+class ColumnAttributes extends AbstractOptions
 {
     /**
      * Defines the alignment of the cell in the Body layer, not in header cell. Possible values: left, center, right.
@@ -219,7 +219,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $align
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setAlign($align)
     {
@@ -238,7 +238,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $class
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setClass($class)
     {
@@ -257,7 +257,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $dateFormat
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setDateFormat($dateFormat)
     {
@@ -276,7 +276,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $defaultValue
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setDefaultValue($defaultValue)
     {
@@ -295,7 +295,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $editElement
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setEditElement($editElement)
     {
@@ -314,7 +314,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $editElementOptions
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setEditElementOptions($editElementOptions)
     {
@@ -333,7 +333,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $editOptions
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setEditOptions($editOptions)
     {
@@ -352,7 +352,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $editRules
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setEditRules($editRules)
     {
@@ -371,7 +371,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param mixed $format
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setFormat($format)
     {
@@ -389,8 +389,8 @@ class ColumnOptions extends AbstractOptions
     }
 
     /**
-     * @param array $formatOptions
-     * @return ColumnOptions
+     * @param  array $formatOptions
+     * @return ColumnAttributes
      */
     public function setFormatOptions($formatOptions)
     {
@@ -408,12 +408,12 @@ class ColumnOptions extends AbstractOptions
     }
 
     /**
-     * @param string $identifier
-     * @return ColumnOptions
+     * @param  string $identifier
+     * @return ColumnAttributes
      */
     public function setIdentifier($identifier)
     {
-        $this->identifier = $identifier;
+        $this->identifier = (string) $identifier;
 
         return $this;
     }
@@ -421,18 +421,14 @@ class ColumnOptions extends AbstractOptions
     /**
      * @return string
      */
-    public function getIdentifier($returnNameOnEmpty = true)
+    public function getIdentifier()
     {
-        if(null === $this->identifier && true === $returnNameOnEmpty) {
-            return $this->getName();
-        }
-
         return $this->identifier;
     }
 
     /**
      * @param boolean $isEditable
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsEditable($isEditable)
     {
@@ -451,7 +447,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isFixed
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsFixed($isFixed)
     {
@@ -470,7 +466,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isFrozen
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsFrozen($isFrozen)
     {
@@ -489,7 +485,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isHidden
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsHidden($isHidden)
     {
@@ -508,7 +504,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isResizable
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsResizable($isResizable)
     {
@@ -527,7 +523,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isHideable
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsHideable($isHideable)
     {
@@ -546,7 +542,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param boolean $isSearchable
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsSearchable($isSearchable)
     {
@@ -565,7 +561,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $isSortable
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setIsSortable($isSortable)
     {
@@ -584,7 +580,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $label
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setLabel($label)
     {
@@ -603,7 +599,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $searchElement
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setSearchElement($searchElement)
     {
@@ -622,7 +618,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param string $searchUrl
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setSearchUrl($searchUrl)
     {
@@ -641,7 +637,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param array $searchOptions
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setSearchOptions($searchOptions)
     {
@@ -655,20 +651,12 @@ class ColumnOptions extends AbstractOptions
      */
     public function getSearchOptions()
     {
-        $options = array();
-
-        if(is_array($this->searchOptions)) {
-            foreach($this->searchOptions as $key => $value) {
-                $options[$key] = $this->getGrid()->getView()->translate($value);
-            }
-        }
-
-        return $options;
+        return $this->searchOptions;
     }
 
     /**
      * @param string $sortType
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setSortType($sortType)
     {
@@ -687,7 +675,7 @@ class ColumnOptions extends AbstractOptions
 
     /**
      * @param int $width
-     * @return ColumnOptions
+     * @return ColumnAttributes
      */
     public function setWidth($width)
     {

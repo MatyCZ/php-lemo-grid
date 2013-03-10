@@ -3,11 +3,9 @@
 namespace LemoGrid\Adapter;
 
 use Doctrine\ORM\QueryBuilder;
-use LemoGrid\Adapter;
-use LemoGrid\AdapterInterface;
 use LemoGrid\Exception;
 
-class Doctrine2 extends Adapter implements AdapterInterface
+class Doctrine2 extends AbstractAdapter implements AdapterInterface
 {
     /**
      * @var string

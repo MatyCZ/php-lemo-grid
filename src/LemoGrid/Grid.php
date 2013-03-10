@@ -19,6 +19,11 @@ class Grid implements GridInterface
     protected $adapter;
 
     /**
+     * @var GridAttributes
+     */
+    protected $attributes;
+
+    /**
      * @var array
      */
     protected $byName    = array();
@@ -51,34 +56,6 @@ class Grid implements GridInterface
     protected $options;
 
     /**
-     * Grid metadata and attributes
-     *
-     * @var array
-     */
-    protected $_attribs = array();
-
-    /**
-     * Name of grid
-     *
-     * @var string
-     */
-    protected $_name = null;
-
-    /**
-     * Order in which to display and iterate columns
-     *
-     * @var array
-     */
-    protected $_order = array();
-
-    /**
-     * Whether internal order has been updated or not
-     *
-     * @var bool
-     */
-    protected $_orderUpdated = false;
-
-    /**
      * Parameter container responsible for query parameters
      *
      * @var \Zend\Stdlib\Parameters
@@ -100,12 +77,7 @@ class Grid implements GridInterface
     /**
      * @var SessionManager
      */
-    protected $_session = null;
-
-    /**
-     * @var string
-     */
-    protected $_sessionNamespace = 'lemoLibrary_grid';
+    protected $sessionManager;
 
     /**
      * @var View
@@ -113,76 +85,15 @@ class Grid implements GridInterface
     protected $_view;
 
     /**
-     * List of grid options
-     *
-     * @var array
-     */
-    private $_gridOptions = array(
-        'alternativeRows' => 'altRows',
-        'alternativeRowsClass' => 'altclass',
-        'autoEncodeIncomingAndPostData' => 'autoencode',
-        'autowidth' => null,
-        'caption' => null,
-        'cellLayout' => null,
-        'cellEdit' => null,
-        'cellEditUrl' => 'editurl',
-        'cellSaveType' => 'cellsubmit',
-        'cellSaveUrl' => 'cellurl',
-        'dataString' => null,
-        'dataType' => null,
-        'defaultPage' => 'page',
-        'defaultSortColumn' => 'sortname',
-        'defaultSortOrder' => 'sortorder',
-        'expandColumnOnClick' => 'ExpandColClick',
-        'expandColumnIdentifier' => 'ExpandColumn',
-        'forceFit' => null,
-        'gridState' => null,
-        'grouping' => null,
-        'headerTitles' => null,
-        'height' => null,
-        'hoverRows' => null,
-        'loadOnce' => null,
-        'loadType' => 'loadui',
-        'multiSelect' => null,
-        'multiSelectKey' => 'multikey',
-        'multiSelectWidth' => null,
-        'pagerElementId' => 'pager',
-        'pagerPosition' => 'pagerpos',
-        'pagerShowButtions' => 'pgbuttons',
-        'pagerShowInput' => 'pginput',
-        'requestType' => 'mtype',
-        'renderFooterRow' => 'footerrow',
-        'renderRecordsInfo' => 'viewrecords',
-        'renderRowNumbersColumn' => 'rownumbers',
-        'resizeClass' => null,
-        'recordsPerPage' => 'rowNum',
-        'recordsPerPageList' => 'rowList',
-        'scroll' => null,
-        'scrollOffset' => null,
-        'scrollRows' => null,
-        'scrollTimeout' => null,
-        'shrinkToFit' => null,
-        'sortingColumns' => 'sortable',
-        'sortingColumnsDefinition' => 'viewsortcols',
-        'shrinkToFit' => null,
-        'treeGrid' => null,
-        'treeGridType' => 'treeGridModel',
-        'treeGridIcons' => 'treeIcons',
-        'url' => null,
-        'width' => null,
-    );
-
-    // ===== GRID PROPERTIES =====
-
-    /**
      * Constructor
      *
      * @param  ServiceLocatorInterface            $serviceManager
      * @param  null|AdapterInterface              $adapter
      * @param  null|array|Traversable|GridOptions $options
-     * @return \LemoGrid\Grid
+     * @param  null|array|Traversable|GridAttributes $attributes
+     * @return void
      */
-    public function __construct(ServiceLocatorInterface $serviceManager, AdapterInterface $adapter = null, $options = null)
+    public function __construct(ServiceLocatorInterface $serviceManager, AdapterInterface $adapter = null, $options = null, $attributes = null)
     {
         $this->iterator = new PriorityQueue();
         $this->serviceManager = $serviceManager;
@@ -192,6 +103,9 @@ class Grid implements GridInterface
         }
         if (null !== $options) {
             $this->setOptions($options);
+        }
+        if (null !== $attributes) {
+            $this->setAttributes($attributes);
         }
     }
 
@@ -207,8 +121,8 @@ class Grid implements GridInterface
         if (!$options instanceof GridOptions) {
             if (is_object($options) && !$options instanceof Traversable) {
                 throw new Exception\InvalidArgumentException(sprintf(
-                        'Expected instance of LemoGrid\GridOptions; '
-                        . 'received "%s"', get_class($options))
+                    'Expected instance of LemoGrid\GridOptions; '
+                    . 'received "%s"', get_class($options))
                 );
             }
 
@@ -232,6 +146,45 @@ class Grid implements GridInterface
         }
 
         return $this->options;
+    }
+
+    /**
+     * Set grid attributes
+     *
+     * @param  array|\Traversable|GridAttributes $attributes
+     * @throws Exception\InvalidArgumentException
+     * @return Grid
+     */
+    public function setAttributes($attributes)
+    {
+        if (!$attributes instanceof GridAttributes) {
+            if (is_object($attributes) && !$attributes instanceof Traversable) {
+                throw new Exception\InvalidArgumentException(sprintf(
+                    'Expected instance of LemoGrid\GridAttributes; '
+                    . 'received "%s"', get_class($attributes))
+                );
+            }
+
+            $attributes = new GridAttributes($attributes);
+        }
+
+        $this->attributes = $attributes;
+
+        return $this;
+    }
+
+    /**
+     * Get grid attributes
+     *
+     * @return GridAttributes
+     */
+    public function getAttributes()
+    {
+        if (!$this->attributes) {
+            $this->setAttributes(new GridAttributes());
+        }
+
+        return $this->attributes;
     }
 
     /**
@@ -485,6 +438,53 @@ class Grid implements GridInterface
     {
         return $this->name;
     }
+    /**
+     * Return sort by column index
+     *
+     * @return string
+     */
+    public function getSortColumn()
+    {
+        if(null === $this->sortColumn) {
+            $queryParams = $this->getGrid()->getQueryParams();
+
+            if(isset($queryParams['sidx'])) {
+                $this->sortColumn = $queryParams['sidx'];
+            } else {
+                $this->sortColumn = $this->getGrid()->getDefaultSortColumn();
+            }
+        }
+
+        return $this->sortColumn;
+    }
+
+    /**
+     * Return sort direct
+     *
+     * @return string
+     */
+    public function getSortDirect()
+    {
+        if(null === $this->sortDirect) {
+            $queryParams = $this->getGrid()->getQueryParams();
+            if(isset($queryParams['sidx'])) {
+                if(isset($queryParams['sord'])) {
+                    if(strtolower($queryParams['sord']) != 'asc' AND strtolower($queryParams['sord']) != 'desc') {
+                        throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
+                    }
+
+                    $this->sortDirect = $queryParams['sord'];
+                } else {
+                    $this->sortDirect = 'asc';
+                }
+            } else {
+                $this->sortDirect = $this->getGrid()->getDefaultSortOrder();
+            }
+        }
+
+        return $this->sortDirect;
+    }
+
 
     /**
      * Set query params
@@ -542,48 +542,6 @@ class Grid implements GridInterface
         }
 
         return $this->_queryParams;
-    }
-
-    /**
-     * @param string $sessionNamespace
-     * @return Grid
-     */
-    public function setSessionNamespace($sessionNamespace)
-    {
-        $this->_sessionNamespace = $sessionNamespace;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSessionNamespace()
-    {
-        return $this->_sessionNamespace;
-    }
-
-    /**
-     * Set grid source
-     *
-     * @param string $source
-     * @return Grid
-     */
-    public function setSource($source)
-    {
-        $this->_source = $source;
-
-        return $this;
-    }
-
-    /**
-     * Return grid source
-     *
-     * @return string
-     */
-    public function getSource()
-    {
-        return $this->_source;
     }
 
     /**
