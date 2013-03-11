@@ -66,13 +66,18 @@ class Grid implements GridInterface
     /**
      * Constructor
      *
-     * @param  null|AdapterInterface                 $adapter
-     * @param  null|array|Traversable|GridOptions    $options
+     * @param  null|string                        $name
+     * @param  null|AdapterInterface              $adapter
+     * @param  null|array|Traversable|GridOptions $options
      * @return \LemoGrid\Grid
      */
-    public function __construct(AdapterInterface $adapter = null, $options = null)
+    public function __construct($name = null, AdapterInterface $adapter = null, $options = null)
     {
         $this->iterator = new PriorityQueue();
+
+        if (null !== $name) {
+            $this->setName($name);
+        }
 
         if (null !== $adapter) {
             $this->setAdapter($adapter);
@@ -420,44 +425,30 @@ class Grid implements GridInterface
      */
     public function getSortColumn()
     {
-        if(null === $this->sortColumn) {
-            $queryParams = $this->getGrid()->getQueryParams();
-
-            if(isset($queryParams['sidx'])) {
-                $this->sortColumn = $queryParams['sidx'];
-            } else {
-                $this->sortColumn = $this->getGrid()->getDefaultSortColumn();
-            }
+        if($this->hasQueryParam('sidx')) {
+            return $this->getQueryParam('sidx');
+        } else {
+            return $this->getOptions()->getDefaultSortColumn();
         }
-
-        return $this->sortColumn;
     }
 
     /**
      * Return sort direct
      *
+     * @throws Exception\UnexpectedValueException
      * @return string
      */
     public function getSortDirect()
     {
-        if(null === $this->sortDirect) {
-            $queryParams = $this->getGrid()->getQueryParams();
-            if(isset($queryParams['sidx'])) {
-                if(isset($queryParams['sord'])) {
-                    if(strtolower($queryParams['sord']) != 'asc' AND strtolower($queryParams['sord']) != 'desc') {
-                        throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
-                    }
-
-                    $this->sortDirect = $queryParams['sord'];
-                } else {
-                    $this->sortDirect = 'asc';
-                }
-            } else {
-                $this->sortDirect = $this->getGrid()->getDefaultSortOrder();
+        if($this->hasQueryParam('sord')) {
+            if(strtolower($this->getQueryParam('sord')) != 'asc' && strtolower($this->getQueryParam('sord')) != 'desc') {
+                throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
             }
-        }
 
-        return $this->sortDirect;
+            return $this->getQueryParam('sord');
+        } else {
+            return $this->getOptions()->getDefaultSortOrder();
+        }
     }
 
     /**
@@ -491,7 +482,7 @@ class Grid implements GridInterface
      */
     public function getData()
     {
-        return $this->getAdapter()->getData();
+        return $this->getAdapter()->setGrid($this)->getData();
     }
 
     /**
@@ -592,137 +583,7 @@ class Grid implements GridInterface
                 'rows' => $items,
             ));
             exit;
-        } else {
-            $colNames = array();
-
-            foreach($this->_gridOptions as $nameProperty => $nameGrid) {
-                $methodName = 'get' . ucfirst($nameProperty);
-
-                if(method_exists($this, $methodName)) {
-                    $value = call_user_func(array($this, $methodName));
-
-                    if(null === $value) {
-                        if('pagerElementId'== $nameProperty) {
-                            $value = $this->getId() . '_pager';
-                        }
-                        if('height' == $nameProperty) {
-                            $value = '100%';
-                        }
-                    }
-
-                    if(!empty($value) || is_bool($value)) {
-                        if(null !== $nameGrid) {
-                            $nameProperty = $nameGrid;
-                        }
-
-                        $attribs[strtolower($nameProperty)] = $value;
-                    }
-                }
-            }
-
-            if(isset($query['sidx'])) {
-                $attribs['sortname'] = $query['sidx'];
-            } else {
-                $attribs['sortname'] = $this->getDefaultSortColumn();
-            }
-            if(isset($query['sord'])) {
-                $attribs['sortorder'] = $query['sord'];
-            } else {
-                $attribs['sortorder'] = $this->getDefaultSortOrder();
-            }
-
-            ksort($attribs);
-
-            foreach($this->getColumns() as $column) {
-                $label = $column->getLabel();
-
-                if(!empty($label)) {
-                    $label = $this->getView()->translate($label);
-
-                }
-
-                $colNames[] = $label;
-
-                unset($label);
-            }
-
-            $script[] = '	$(document).ready(function(){';
-            $script[] = '		$(\'#' . $this->getId() . '\').jqGrid({';
-
-            foreach($attribs as $key => $value) {
-                if(is_array($value)) {
-                    $values = array();
-                    foreach($value as $k => $val) {
-                        if(is_bool($val)) {
-                            if($val == true) {
-                                $values[] = 'true';
-                            } else {
-                                $values[] = 'false';
-                            }
-                        } elseif(is_numeric($val)) {
-                            $values[] = $val;
-                        } elseif(strtolower($key) == 'treeicons') {
-                            $values[] = $k . ":'" .  $val . "'";
-                        } else {
-                            $values[] = "'" .  $val . "'";
-                        }
-                    }
-
-                    if(strtolower($key) == 'treeicons') {
-                        $script[] = '			' . $key . ': {' . implode(',', $values) . '},';
-                    } else {
-                        $script[] = '			' . $key . ': [' . implode(',', $values) . '],';
-                    }
-                } elseif(is_numeric($value)) {
-                    $script[] = '			' . $key . ': ' . $value . ',';
-                } elseif(is_bool($value)) {
-                    if($value == true) {
-                        $value = 'true';
-                    } else {
-                        $value = 'false';
-                    }
-                    $script[] = '			' . $key . ': ' . $value . ',';
-                } else {
-                    $script[] = '			' . $key . ': \'' . $value . '\',';
-                }
-            }
-
-            $script[] = '			colNames: [\'' . implode('\', \'', $colNames) . '\'],';
-            $script[] = '			colModel: [';
-
-            $columnsCount = count($this->getColumns());
-            $a = 1;
-            foreach($this->getColumns() as $column) {
-                if($a != $columnsCount) { $delimiter = ','; } else { $delimiter = ''; }
-                $script[] = '				{' . $column->render() . '}' . $delimiter;
-                $a++;
-            }
-
-            $script[] = '			]';
-            $script[] = '		});';
-
-            $filterToolbar = $this->getFilterToolbar();
-            if($filterToolbar['enabled'] == true) {
-                $filterToolbar = $this->getFilterToolbar();
-                if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
-                if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
-                $script[] = '		$(\'#' . $this->getName() . '\').jqGrid(\'filterToolbar\',{stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;
-            }
-
-            $script[] = '	$(window).bind(\'resize\', function() {';
-            $script[] = '		$(\'#' . $this->getId() . '\').setGridWidth($(\'#gbox_' . $this->getId() . '\').parent().width());';
-            $script[] = '	}).trigger(\'resize\');';
-
-            $script[] = '	});';
-            $xhtml[] = '<table id="' . $this->getId() . '"></table>';
-
-            // Pokud se nema zobrazit paticka
-            if($this->getRenderFooterRow() !== false) {
-                $xhtml[] = '<div id="' . $attribs['pager'] . '"></div>';
-            }
         }
-
-        $this->getView()->inlineScript()->appendScript(implode(PHP_EOL, $script));
 
         return implode(PHP_EOL, $xhtml);
     }

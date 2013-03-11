@@ -2,6 +2,7 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\Collection\Data;
 use LemoGrid\Exception;
 use Traversable;
 
@@ -46,8 +47,8 @@ class Text extends AbstractColumn
         if (!$options instanceof TextOptions) {
             if (is_object($options) && !$options instanceof Traversable) {
                 throw new Exception\InvalidArgumentException(sprintf(
-                        'Expected instance of LemoGrid\Column\TextOptions; '
-                            . 'received "%s"', get_class($options))
+                    'Expected instance of LemoGrid\Column\TextOptions; '
+                    . 'received "%s"', get_class($options))
                 );
             }
 
@@ -71,5 +72,10 @@ class Text extends AbstractColumn
         }
 
         return $this->options;
+    }
+
+    public function composeValue()
+    {
+        return $this->getValue();
     }
 }

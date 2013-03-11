@@ -16,6 +16,11 @@ abstract class AbstractColumn implements ColumnInterface
     /**
      * @var string
      */
+    protected $identifier;
+
+    /**
+     * @var string
+     */
     protected $name;
 
     /**
@@ -70,6 +75,33 @@ abstract class AbstractColumn implements ColumnInterface
         }
 
         return $this->attributes;
+    }
+
+    /**
+     * Set the column identifier
+     *
+     * @param  string $identifier
+     * @return AbstractColumn
+     */
+    public function setIdentifier($identifier)
+    {
+        $this->identifier = $identifier;
+
+        return $this;
+    }
+
+    /**
+     * Get the column identifier
+     *
+     * @return string
+     */
+    public function getIdentifier()
+    {
+        if(null === $this->identifier) {
+            $this->identifier = $this->name;
+        }
+
+        return $this->identifier;
     }
 
     /**

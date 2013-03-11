@@ -37,11 +37,7 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface, Vi
     {
         return array(
             'invokables' => array(
-                'formRenderRow'  => 'LemoBase\Form\View\Helper\FormRenderRow',
-                'formValidator'  => 'LemoBase\Form\View\Helper\FormValidator',
-                'paramsQuery'    => 'LemoBase\View\Helper\ParamsQuery',
-                'notice'         => 'LemoBase\View\Helper\Notice',
-                'lang'           => 'LemoBase\View\Helper\Lang',
+                'grid'           => 'LemoGrid\View\Helper\Grid',
             ),
         );
     }

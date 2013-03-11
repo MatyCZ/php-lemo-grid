@@ -136,11 +136,16 @@ class Factory
         $spec = $this->validateSpecification($spec, __METHOD__);
 
         $name       = isset($spec['name'])       ? $spec['name']       : null;
+        $identifier = isset($spec['identifier']) ? $spec['identifier'] : null;
         $options    = isset($spec['options'])    ? $spec['options']    : null;
         $attributes = isset($spec['attributes']) ? $spec['attributes'] : null;
 
         if ($name !== null && $name !== '') {
             $column->setName($name);
+        }
+
+        if ($identifier !== null && $identifier !== '') {
+            $column->setIdentifier($identifier);
         }
 
         if (is_array($options) || $options instanceof Traversable || $options instanceof ArrayAccess) {

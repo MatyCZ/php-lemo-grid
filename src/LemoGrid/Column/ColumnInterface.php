@@ -66,4 +66,11 @@ interface ColumnInterface
      * @return string
      */
     public function getValue();
+
+    /**
+     * Compose the column value
+     *
+     * @return string
+     */
+    public function composeValue();
 }

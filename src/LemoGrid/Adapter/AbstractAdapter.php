@@ -3,6 +3,8 @@
 namespace LemoGrid\Adapter;
 
 use LemoGrid\GridInterface;
+use LemoGrid\Collection\Data;
+use LemoGrid\Collection\DataAll;
 
 abstract class AbstractAdapter implements AdapterInterface
 {
@@ -21,6 +23,11 @@ abstract class AbstractAdapter implements AdapterInterface
     protected $countItemsTotal = 0;
 
     /**
+     * @var Data
+     */
+    protected $data;
+
+    /**
      * @var GridInterface
      */
     protected $grid;
@@ -32,7 +39,7 @@ abstract class AbstractAdapter implements AdapterInterface
      */
     public function getNumberOfPages()
     {
-        return ceil($this->getCountOfItemsTotal() / $this->getGrid()->getRecordsPerPage());
+        return ceil($this->getCountOfItemsTotal() / $this->getGrid()->getOptions()->getRecordsPerPage());
     }
 
     /**
@@ -45,7 +52,7 @@ abstract class AbstractAdapter implements AdapterInterface
         $page = $this->getGrid()->getQueryParam('page');
 
         if(null === $page) {
-            $page = $this->getGrid()->getDefaultPage();
+            $page = 1;
         }
 
         return $page;
@@ -69,6 +76,30 @@ abstract class AbstractAdapter implements AdapterInterface
     public function getCountOfItemsTotal()
     {
         return $this->countItemsTotal;
+    }
+
+    /**
+     * @param  Data $collection
+     * @return AbstractAdapter
+     */
+    public function setData(Data $collection)
+    {
+        $this->data = $collection;
+
+        return $this;
+    }
+
+    /**
+     * @return Data
+     */
+    public function getData()
+    {
+        if(null === $this->data) {
+            $this->data = new Data();
+            $this->data = $this->populateData();
+        }
+
+        return $this->data;
     }
 
     /**

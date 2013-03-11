@@ -6,6 +6,7 @@ use DateTime;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Exception;
+use LemoGrid\GridInterface;
 
 class QueryBuilder extends AbstractAdapter
 {
@@ -31,36 +32,40 @@ class QueryBuilder extends AbstractAdapter
 
     /**
      * @throws Exception\UnexpectedValueException
-     * @return array
+     * @return Collection
      */
-    public function getData()
+    public function populateData()
     {
-        if(null === $this->getQueryBuilder()) {
+        if(!$this->getGrid() instanceof GridInterface) {
+            throw new Exception\UnexpectedValueException("No Grid instance given");
+        }
+        if(!$this->getQueryBuilder() instanceof DoctrineQueryBuilder) {
             throw new Exception\UnexpectedValueException("No QueryBuilder instance given");
         }
-
-        $grid = $this->getGrid();
-        $data = array();
 
         $this->findAliases();
         $this->findRelations($this->aliasRoot);
 
         foreach ($this->executeQuery() as $item)
         {
-            $rowData = array();
+            $data = array();
 
-            foreach($grid->getColumns() as $column) {
-                $colName = $column->getIdentifier();
-                $rowData[$colName] = null;
+            foreach($this->getGrid()->getColumns() as $column) {
+                $colIdentifier = $column->getIdentifier();
+                $colname = $column->getName();
+                $data[$colname] = null;
 
                 // Nacteme si data radku
-                $value = $column->renderValue($this->findValue($colName, $item));
+                $value = $this->findValue($colIdentifier, $item);
+                $column->setValue($value);
+
+                $value = $column->composeValue();
 
                 if($value instanceof DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
                 }
 
-                if('concat' == $column->getType()) {
+                if($column instanceof \LemoGrid\Column\Concat) {
                     $values = array();
                     foreach($column->getOptions()->getIdentifiers() as $identifier) {
                         $val = $this->findValue($identifier, $item);
@@ -86,13 +91,14 @@ class QueryBuilder extends AbstractAdapter
                     }
                 }
 
-                $rowData[$colName] = $value;
+                $data[$colname] = $value;
+                $column->setValue($value);
             }
 
-            $data[] = $rowData;
+            $this->getData()->append($data);
         }
 
-        return $data;
+        return $this->getData();
     }
 
     /**
@@ -104,14 +110,14 @@ class QueryBuilder extends AbstractAdapter
 
         $resultCount = $this->getQueryBuilder()->getQuery()->getScalarResult();
 
-        $this->getQueryBuilder()->setMaxResults($grid->getRecordsPerPage());
-        $this->getQueryBuilder()->setFirstResult($grid->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getRecordsPerPage());
+        $this->getQueryBuilder()->setMaxResults($grid->getOptions()->getRecordsPerPage());
+        $this->getQueryBuilder()->setFirstResult($grid->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getOptions()->getRecordsPerPage());
 
         // WHERE
         foreach($grid->getColumns() as $col)
         {
 
-            if(true === $col->getIsSearchable()) {
+            if(true === $col->getAttributes()->getIsSearchable()) {
                 $prepend = null;
                 $append = null;
 
@@ -124,7 +130,7 @@ class QueryBuilder extends AbstractAdapter
                         }
                         $this->getQueryBuilder()->andWhere($or);
                     } else {
-                        if('text' == $col->getSearchElement()) {
+                        if('text' == $col->getAttributes()->getSearchElement()) {
                             $prepend = $append = '%';
                         }
 
@@ -135,27 +141,27 @@ class QueryBuilder extends AbstractAdapter
         }
 
         // ORDER
-        if('concat' == $grid->getColumn($this->getSortColumn())->getType()) {
-            foreach($grid->getColumn($this->getSortColumn())->getIdentifiers() as $identifier){
-                if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
-                    $method = 'orderBy';
-                } else {
-                    $method = 'addOrderBy';
-                }
+//        if('concat' == $grid->get($this->getSortColumn())->getType()) {
+//            foreach($grid->get($this->getSortColumn())->getIdentifiers() as $identifier){
+//                if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
+//                    $method = 'orderBy';
+//                } else {
+//                    $method = 'addOrderBy';
+//                }
+//
+//                $this->getQueryBuilder()->{$method}($identifier, $this->getSortDirect());
+//            }
+//        } else {
+            $this->getQueryBuilder()->orderBy($grid->get($grid->getSortColumn())->getIdentifier(), $grid->getSortDirect());
+//        }
 
-                $this->getQueryBuilder()->{$method}($identifier, $this->getSortDirect());
-            }
-        } else {
-            $this->getQueryBuilder()->orderBy($grid->getColumn($this->getSortColumn())->getIdentifier(), $this->getSortDirect());
-        }
-
-        $offset = $grid->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getRecordsPerPage();
+        $offset = $grid->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getOptions()->getRecordsPerPage();
 
         if($offset < 0) {
             $offset = 0;
         }
 
-        $this->getQueryBuilder()->setMaxResults($grid->getRecordsPerPage());
+        $this->getQueryBuilder()->setMaxResults($grid->getOptions()->getRecordsPerPage());
         $this->getQueryBuilder()->setFirstResult($offset);
 
         $result = $this->getQueryBuilder()->getQuery()->getArrayResult();
@@ -248,7 +254,7 @@ class QueryBuilder extends AbstractAdapter
         }
 
         // Try find item in root
-        if(isset($item[$name]) && ($relationAlias == null || !isset($relations[$relationAlias]))) {
+        if(array_key_exists($name, $item) && (null === $relationAlias || !array_key_exists($relationAlias, $this->relations))) {
             return $item[$name];
         }
 

@@ -72,4 +72,9 @@ class Route extends AbstractColumn
 
         return $this->options;
     }
+
+    public function composeValue()
+    {
+        return $this->getValue();
+    }
 }
