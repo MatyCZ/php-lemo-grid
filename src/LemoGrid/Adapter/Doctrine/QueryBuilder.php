@@ -1,11 +1,13 @@
 <?php
 
-namespace LemoGrid\Adapter;
+namespace LemoGrid\Adapter\Doctrine;
 
-use Doctrine\ORM\QueryBuilder;
+use DateTime;
+use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
+use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Exception;
 
-class Doctrine2 extends AbstractAdapter implements AdapterInterface
+class QueryBuilder extends AbstractAdapter
 {
     /**
      * @var string
@@ -18,7 +20,7 @@ class Doctrine2 extends AbstractAdapter implements AdapterInterface
     protected $aliases = array();
 
     /**
-     * @var QueryBuilder
+     * @var DoctrineQueryBuilder
      */
     protected $queryBuilder = null;
 
@@ -52,19 +54,19 @@ class Doctrine2 extends AbstractAdapter implements AdapterInterface
                 $rowData[$colName] = null;
 
                 // Nacteme si data radku
-                $value = $column->renderValue($this->findValue($colName, $item, $this->relations));
+                $value = $column->renderValue($this->findValue($colName, $item));
 
-                if($value instanceof \DateTime) {
+                if($value instanceof DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
                 }
 
                 if('concat' == $column->getType()) {
                     $values = array();
-                    foreach($column->getIdentifiers() as $identifier) {
-                        $val = $this->findValue($identifier, $item, $this->relations);
+                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
+                        $val = $this->findValue($identifier, $item);
 
                         if(!empty($val)) {
-                            if($val instanceof \DateTime) {
+                            if($val instanceof DateTime) {
                                 $val = $value->format('Y-m-d H:i:s');
                             }
 
@@ -80,7 +82,7 @@ class Doctrine2 extends AbstractAdapter implements AdapterInterface
                 // Projdeme data a nahradime data ve formatu %xxx%
                 if(preg_match_all('/%([a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
-                        $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item, $this->relations), $value);
+                        $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                     }
                 }
 
@@ -167,7 +169,7 @@ class Doctrine2 extends AbstractAdapter implements AdapterInterface
     /**
      * Find aliases used in Query
      *
-     * @return Doctrine2
+     * @return QueryBuilder
      */
     protected function findAliases()
     {
@@ -197,7 +199,7 @@ class Doctrine2 extends AbstractAdapter implements AdapterInterface
      *
      * @param  string $alias
      * @param  bool   $sub
-     * @return Doctrine2
+     * @return QueryBuilder
      */
     protected function findRelations($alias, $sub = false)
     {
@@ -277,10 +279,10 @@ class Doctrine2 extends AbstractAdapter implements AdapterInterface
     /**
      * Set QueryBuilder
      *
-     * @param QueryBuilder $queryBuilder
-     * @return Doctrine2
+     * @param  DoctrineQueryBuilder $queryBuilder
+     * @return QueryBuilder
      */
-    public function setQueryBuilder(QueryBuilder $queryBuilder)
+    public function setQueryBuilder(DoctrineQueryBuilder $queryBuilder)
     {
         $this->queryBuilder = $queryBuilder;
 

@@ -2,6 +2,8 @@
 
 namespace LemoGrid\Adapter;
 
+use LemoGrid\GridInterface;
+
 abstract class AbstractAdapter implements AdapterInterface
 {
     /**
@@ -17,6 +19,11 @@ abstract class AbstractAdapter implements AdapterInterface
      * @var int
      */
     protected $countItemsTotal = 0;
+
+    /**
+     * @var GridInterface
+     */
+    protected $grid;
 
     /**
      * Get number of current page
@@ -62,5 +69,24 @@ abstract class AbstractAdapter implements AdapterInterface
     public function getCountOfItemsTotal()
     {
         return $this->countItemsTotal;
+    }
+
+    /**
+     * @param  GridInterface $grid
+     * @return AbstractAdapter
+     */
+    public function setGrid(GridInterface $grid)
+    {
+        $this->grid = $grid;
+
+        return $this;
+    }
+
+    /**
+     * @return GridInterface
+     */
+    public function getGrid()
+    {
+        return $this->grid;
     }
 }

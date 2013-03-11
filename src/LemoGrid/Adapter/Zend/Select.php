@@ -1,18 +1,21 @@
 <?php
 
-/**
- * @namespace
- */
-namespace LemoBase\Grid\Adapter\Zend;
+namespace LemoGrid\Adapter\Zend;
 
-use LemoBase\Grid\Adapter\Zend\AbstractZend;
-use LemoBase\Grid\Adapter\AdapterInterface;
+use LemoGrid\Adapter\AbstractAdapter;
+use Zend\Db\Adapter as DbAdapter;
+use Zend\Db\Sql\Select as DbSelect;
 use Zend\Db\Sql\Where;
 
-class Select extends AbstractZend implements AdapterInterface
+class Select extends AbstractAdapter
 {
     /**
-     * @var Select
+     * @var DbAdapter
+     */
+    protected $adapter;
+
+    /**
+     * @var DbSelect
      */
     protected $select;
 
@@ -141,12 +144,35 @@ class Select extends AbstractZend implements AdapterInterface
     }
 
     /**
-     * Set instance of Doctrine QueryBuilder
+     * Set adapter
      *
-     * @param \Zend\Db\Sql\Select $select
+     * @param  DbAdapter $adapter
      * @return Select
      */
-    public function setSelect(\Zend\Db\Sql\Select $select)
+    public function setAdapter(DbAdapter $adapter)
+    {
+        $this->adapter = $adapter;
+
+        return $this;
+    }
+
+    /**
+     * Get adapter
+     *
+     * @return DbAdapter
+     */
+    public function getAdapter()
+    {
+        return $this->adapter;
+    }
+
+    /**
+     * Set instance of Select
+     *
+     * @param DbSelect $select
+     * @return Select
+     */
+    public function setSelect(DbSelect $select)
     {
         $this->select = $select;
 
@@ -154,9 +180,9 @@ class Select extends AbstractZend implements AdapterInterface
     }
 
     /**
-     * Return instance of Doctrine QueryBuilder
+     * Return instance of Select
      *
-     * @return \Zend\Db\Sql\Select
+     * @return DbSelect
      */
     public function getSelect()
     {

@@ -5,6 +5,7 @@ namespace LemoGrid;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use Traversable;
+use Zend\Json;
 use Zend\Session\SessionManager;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\PriorityQueue;
@@ -19,19 +20,14 @@ class Grid implements GridInterface
     protected $adapter;
 
     /**
-     * @var GridAttributes
+     * @var array
      */
-    protected $attributes;
+    protected $byName = array();
 
     /**
      * @var array
      */
-    protected $byName    = array();
-
-    /**
-     * @var array
-     */
-    protected $columns  = array();
+    protected $columns = array();
 
     /**
      * @var Factory
@@ -58,21 +54,9 @@ class Grid implements GridInterface
     /**
      * Parameter container responsible for query parameters
      *
-     * @var \Zend\Stdlib\Parameters
+     * @var array
      */
-    protected $_queryParams = null;
-
-    /**
-     * Request object
-     *
-     * @var \Zend\Http\PhpEnvironment\Request
-     */
-    protected $_request = null;
-
-    /**
-     * @var ServiceLocatorInterface
-     */
-    protected $serviceManager;
+    protected $queryParams = array();
 
     /**
      * @var SessionManager
@@ -80,32 +64,22 @@ class Grid implements GridInterface
     protected $sessionManager;
 
     /**
-     * @var View
-     */
-    protected $_view;
-
-    /**
      * Constructor
      *
-     * @param  ServiceLocatorInterface            $serviceManager
-     * @param  null|AdapterInterface              $adapter
-     * @param  null|array|Traversable|GridOptions $options
-     * @param  null|array|Traversable|GridAttributes $attributes
-     * @return void
+     * @param  null|AdapterInterface                 $adapter
+     * @param  null|array|Traversable|GridOptions    $options
+     * @return \LemoGrid\Grid
      */
-    public function __construct(ServiceLocatorInterface $serviceManager, AdapterInterface $adapter = null, $options = null, $attributes = null)
+    public function __construct(AdapterInterface $adapter = null, $options = null)
     {
         $this->iterator = new PriorityQueue();
-        $this->serviceManager = $serviceManager;
 
         if (null !== $adapter) {
             $this->setAdapter($adapter);
         }
+
         if (null !== $options) {
             $this->setOptions($options);
-        }
-        if (null !== $attributes) {
-            $this->setAttributes($attributes);
         }
     }
 
@@ -146,45 +120,6 @@ class Grid implements GridInterface
         }
 
         return $this->options;
-    }
-
-    /**
-     * Set grid attributes
-     *
-     * @param  array|\Traversable|GridAttributes $attributes
-     * @throws Exception\InvalidArgumentException
-     * @return Grid
-     */
-    public function setAttributes($attributes)
-    {
-        if (!$attributes instanceof GridAttributes) {
-            if (is_object($attributes) && !$attributes instanceof Traversable) {
-                throw new Exception\InvalidArgumentException(sprintf(
-                    'Expected instance of LemoGrid\GridAttributes; '
-                    . 'received "%s"', get_class($attributes))
-                );
-            }
-
-            $attributes = new GridAttributes($attributes);
-        }
-
-        $this->attributes = $attributes;
-
-        return $this;
-    }
-
-    /**
-     * Get grid attributes
-     *
-     * @return GridAttributes
-     */
-    public function getAttributes()
-    {
-        if (!$this->attributes) {
-            $this->setAttributes(new GridAttributes());
-        }
-
-        return $this->attributes;
     }
 
     /**
@@ -237,6 +172,92 @@ class Grid implements GridInterface
         }
 
         return $this->factory;
+    }
+
+    /**
+     * Set name
+     *
+     * @param  string $name
+     * @return Grid
+     */
+    public function setName($name)
+    {
+        return $this->name = (string) $name;
+    }
+
+    /**
+     * Get name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Set query params
+     *
+     * @param array $params
+     * @return Grid
+     */
+    public function setQueryParams($params)
+    {
+        if(isset($params['filters'])) {
+            if(is_array($params['filters'])) {
+                $rules = $params['filters'];
+            } else {
+                $rules = Json\Decoder::decode(stripslashes($params['filters']), Json\Json::TYPE_ARRAY);
+            }
+
+            foreach($rules['rules'] as $rule) {
+                $params[$rule['field']] = $rule['data'];
+            }
+        }
+
+        $this->queryParams = $params;
+
+        return $this;
+    }
+
+    /**
+     * Get query param
+     *
+     * @param  string $name
+     * @return mixed
+     */
+    public function getQueryParam($name)
+    {
+        if(array_key_exists($name, $this->queryParams)) {
+            return $this->queryParams[$name];
+        }
+
+        return null;
+    }
+
+    /**
+     * Get query params
+     *
+     * @return array
+     */
+    public function getQueryParams()
+    {
+        return $this->queryParams;
+    }
+
+    /**
+     * Exist param with given name in query?
+     *
+     * @param  string $name
+     * @return bool
+     */
+    public function hasQueryParam($name)
+    {
+        if(array_key_exists($name, $this->queryParams)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -393,52 +414,6 @@ class Grid implements GridInterface
     }
 
     /**
-     * Make a deep clone of a grid
-     *
-     * @return void
-     */
-    public function __clone()
-    {
-        $items = $this->iterator->toArray(PriorityQueue::EXTR_BOTH);
-
-        $this->byName    = array();
-        $this->columns  = array();
-        $this->iterator  = new PriorityQueue();
-
-        foreach ($items as $item) {
-            $column = clone $item['data'];
-            $name = $column->getName();
-
-            $this->iterator->insert($column, $item['priority']);
-            $this->byName[$name] = $column;
-
-            if ($column instanceof ColumnInterface) {
-                $this->columns[$name] = $column;
-            }
-        }
-    }
-
-    /**
-     * Set name
-     *
-     * @param  string $name
-     * @return Grid
-     */
-    public function setName($name)
-    {
-        return $this->name = (string) $name;
-    }
-
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-    /**
      * Return sort by column index
      *
      * @return string
@@ -485,144 +460,38 @@ class Grid implements GridInterface
         return $this->sortDirect;
     }
 
-
     /**
-     * Set query params
+     * Make a deep clone of a grid
      *
-     * @param array $params
-     * @return Grid
-     */
-    public function setQueryParams($params)
-    {
-        if(isset($params['filters'])) {
-            if(is_array($params['filters'])) {
-                $rules = $params['filters'];
-            } else {
-                $rules = \Zend\Json\Decoder::decode(stripslashes($params['filters']), \Zend\Json\Json::TYPE_ARRAY);
-            }
-
-            foreach($rules['rules'] as $rule) {
-                $params[$rule['field']] = $rule['data'];
-            }
-        }
-
-        $this->_queryParams = $params;
-
-        return $this;
-    }
-
-    /**
-     * Get query param
-     *
-     * @param string $name
-     * @return string
-     */
-    public function getQueryParam($name)
-    {
-        if(null === $this->_queryParams) {
-            $this->setQueryParams($this->getRequest()->getQuery()->toArray());
-        }
-
-        if(isset($this->_queryParams[$name])) {
-            return $this->_queryParams[$name];
-        }
-
-        return null;
-    }
-
-    /**
-     * Get query params
-     *
-     * @return array
-     */
-    public function getQueryParams()
-    {
-        if(null === $this->_queryParams) {
-            $this->setQueryParams($this->getRequest()->getQuery()->toArray());
-        }
-
-        return $this->_queryParams;
-    }
-
-    /**
-     * Set request instance
-     *
-     * @param \Zend\Http\PhpEnvironment\Request $request
-     * @return Grid
-     */
-    public function setRequest(\Zend\Http\PhpEnvironment\Request $request)
-    {
-        $this->_request = $request;
-
-        return $this;
-    }
-
-    /**
-     * Return instance of request
-     *
-     * @return \Zend\Http\PhpEnvironment\Request
-     */
-    public function getRequest()
-    {
-        if(null === $this->_request) {
-            $this->_request = $this->getServiceManager()->get('Zend\Http\PhpEnvironment\Request');
-        }
-
-        return $this->_request;
-    }
-
-    // Rendering
-
-    /**
-     * Retrieves the view instance.
-     *
-     * If none registered, instantiates a PhpRenderer instance.
-     *
-     * @return \Zend\View\Renderer\RendererInterface|null
-     */
-    public function getView()
-    {
-        if ($this->_view === null) {
-            $this->_view = $this->getServiceManager()->get('Zend\View\Renderer\PhpRenderer');
-        }
-
-        return $this->_view;
-    }
-
-    /**
-     * Sets the view object.
-     *
-     * @param  \Zend\View\Renderer\RendererInterface $view
-     * @return Paginator
-     */
-    public function setView(\Zend\View\Renderer\RendererInterface $view = null)
-    {
-        $this->_view = $view;
-
-        return $this;
-    }
-
-    /**
-     * Set service manager instance
-     *
-     * @param ServiceManager $locator
      * @return void
      */
-    public function setServiceManager(ServiceLocatorInterface $serviceManager)
+    public function __clone()
     {
-        $this->serviceManager = $serviceManager;
+        $items = $this->iterator->toArray(PriorityQueue::EXTR_BOTH);
 
-        return $this;
+        $this->byName    = array();
+        $this->columns  = array();
+        $this->iterator  = new PriorityQueue();
+
+        foreach ($items as $item) {
+            $column = clone $item['data'];
+            $name = $column->getName();
+
+            $this->iterator->insert($column, $item['priority']);
+            $this->byName[$name] = $column;
+
+            if ($column instanceof ColumnInterface) {
+                $this->columns[$name] = $column;
+            }
+        }
     }
 
     /**
-     * Retrieve service manager instance
-     *
-     * @return ServiceManager
+     * @return array
      */
-    public function getServiceManager()
+    public function getData()
     {
-        return $this->serviceManager;
+        return $this->getAdapter()->getData();
     }
 
     /**
@@ -856,25 +725,5 @@ class Grid implements GridInterface
         $this->getView()->inlineScript()->appendScript(implode(PHP_EOL, $script));
 
         return implode(PHP_EOL, $xhtml);
-    }
-
-    /**
-     * Serializes the object as a string.  Proxies to {@link render()}.
-     *
-     * @return string
-     */
-    public function __toString()
-    {
-        try {
-            return $this->render();
-        } catch (\Exception $e) {
-
-            ob_clean();
-            trigger_error($e->getMessage(), E_USER_WARNING);
-
-            return $e->getMessage();
-        }
-
-        return '';
     }
 }

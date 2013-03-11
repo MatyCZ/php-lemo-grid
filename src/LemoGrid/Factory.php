@@ -3,6 +3,7 @@
 namespace LemoGrid;
 
 use ArrayAccess;
+use LemoGrid\Column\ColumnInterface;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Hydrator;
