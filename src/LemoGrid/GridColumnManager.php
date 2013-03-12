@@ -3,6 +3,7 @@
 namespace LemoGrid;
 
 use LemoGrid\Column\ColumnInterface;
+use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 use Zend\Stdlib\InitializableInterface;
@@ -40,6 +41,7 @@ class GridColumnManager extends AbstractPluginManager
         parent::__construct($configuration);
 
         $this->addInitializer(array($this, 'injectFactory'));
+        $this->addInitializer(array($this, 'injectTranslator'));
     }
 
     /**
@@ -51,6 +53,22 @@ class GridColumnManager extends AbstractPluginManager
     {
         if ($column instanceof GridFactoryAwareInterface) {
             $column->getGridFactory()->setGridColumnManager($this);
+        }
+    }
+
+    /**
+     * Inject a helper instance with the registered translator
+     *
+     * @param  Column\ColumnInterface $helper
+     * @return void
+     */
+    public function injectTranslator($helper)
+    {
+        if ($helper instanceof TranslatorAwareInterface) {
+            $locator = $this->getServiceLocator();
+            if ($locator && $locator->has('translator')) {
+                $helper->setTranslator($locator->get('translator'));
+            }
         }
     }
 

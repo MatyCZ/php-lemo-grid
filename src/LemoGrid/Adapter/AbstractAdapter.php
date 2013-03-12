@@ -49,7 +49,7 @@ abstract class AbstractAdapter implements AdapterInterface
      */
     public function getNumberOfCurrentPage()
     {
-        $page = $this->getGrid()->getQueryParam('page');
+        $page = $this->getGrid()->getParam('page');
 
         if(null === $page) {
             $page = 1;
@@ -96,7 +96,8 @@ abstract class AbstractAdapter implements AdapterInterface
     {
         if(null === $this->data) {
             $this->data = new Data();
-            $this->data = $this->populateData();
+
+            $this->populateData();
         }
 
         return $this->data;

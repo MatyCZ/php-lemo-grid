@@ -175,6 +175,13 @@ class ColumnAttributes extends AbstractOptions
     protected $label;
 
     /**
+     * Set the unique name in the grid for the column. This property is required. As well as other words used as property/event names, the reserved words (which cannot be used for names) include subgrid, cb and rn.
+     *
+     * @var string
+     */
+    protected $name;
+
+    /**
      * Determines the type of the element when searching. Possible values: text and select.
      *
      * @var string
@@ -595,6 +602,25 @@ class ColumnAttributes extends AbstractOptions
     public function getLabel()
     {
         return $this->label;
+    }
+
+    /**
+     * @param  string $name
+     * @return ColumnAttributes
+     */
+    public function setName($name)
+    {
+        $this->name = (string) $name;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     /**

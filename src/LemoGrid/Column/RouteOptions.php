@@ -27,6 +27,11 @@ class RouteOptions extends AbstractOptions
     protected $route;
 
     /**
+     * @var string
+     */
+    protected $text;
+
+    /**
      * @param array $options
      * @return RouteOptions
      */
@@ -100,5 +105,24 @@ class RouteOptions extends AbstractOptions
     public function getRoute()
     {
         return $this->route;
+    }
+
+    /**
+     * @param  string $text
+     * @return RouteOptions
+     */
+    public function setText($text)
+    {
+        $this->text = (string) $text;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getText()
+    {
+        return $this->text;
     }
 }

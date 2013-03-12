@@ -72,5 +72,5 @@ interface ColumnInterface
      *
      * @return string
      */
-    public function composeValue();
+    public function renderValue();
 }

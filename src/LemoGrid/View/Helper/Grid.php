@@ -2,11 +2,11 @@
 
 namespace LemoGrid\View\Helper;
 
+use LemoGrid\Column\ColumnAttributes;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\GridOptions;
 use Zend\Stdlib\AbstractOptions;
-use Zend\View\Helper\AbstractHelper;
 
 class Grid extends AbstractHelper
 {
@@ -144,6 +144,12 @@ class Grid extends AbstractHelper
             ));
         }
 
+        if($this->grid->getIsXmlHttpRequest()) {
+            $this->getGrid()->renderData();
+        } else {
+            $this->getGrid()->setOptions($this->modifyGridAttribute($this->grid->getOptions()));
+        }
+
         try {
             $html = array();
             $html[] = $this->renderHtml();
@@ -167,11 +173,7 @@ class Grid extends AbstractHelper
     {
         $html = array();
         $html[] = '<table id="' . $this->getGrid()->getName() . '"></table>';
-
-        // Pokud se nema zobrazit paticka
-        if($this->getGrid()->getOptions()->getRenderFooterRow()) {
-            $xhtml[] = '<div id="' . $this->getGrid()->getOptions()->getPagerElementId() . '"></div>';
-        }
+        $html[] = '<div id="' . $this->getGrid()->getOptions()->getPagerElementId() . '"></div>';
 
         return implode(PHP_EOL, $html);
     }
@@ -183,28 +185,44 @@ class Grid extends AbstractHelper
      */
     protected function renderScript()
     {
+        $colNames = array();
+        foreach($this->getGrid()->getColumns() as $column) {
+            $label = $column->getAttributes()->getLabel();
+
+            if (null !== ($translator = $this->getTranslator())) {
+                $label = $translator->translate(
+                    $label, $this->getTranslatorTextDomain()
+                );
+            }
+
+            $colNames[] = $label;
+        }
+
         $script[] = '<script type="text/javascript">';
         $script[] = '$(document).ready(function(){';
         $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid({';
         $script[] = '        ' . $this->renderScriptAttributes('grid', $this->getGrid()->getOptions()) . ', ' . PHP_EOL;
+        $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
         $script[] = '        colModel: [';
 
+        $i = 1;
         $columns = $this->getGrid()->getColumns();
-        $columnsCount = count($columns) -1;
-        foreach($columns as $index => $column) {
-            if($index != $columnsCount) { $delimiter = ','; } else { $delimiter = ''; }
+        $columnsCount = count($columns);
+        foreach($columns as $column) {
+            if($i != $columnsCount) { $delimiter = ','; } else { $delimiter = ''; }
             $script[] = '            {' . $this->renderScriptAttributes('column', $column->getAttributes()) . '}' . $delimiter;
+            $i++;
         }
 
         $script[] = '        ]';
         $script[] = '    });';
 
-        $filterToolbar = $this->getGrid()->getOptions()->getFilterToolbar();
-        if($filterToolbar['enabled'] == true) {
-            if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
-            if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
-            $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid(\'filterToolbar\',{stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;
-        }
+//        $filterToolbar = $this->getGrid()->getOptions()->getFilterToolbar();
+//        if($filterToolbar['enabled'] == true) {
+//            if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
+//            if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
+//            $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid(\'filterToolbar\', {stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;
+//        }
 
         $script[] = '    $(window).bind(\'resize\', function() {';
         $script[] = '        $(\'#' . $this->getGrid()->getName() . '\').setGridWidth($(\'#gbox_' . $this->getGrid()->getName() . '\').parent().width());';
@@ -226,11 +244,6 @@ class Grid extends AbstractHelper
     {
         $script = array();
 
-        if('grid' == $type) {
-            $attributes = $this->modifyGridAttribute($attributes);
-            $separator = ', ' . PHP_EOL;
-        }
-
         // Convert attributes to array
         $attributes = $attributes->toArray();
 
@@ -245,8 +258,8 @@ class Grid extends AbstractHelper
                 }
 
                 $key = $this->convertGridAttributeName($key);
+                $separator = ', ' . PHP_EOL;
             }
-
             if('column' == $type) {
                 if(!array_key_exists($key, $this->attributeMapColumn)) {
                     continue;
@@ -308,7 +321,7 @@ class Grid extends AbstractHelper
             $name = $this->attributeMapColumn[$name];
         }
 
-        return $name;
+        return strtolower($name);
     }
 
     /**
@@ -323,7 +336,7 @@ class Grid extends AbstractHelper
             $name = $this->attributeMapGrid[$name];
         }
 
-        return $name;
+        return strtolower($name);
     }
 
     /**
@@ -334,12 +347,23 @@ class Grid extends AbstractHelper
      */
     protected function modifyGridAttribute(GridOptions $attributes)
     {
-        if($this->getGrid()->hasQueryParam('sidx')) {
-            $attributes->setDefaultSortColumn($this->getGrid()->getQueryParam('sidx'));
+        if($this->getGrid()->hasParam('sidx')) {
+            $attributes->setDefaultSortColumn($this->getGrid()->getParam('sidx'));
         }
-        if($this->getGrid()->hasQueryParam('sord')) {
-            $attributes->setDefaultSortColumn($this->getGrid()->getQueryParam('sord'));
+        if($this->getGrid()->hasParam('sord')) {
+            $attributes->setDefaultSortColumn($this->getGrid()->getParam('sord'));
         }
+        if(null === $attributes->getPagerElementId()) {
+            $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
+        }
+
+        // Modify grid data URL
+        $url = $attributes->getUrl();
+        if(empty($url)) {
+            $url = parse_url($_SERVER['REQUEST_URI']);
+        }
+
+        $attributes->setUrl($url['path'] . '?_name=' . $this->getGrid()->getName());
 
         return $attributes;
     }

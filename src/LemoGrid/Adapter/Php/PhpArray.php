@@ -217,7 +217,7 @@ class ArrayAdapter extends AbstractAdapter
             return $records;
         }
 
-        $queryParams = $this->getGrid()->getQueryParams();
+        $queryParams = $this->getGrid()->getParams();
 
         if(isset($queryParams['sortColumn'])) {
             $sortBy = $queryParams['sortColumn'];

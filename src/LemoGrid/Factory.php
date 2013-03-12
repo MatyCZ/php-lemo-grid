@@ -142,6 +142,7 @@ class Factory
 
         if ($name !== null && $name !== '') {
             $column->setName($name);
+            $attributes['name'] = $name;
         }
 
         if ($identifier !== null && $identifier !== '') {

@@ -4,9 +4,10 @@ namespace LemoGrid;
 
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
+use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\ViewHelperProviderInterface;
 
-class Module implements AutoloaderProviderInterface, ConfigProviderInterface, ViewHelperProviderInterface
+class Module implements AutoloaderProviderInterface, ConfigProviderInterface, ServiceProviderInterface, ViewHelperProviderInterface
 {
     /**
      * @inheritdoc
@@ -33,11 +34,23 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface, Vi
     /**
      * @inheritdoc
      */
+    public function getServiceConfig()
+    {
+        return array(
+            'factories' => array(
+                'GridColumnManager'=> 'LemoGrid\Service\GridColumnManagerFactory',
+            )
+        );
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function getViewHelperConfig()
     {
         return array(
             'invokables' => array(
-                'grid'           => 'LemoGrid\View\Helper\Grid',
+                'grid' => 'LemoGrid\View\Helper\Grid',
             ),
         );
     }

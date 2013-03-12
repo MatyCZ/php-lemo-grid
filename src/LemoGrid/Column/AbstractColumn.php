@@ -98,7 +98,7 @@ abstract class AbstractColumn implements ColumnInterface
     public function getIdentifier()
     {
         if(null === $this->identifier) {
-            $this->identifier = $this->name;
+            $this->identifier = $this->getName();
         }
 
         return $this->identifier;
@@ -113,6 +113,7 @@ abstract class AbstractColumn implements ColumnInterface
     public function setName($name)
     {
         $this->name = $name;
+        $this->getAttributes()->setName($name);
 
         return $this;
     }

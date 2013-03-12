@@ -74,7 +74,7 @@ class Text extends AbstractColumn
         return $this->options;
     }
 
-    public function composeValue()
+    public function renderValue()
     {
         return $this->getValue();
     }

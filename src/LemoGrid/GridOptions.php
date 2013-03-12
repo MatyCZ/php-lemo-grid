@@ -35,7 +35,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $alternativeRows = null;
+    protected $alternativeRows;
 
     /**
      * The class that is used for alternate (zebra) rows. You can construct your own class and replace this value.
@@ -43,7 +43,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $alternativeRowsClass = null;
+    protected $alternativeRowsClass;
 
     /**
      * When set to true encodes (html encode) the incoming (from server) and posted data (from editing modules).
@@ -51,7 +51,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $autoEncodeIncomingAndPostData = null;
+    protected $autoEncodeIncomingAndPostData;
 
     /**
      * When set to true, the grid width is recalculated automatically to the width of the parent element. This is done
@@ -68,7 +68,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $caption = null;
+    protected $caption;
 
     /**
      * This option determines the padding + border width of the cell. Usually this should not be changed, but if custom
@@ -77,35 +77,35 @@ class GridOptions extends AbstractOptions
      *
      * @var int
      */
-    protected $cellLayout = null;
+    protected $cellLayout;
 
     /**
      * Enables (disables) cell editing. See Cell Editing for more details.
      *
      * @var bool
      */
-    protected $cellEdit = null;
+    protected $cellEdit;
 
     /**
      * Defines the url for inline and form editing.
      *
      * @var string
      */
-    protected $cellEditUrl = null;
+    protected $cellEditUrl;
 
     /**
      * Determines where the contents of the cell are saved: 'remote' or 'clientArray'.
      *
      * @var string
      */
-    protected $cellSaveType = null;
+    protected $cellSaveType;
 
     /**
      * The url where the cell is to be saved.
      *
      * @var string
      */
-    protected $cellSaveUrl = null;
+    protected $cellSaveUrl;
 
     /**
      * A array that store the local data passed to the grid. You can directly point to this variable in case you want
@@ -113,12 +113,12 @@ class GridOptions extends AbstractOptions
      *
      * @var array
      */
-    protected $data = null;
+    protected $data;
 
     /**
      * @var string
      */
-    protected $dataString = null;
+    protected $dataString;
 
     /**
      * Defines what type of information to expect to represent data in the grid. Valid options are xml - we expect
@@ -136,7 +136,7 @@ class GridOptions extends AbstractOptions
      *
      * @var int
      */
-    protected $defaultPage = null;
+    protected $defaultPage;
 
     /**
      * The initial sorting name when we use datatypes xml or json (data returned from server). This parameter is added
@@ -145,7 +145,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $defaultSortColumn = null;
+    protected $defaultSortColumn;
 
     /**
      * The initial sorting order when we use datatypes xml or json (data returned from server).This parameter is added
@@ -160,7 +160,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $grouping = null;
+    protected $grouping;
 
     /**
      * Indicates which column should be used to expand the tree grid. If not set the first one
@@ -168,7 +168,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $expandColumnIdentifier = null;
+    protected $expandColumnIdentifier;
 
     /**
      * When true, the treeGrid is expanded and/or collapsed when we click on the text of the expanded column, not
@@ -176,7 +176,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $expandColumnOnClick = null;
+    protected $expandColumnOnClick;
 
     /**
      * @var array
@@ -195,7 +195,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $forceFit = null;
+    protected $forceFit;
 
     /**
      * Determines the current state of the grid (i.e. when used with hiddengrid, hidegrid and caption options). Can
@@ -203,14 +203,14 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $gridState = null;
+    protected $gridState;
 
     /**
      * If the option is set to true the title attribute is added to the column headers.
      *
      * @var string
      */
-    protected $headerTitles = null;
+    protected $headerTitles;
 
     /**
      * The height of the grid. Can be set as number (in this case we mean pixels) or as percentage
@@ -218,7 +218,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $height = null;
+    protected $height = '100%';
 
     /**
      * When set to false the effect of mouse hovering over the grid data rows is disabled.
@@ -234,7 +234,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $loadOnce = null;
+    protected $loadOnce;
 
     /**
      * This option controls what to do when an ajax operation is in progress.
@@ -242,7 +242,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $loadType = null;
+    protected $loadType;
 
     /**
      * If this flag is set to true a multi selection of rows is enabled. A new column at left side is added. Can be used
@@ -250,7 +250,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $multiSelect = null;
+    protected $multiSelect;
 
     /**
      * This parameter have sense only multiselect option is set to true. Defines the key which will be pressed when we
@@ -261,14 +261,14 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $multiSelectKey = null;
+    protected $multiSelectKey;
 
     /**
      * Determines the width of the multiselect column if multiselect is set to true.
      *
      * @var int
      */
-    protected $multiSelectWidth = null;
+    protected $multiSelectWidth;
 
     /**
      * Defines that we want to use a pager bar to navigate through the records. This must be a valid html element;
@@ -278,7 +278,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $pagerElementId = null;
+    protected $pagerElementId;
 
     /**
      * Determines the position of the pager in the grid. By default the pager element when created is divided in 3 parts
@@ -288,7 +288,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $pagerPosition = null;
+    protected $pagerPosition;
 
     /**
      * Determines if the Pager buttons should be shown if pager is available. Also valid only if pager is set correctly.
@@ -296,7 +296,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $pagerShowButtons = null;
+    protected $pagerShowButtons;
 
     /**
      * Determines if the input box, where the user can change the number of requested page, should be available.
@@ -304,7 +304,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $pagerShowInput = null;
+    protected $pagerShowInput;
 
     /**
      * Determines the position of the record information in the pager.
@@ -313,7 +313,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $recordPosition = null;
+    protected $recordPosition;
 
     /**
      * Defines the type of request to make ('post' or 'get')
@@ -327,7 +327,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $renderFooterRow = null;
+    protected $renderFooterRow;
 
     /**
      * Enables or disables the show/hide grid button, which appears on the right side of the Caption layer. Takes effect
@@ -335,7 +335,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $renderHideGridButton = null;
+    protected $renderHideGridButton;
 
     /**
      * If this option is set to true, a new column at left of the grid is added. The purpose of this column is to count
@@ -344,7 +344,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $renderRowNumbersColumn = null;
+    protected $renderRowNumbersColumn;
 
     /**
      * If true, jqGrid displays the beginning and ending record number in the grid, out of the total number of records
@@ -362,7 +362,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $resizeClass = null;
+    protected $resizeClass;
 
     /**
      * Sets how many records we want to view in the grid. This parameter is passed to the url for use by the server
@@ -393,7 +393,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool|int
      */
-    protected $scroll = null;
+    protected $scroll;
 
     /**
      * Determines the width of the vertical scrollbar. Since different browsers interpret this width differently
@@ -401,7 +401,7 @@ class GridOptions extends AbstractOptions
      *
      * @var int
      */
-    protected $scrollOffset = null;
+    protected $scrollOffset;
 
     /**
      * When enabled, selecting a row with setSelection scrolls the grid so that the selected row is visible. This is
@@ -410,14 +410,14 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $scrollRows = null;
+    protected $scrollRows;
 
     /**
      * This control the timeout handler when scroll is set to 1. In miliseconds.
      *
      * @var int
      */
-    protected $scrollTimeout = null;
+    protected $scrollTimeout;
 
     /**
      * Name of session namespace
@@ -439,7 +439,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $shrinkToFit = null;
+    protected $shrinkToFit;
 
     /**
      * When enabled this option allow column reordering with mouse. Since this option uses jQuery UI sortable widget,
@@ -448,7 +448,7 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $sortingColumns = null;
+    protected $sortingColumns;
 
     /**
      * The purpose of this parameter is to define different look and behavior of sorting icons that appear near the header.
@@ -476,14 +476,14 @@ class GridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $treeGrid = null;
+    protected $treeGrid;
 
     /**
      * Deteremines the method used for the treeGrid. Can be 'nested' or 'adjacency'
      *
      * @var string
      */
-    protected $treeGridType = null;
+    protected $treeGridType;
 
     /**
      * This array set the icons used in the tree. The icons should be a valid names from UI theme roller images.
@@ -497,14 +497,14 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $treeGridIcons = null;
+    protected $treeGridIcons;
 
     /**
      * The url of the file that holds the request
      *
      * @var string
      */
-    protected $url = null;
+    protected $url;
 
     /**
      * If this option is not set, the width of the grid is a sum of the widths of the columns defined (in pixels).
@@ -512,7 +512,7 @@ class GridOptions extends AbstractOptions
      *
      * @var int
      */
-    protected $width = null;
+    protected $width;
 
     /**
      * @param boolean $alternativeRows
@@ -1582,11 +1582,7 @@ class GridOptions extends AbstractOptions
      */
     public function getUrl()
     {
-        if($this->url == null) {
-            $this->url = 'http://' . $_SERVER['HTTP_HOST'] . $this->getRequest()->getUri()->getPath();
-        }
-
-        return $this->url . '?_name=' . $this->getName();
+        return $this->url;
     }
 
     /**

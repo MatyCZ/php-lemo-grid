@@ -5,10 +5,13 @@ namespace LemoGrid;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use Traversable;
+use Zend\Feed\Reader\Collection;
 use Zend\Json;
 use Zend\Session\SessionManager;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\PriorityQueue;
+use Zend\Stdlib\Parameters;
+use Zend\View\Model\JsonModel;
 
 class Grid implements GridInterface
 {
@@ -40,6 +43,13 @@ class Grid implements GridInterface
     protected $iterator;
 
     /**
+     * Is the request a Javascript XMLHttpRequest?
+     *
+     * @var bool
+     */
+    protected $isXmlHttpRequest = false;
+
+    /**
      * Grid name
      *
      * @var string
@@ -54,9 +64,9 @@ class Grid implements GridInterface
     /**
      * Parameter container responsible for query parameters
      *
-     * @var array
+     * @var Parameters
      */
-    protected $queryParams = array();
+    protected $params = array();
 
     /**
      * @var SessionManager
@@ -180,6 +190,29 @@ class Grid implements GridInterface
     }
 
     /**
+     * Set if the request is a Javascript XMLHttpRequest
+     *
+     * @param  bool $flag
+     * @return Grid
+     */
+    public function setIsXmlHttpRequest($flag)
+    {
+        $this->isXmlHttpRequest = $flag;
+
+        return $this;
+    }
+
+    /**
+     * Is the request a Javascript XMLHttpRequest?
+     *
+     * @return bool
+     */
+    public function getIsXmlHttpRequest()
+    {
+        return $this->isXmlHttpRequest;
+    }
+
+    /**
      * Set name
      *
      * @param  string $name
@@ -201,64 +234,60 @@ class Grid implements GridInterface
     }
 
     /**
-     * Set query params
+     * Set params
      *
-     * @param array $params
+     * @param  Parameters $params
      * @return Grid
      */
-    public function setQueryParams($params)
+    public function setParams(Parameters $params)
     {
-        if(isset($params['filters'])) {
-            if(is_array($params['filters'])) {
-                $rules = $params['filters'];
+        if($params->offsetExists('filters')) {
+            if(is_array($params->offsetGet('filters'))) {
+                $rules = $params->offsetGet('filters');
             } else {
-                $rules = Json\Decoder::decode(stripslashes($params['filters']), Json\Json::TYPE_ARRAY);
+                $rules = Json\Decoder::decode(stripslashes($params->offsetGet('filters')), Json\Json::TYPE_ARRAY);
             }
 
             foreach($rules['rules'] as $rule) {
-                $params[$rule['field']] = $rule['data'];
+                $params->offsetSet($rule['field'], $rule['data']);
             }
         }
 
-        $this->queryParams = $params;
+        $this->params = $params;
 
         return $this;
     }
 
     /**
-     * Get query param
+     * Get params
+     *
+     * @return Parameters
+     */
+    public function getParams()
+    {
+        return $this->params;
+    }
+
+    /**
+     * Get param
      *
      * @param  string $name
      * @return mixed
      */
-    public function getQueryParam($name)
+    public function getParam($name)
     {
-        if(array_key_exists($name, $this->queryParams)) {
-            return $this->queryParams[$name];
-        }
-
-        return null;
+        return $this->params->offsetGet($name);
     }
 
     /**
-     * Get query params
-     *
-     * @return array
-     */
-    public function getQueryParams()
-    {
-        return $this->queryParams;
-    }
-
-    /**
-     * Exist param with given name in query?
+     * Exist param with given name?
      *
      * @param  string $name
      * @return bool
      */
-    public function hasQueryParam($name)
+    public function hasParam($name)
     {
-        if(array_key_exists($name, $this->queryParams)) {
+        if($this->params->offsetExists($name)) {
             return true;
         }
 
@@ -425,8 +454,8 @@ class Grid implements GridInterface
      */
     public function getSortColumn()
     {
-        if($this->hasQueryParam('sidx')) {
-            return $this->getQueryParam('sidx');
+        if($this->hasParam('sidx')) {
+            return $this->getParam('sidx');
         } else {
             return $this->getOptions()->getDefaultSortColumn();
         }
@@ -440,12 +469,12 @@ class Grid implements GridInterface
      */
     public function getSortDirect()
     {
-        if($this->hasQueryParam('sord')) {
-            if(strtolower($this->getQueryParam('sord')) != 'asc' && strtolower($this->getQueryParam('sord')) != 'desc') {
+        if($this->hasParam('sord')) {
+            if(strtolower($this->getParam('sord')) != 'asc' && strtolower($this->getParam('sord')) != 'desc') {
                 throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
             }
 
-            return $this->getQueryParam('sord');
+            return $this->getParam('sord');
         } else {
             return $this->getOptions()->getDefaultSortOrder();
         }
@@ -478,26 +507,22 @@ class Grid implements GridInterface
     }
 
     /**
-     * @return array
-     */
-    public function getData()
-    {
-        return $this->getAdapter()->setGrid($this)->getData();
-    }
-
-    /**
      * Render grid
      *
      * @return string
      */
-    public function render()
+    public function renderData()
     {
-        $sessionContainer = new \Zend\Session\Container($this->getSessionNamespace());
-        $query = $this->getQueryParams();
+        if($this->getIsXmlHttpRequest() && $this->getParam('_name') != $this->getName()) {
+            return null;
+        }
+
+        $sessionContainer = new \Zend\Session\Container($this->getOptions()->getSessionNamespace());
+        $query = $this->getParams();
 
         $sessionName = 'grid_' . $this->getName();
 
-        if($this->getRequest()->isXmlHttpRequest() && $this->getQueryParam('_name') != $this->getName()) {
+        if($this->getIsXmlHttpRequest() && $this->getParam('_name') != $this->getName()) {
             return null;
         }
 
@@ -507,7 +532,7 @@ class Grid implements GridInterface
             $session = $sessionContainer->offsetSet($sessionName, array());
         }
 
-        if(true === $this->getRequest()->isXmlHttpRequest()) {
+        if(true === $this->getIsXmlHttpRequest()) {
             if(isset($session['loaded']) && $session['loaded'] == true) {
                 if(isset($session['filters']) && $session['loaded'] == true && !isset($query['filters'])) {
                     $query['filters'] = $session['filters'];
@@ -543,48 +568,45 @@ class Grid implements GridInterface
         }
 
         $sessionContainer->offsetSet($sessionName, $session);
-        $this->setQueryParams($query);
+        $this->setParams($query);
 
     // ===== RENDERING =====
 
-        if(true == $this->getRequest()->isXmlHttpRequest()) {
-            $this->getAdapter()->setGrid($this);
+        if(true == $this->getIsXmlHttpRequest()) {
             $items = array();
-            $data = $this->getAdapter()->getData();
+            $data = $this->getAdapter()->setGrid($this)->getData();
 
-            if(is_array($data)) {
-                foreach($data as $index => $item) {
-                    $rowData = $item;
+            foreach($data->getArrayCopy() as $index => $item) {
+                $rowData = $item;
 
-                    if($this->getTreeGrid() == true AND $this->getTreeGridModel() == self::TREE_MODEL_NESTED) {
-                        $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
-                        $item['expanded'] = 'true';
-                    }
-
-                    if($this->getTreeGrid() == true AND $this->getTreeGridModel() == self::TREE_MODEL_ADJACENCY) {
-                        $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
-                        $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
-                        $item['expanded'] = 'true';
-                    }
-
-                    // Pridame radek
-                    $items[] = array(
-                        'id' => $index +1,
-                        'cell' => array_values($rowData)
-                    );
+                if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_NESTED) {
+                    $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
+                    $item['expanded'] = 'true';
                 }
+
+                if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_ADJACENCY) {
+                    $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
+                    $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
+                    $item['expanded'] = 'true';
+                }
+
+                // Pridame radek
+                $items[] = array(
+                    'id' => $index +1,
+                    'cell' => array_values($rowData)
+                );
             }
 
             @ob_clean();
-            echo \Zend\Json\Encoder::encode(array(
+            echo Json\Encoder::encode(array(
                 'page' => $this->getAdapter()->getNumberOfCurrentPage(),
-                'total' => $this->getAdapter()->getNumberOfPages(),
-                'records' => $this->getAdapter()->getNumberOfRecords(),
+                'total' => $this->getAdapter()->getCountOfItemsTotal(),
+                'records' => $this->getAdapter()->getCountOfItems(),
                 'rows' => $items,
             ));
             exit;
         }
 
-        return implode(PHP_EOL, $xhtml);
+        return $this;
     }
 }

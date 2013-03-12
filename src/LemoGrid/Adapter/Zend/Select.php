@@ -95,12 +95,12 @@ class Select extends AbstractAdapter
                 $prepend = null;
                 $append = null;
 
-                if($grid->getQueryParam($col->getName()))
+                if($grid->getParam($col->getName()))
                 {
                     if('concat' == $col->getType()) {
                         $where = new Where();
                         foreach($col->getIdentifiers() as $identifier){
-                            $where->like($identifier, '%' . $grid->getQueryParam($col->getName()) . '%');
+                            $where->like($identifier, '%' . $grid->getParam($col->getName()) . '%');
                             $where->andPredicate($whereFromSelect);
                             $where->or;
                         }
@@ -110,7 +110,7 @@ class Select extends AbstractAdapter
                             $prepend = $append = '%';
                         }
 
-                        $select->where($col->getIdentifier() . " LIKE '" . $prepend . $grid->getQueryParam($col->getName()) . $append . "'");
+                        $select->where($col->getIdentifier() . " LIKE '" . $prepend . $grid->getParam($col->getName()) . $append . "'");
                     }
                 }
             }

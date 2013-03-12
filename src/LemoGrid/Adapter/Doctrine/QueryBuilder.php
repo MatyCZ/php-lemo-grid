@@ -59,7 +59,7 @@ class QueryBuilder extends AbstractAdapter
                 $value = $this->findValue($colIdentifier, $item);
                 $column->setValue($value);
 
-                $value = $column->composeValue();
+                $value = $column->renderValue();
 
                 if($value instanceof DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
@@ -98,7 +98,7 @@ class QueryBuilder extends AbstractAdapter
             $this->getData()->append($data);
         }
 
-        return $this->getData();
+        return $this;
     }
 
     /**
@@ -121,12 +121,12 @@ class QueryBuilder extends AbstractAdapter
                 $prepend = null;
                 $append = null;
 
-                if($grid->getQueryParam($col->getName())) {
+                if($grid->getParam($col->getName())) {
 
                     if('concat' == $col->getType()) {
                         $or = $this->getQueryBuilder()->expr()->orx();
                         foreach($col->getIdentifiers() as $identifier){
-                            $or->add($identifier . " LIKE '%" . $grid->getQueryParam($col->getName()) . "%'");
+                            $or->add($identifier . " LIKE '%" . $grid->getParam($col->getName()) . "%'");
                         }
                         $this->getQueryBuilder()->andWhere($or);
                     } else {
@@ -134,7 +134,7 @@ class QueryBuilder extends AbstractAdapter
                             $prepend = $append = '%';
                         }
 
-                        $this->getQueryBuilder()->andWhere($col->getIdentifier() . " LIKE '" . $prepend . $grid->getQueryParam($col->getName()) . $append . "'");
+                        $this->getQueryBuilder()->andWhere($col->getIdentifier() . " LIKE '" . $prepend . $grid->getParam($col->getName()) . $append . "'");
                     }
                 }
             }
