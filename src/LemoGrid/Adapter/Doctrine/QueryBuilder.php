@@ -5,6 +5,7 @@ namespace LemoGrid\Adapter\Doctrine;
 use DateTime;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use LemoGrid\Adapter\AbstractAdapter;
+use LemoGrid\Column\Concat;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 
@@ -116,14 +117,12 @@ class QueryBuilder extends AbstractAdapter
         // WHERE
         foreach($grid->getColumns() as $col)
         {
-
             if(true === $col->getAttributes()->getIsSearchable()) {
                 $prepend = null;
                 $append = null;
 
                 if($grid->getParam($col->getName())) {
-
-                    if('concat' == $col->getType()) {
+                    if($col instanceof Concat) {
                         $or = $this->getQueryBuilder()->expr()->orx();
                         foreach($col->getIdentifiers() as $identifier){
                             $or->add($identifier . " LIKE '%" . $grid->getParam($col->getName()) . "%'");

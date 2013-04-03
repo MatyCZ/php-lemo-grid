@@ -442,6 +442,24 @@ class GridOptions extends AbstractOptions
     protected $shrinkToFit;
 
     /**
+     * The column according to which the data is to be sorted when it is initially loaded from the server (note that you
+     * will have to use datatypes xml or json to load remote data). This parameter is appended to the url. If this value
+     * is set and the index (name) matches the name from colModel, then an icon indicating that the grid is sorted
+     * according to this column is added to the column header.
+     *
+     * @var string
+     */
+    protected $sortColumnName;
+
+    /**
+     * The initial sorting order (ascending or descending) when we fetch data from the server using datatypes xml or
+     * json. This parameter is appended to the url - see prnNames. The two allowed values are - asc or desc.
+     *
+     * @var string
+     */
+    protected $sortOrder = 'asc';
+
+    /**
      * When enabled this option allow column reordering with mouse. Since this option uses jQuery UI sortable widget,
      * be a sure that this widget and the related to widget files are loaded in head tag. Also be a sure too that you
      * mark the grid.jqueryui.js when you download the jqGrid.
@@ -1458,6 +1476,45 @@ class GridOptions extends AbstractOptions
     public function getShrinkToFit()
     {
         return $this->shrinkToFit;
+    }
+
+    /**
+     * @param string $sortColumnName
+     */
+    public function setSortColumnName($sortColumnName)
+    {
+        $this->sortColumnName = $sortColumnName;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSortColumnName()
+    {
+        return $this->sortColumnName;
+    }
+
+    /**
+     * @param  string $sortOrder
+     * @throws Exception\InvalidArgumentException
+     */
+    public function setSortOrder($sortOrder)
+    {
+        $order = (string) $sortOrder;
+
+        if(in_array($order, array())) {
+            throw new Exception\InvalidArgumentException("Order must by 'asc' or 'desc'");
+        }
+
+        $this->sortOrder = $order;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSortOrder()
+    {
+        return $this->sortOrder;
     }
 
     /**

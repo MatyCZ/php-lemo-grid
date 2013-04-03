@@ -2,7 +2,7 @@
 
 namespace LemoGrid;
 
-use LemoGrid\Column\ColumnInterface;
+use LemoGrid\ColumnInterface;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
@@ -59,7 +59,7 @@ class GridColumnManager extends AbstractPluginManager
     /**
      * Inject a helper instance with the registered translator
      *
-     * @param  Column\ColumnInterface $helper
+     * @param  ColumnInterface $helper
      * @return void
      */
     public function injectTranslator($helper)

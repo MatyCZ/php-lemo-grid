@@ -3,7 +3,7 @@
 namespace LemoGrid;
 
 use LemoGrid\Adapter\AdapterInterface;
-use LemoGrid\Column\ColumnInterface;
+use LemoGrid\ColumnInterface;
 use Traversable;
 use Zend\Feed\Reader\Collection;
 use Zend\Json;
@@ -43,6 +43,13 @@ class Grid implements GridInterface
     protected $iterator;
 
     /**
+     * Is the grid prepared ?
+     *
+     * @var bool
+     */
+    protected $isPrepared = false;
+
+    /**
      * Is the request a Javascript XMLHttpRequest?
      *
      * @var bool
@@ -64,7 +71,7 @@ class Grid implements GridInterface
     /**
      * Parameter container responsible for query parameters
      *
-     * @var Parameters
+     * @var array
      */
     protected $params = array();
 
@@ -79,7 +86,7 @@ class Grid implements GridInterface
      * @param  null|string                        $name
      * @param  null|AdapterInterface              $adapter
      * @param  null|array|Traversable|GridOptions $options
-     * @return \LemoGrid\Grid
+     * @return Grid
      */
     public function __construct($name = null, AdapterInterface $adapter = null, $options = null)
     {
@@ -236,20 +243,20 @@ class Grid implements GridInterface
     /**
      * Set params
      *
-     * @param  Parameters $params
+     * @param  array $params
      * @return Grid
      */
-    public function setParams(Parameters $params)
+    public function setParams(array $params)
     {
-        if($params->offsetExists('filters')) {
-            if(is_array($params->offsetGet('filters'))) {
-                $rules = $params->offsetGet('filters');
+        if(array_key_exists('filters', $params)) {
+            if(is_array($params['filters'])) {
+                $rules = $params['filters'];
             } else {
-                $rules = Json\Decoder::decode(stripslashes($params->offsetGet('filters')), Json\Json::TYPE_ARRAY);
+                $rules = Json\Decoder::decode(stripslashes($params['filters']), Json\Json::TYPE_ARRAY);
             }
 
             foreach($rules['rules'] as $rule) {
-                $params->offsetSet($rule['field'], $rule['data']);
+                $params[$rule['field']] = $rule['data'];
             }
         }
 
@@ -261,7 +268,7 @@ class Grid implements GridInterface
     /**
      * Get params
      *
-     * @return Parameters
+     * @return array
      */
     public function getParams()
     {
@@ -272,11 +279,15 @@ class Grid implements GridInterface
      * Get param
      *
      * @param  string $name
-     * @return mixed
+     * @return string|null
      */
     public function getParam($name)
     {
-        return $this->params->offsetGet($name);
+        if(array_key_exists($name, $this->params)) {
+            return $this->params[$name];
+        }
+
+        return null;
     }
 
     /**
@@ -287,7 +298,7 @@ class Grid implements GridInterface
      */
     public function hasParam($name)
     {
-        if($this->params->offsetExists($name)) {
+        if(array_key_exists($name, $this->params)) {
             return true;
         }
 
@@ -507,11 +518,38 @@ class Grid implements GridInterface
     }
 
     /**
+     * Ensures state is ready for use
+     *
+     * Prepares any columns that require  preparation.
+     *
+     * @return Grid
+     */
+    public function prepare()
+    {
+        if ($this->isPrepared) {
+            return $this;
+        }
+
+//        $this->getInputFilter();
+
+        // If the user wants to, elements names can be wrapped by the form's name
+        foreach ($this->getIterator() as $column) {
+            if ($column instanceof ColumnPrepareAwareInterface) {
+                $column->prepareColumn($this);
+            }
+        }
+
+        $this->isPrepared = true;
+
+        return $this;
+    }
+
+    /**
      * Render grid
      *
      * @return string
      */
-    public function renderData()
+    public function render()
     {
         if($this->getIsXmlHttpRequest() && $this->getParam('_name') != $this->getName()) {
             return null;
@@ -606,6 +644,8 @@ class Grid implements GridInterface
             ));
             exit;
         }
+
+        $this->isPrepared = true;
 
         return $this;
     }

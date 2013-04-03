@@ -8,7 +8,7 @@ use LemoGrid\GridInterface;
 use LemoGrid\GridOptions;
 use Zend\Stdlib\AbstractOptions;
 
-class Grid extends AbstractHelper
+class JqGrid extends AbstractHelper
 {
     /**
      * @var array
@@ -59,8 +59,8 @@ class Grid extends AbstractHelper
         'data_string'                        => 'dataString',
         'data_type'                          => 'dataType',
         'default_page'                       => 'page',
-        'default_sort_column'                => 'sortname',
-        'default_sort_order'                 => 'sortorder',
+        'sortname'                           => 'sortname',
+        'sortorder'                          => 'sortorder',
         'expand_column_identifier'           => 'ExpandColumn',
         'expand_column_on_click'             => 'ExpandColClick',
         'force_fit'                          => 'forceFit',
@@ -144,10 +144,10 @@ class Grid extends AbstractHelper
             ));
         }
 
-        if($this->grid->getIsXmlHttpRequest()) {
-            $this->getGrid()->renderData();
+        if($this->getGrid()->getIsXmlHttpRequest()) {
+            $this->getGrid()->prepare();
         } else {
-            $this->getGrid()->setOptions($this->modifyGridAttribute($this->grid->getOptions()));
+            $this->getGrid()->setOptions($this->modifyGridAttribute($this->getGrid()->getOptions()));
         }
 
         try {
@@ -217,12 +217,12 @@ class Grid extends AbstractHelper
         $script[] = '        ]';
         $script[] = '    });';
 
-//        $filterToolbar = $this->getGrid()->getOptions()->getFilterToolbar();
-//        if($filterToolbar['enabled'] == true) {
-//            if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
-//            if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
-//            $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid(\'filterToolbar\', {stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;
-//        }
+        $filterToolbar = $this->getGrid()->getOptions()->getFilterToolbar();
+        if($filterToolbar['enabled'] == true) {
+            if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
+            if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
+            $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid(\'filterToolbar\', {stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;
+        }
 
         $script[] = '    $(window).bind(\'resize\', function() {';
         $script[] = '        $(\'#' . $this->getGrid()->getName() . '\').setGridWidth($(\'#gbox_' . $this->getGrid()->getName() . '\').parent().width());';
@@ -247,6 +247,19 @@ class Grid extends AbstractHelper
         // Convert attributes to array
         $attributes = $attributes->toArray();
 
+        if('grid' == $type) {
+            if($this->getGrid()->hasParam('sidx')) {
+                $attributes['sortname'] = $this->getGrid()->getParam('sidx');
+            } else {
+                $attributes['sortname'] = $this->getGrid()->getOptions()->getDefaultSortColumn();
+            }
+            if($this->getGrid()->hasParam('sord')) {
+                $attributes['sortorder'] = $this->getGrid()->getParam('sord');
+            } else {
+                $attributes['sortorder'] = $this->getGrid()->getOptions()->getDefaultSortOrder();
+            }
+        }
+
         foreach($attributes as $key => $value) {
             if(null === $value) {
                 continue;
@@ -264,6 +277,10 @@ class Grid extends AbstractHelper
                 if(!array_key_exists($key, $this->attributeMapColumn)) {
                     continue;
                 }
+
+//                if(!isset($attributes['searchoptions']) && $this->getGrid()->getQueryParam($this->getIdentifier())) {
+//                    $attribs['searchoptions'] = array('defaultValue' => $this->getGrid()->getQueryParam($this->getIdentifier()));
+//                }
 
                 $key = $this->convertColumnAttributeName($key);
                 $separator = ', ';
@@ -347,12 +364,6 @@ class Grid extends AbstractHelper
      */
     protected function modifyGridAttribute(GridOptions $attributes)
     {
-        if($this->getGrid()->hasParam('sidx')) {
-            $attributes->setDefaultSortColumn($this->getGrid()->getParam('sidx'));
-        }
-        if($this->getGrid()->hasParam('sord')) {
-            $attributes->setDefaultSortColumn($this->getGrid()->getParam('sord'));
-        }
         if(null === $attributes->getPagerElementId()) {
             $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
         }

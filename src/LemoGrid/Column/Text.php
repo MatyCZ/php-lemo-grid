@@ -3,10 +3,11 @@
 namespace LemoGrid\Column;
 
 use LemoGrid\Collection\Data;
+use LemoGrid\Column;
 use LemoGrid\Exception;
 use Traversable;
 
-class Text extends AbstractColumn
+class Text extends Column
 {
     /**
      * Column options
