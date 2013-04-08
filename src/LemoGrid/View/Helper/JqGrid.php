@@ -59,10 +59,9 @@ class JqGrid extends AbstractHelper
         'data_string'                        => 'dataString',
         'data_type'                          => 'dataType',
         'default_page'                       => 'page',
-        'sortname'                           => 'sortname',
-        'sortorder'                          => 'sortorder',
         'expand_column_identifier'           => 'ExpandColumn',
         'expand_column_on_click'             => 'ExpandColClick',
+        'filter_toolbar'                     => 'filterToolbar',
         'force_fit'                          => 'forceFit',
         'grid_state'                         => 'gridState',
         'grouping'                           => 'grouping',
@@ -92,6 +91,8 @@ class JqGrid extends AbstractHelper
         'shrink_to_fit'                      => 'shrinkToFit',
         'sorting_columns'                    => 'sortable',
         'sorting_columns_definition'         => 'viewsortcols',
+        'sortname'                           => 'sortname',
+        'sortorder'                          => 'sortorder',
         'tree_grid'                          => 'treeGrid',
         'tree_grid_type'                     => 'treeGridModel',
         'tree_grid_icons'                    => 'treeIcons',
@@ -110,7 +111,7 @@ class JqGrid extends AbstractHelper
      * Proxies to {@link render()}.
      *
      * @param  GridInterface|null $grid
-     * @return string|Grid
+     * @return string|JqGrid
      */
     public function __invoke(GridInterface $grid = null)
     {
@@ -144,9 +145,10 @@ class JqGrid extends AbstractHelper
             ));
         }
 
-        if($this->getGrid()->getIsXmlHttpRequest()) {
-            $this->getGrid()->prepare();
+        if($this->getGrid()->isRendered()) {
+            $this->getGrid()->renderData();
         } else {
+            $this->getGrid()->prepare();
             $this->getGrid()->setOptions($this->modifyGridAttribute($this->getGrid()->getOptions()));
         }
 
@@ -189,7 +191,7 @@ class JqGrid extends AbstractHelper
         foreach($this->getGrid()->getColumns() as $column) {
             $label = $column->getAttributes()->getLabel();
 
-            if (null !== ($translator = $this->getTranslator())) {
+            if (null !== ($translator = $this->getTranslator()) && !empty($label)) {
                 $label = $translator->translate(
                     $label, $this->getTranslatorTextDomain()
                 );
@@ -218,7 +220,8 @@ class JqGrid extends AbstractHelper
         $script[] = '    });';
 
         $filterToolbar = $this->getGrid()->getOptions()->getFilterToolbar();
-        if($filterToolbar['enabled'] == true) {
+
+        if(true === $filterToolbar['enabled']) {
             if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
             if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
             $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid(\'filterToolbar\', {stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;

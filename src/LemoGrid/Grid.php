@@ -2,19 +2,27 @@
 
 namespace LemoGrid;
 
+use ArrayAccess;
+use ArrayIterator;
+use Doctrine\Tests\DBAL\Types\ArrayTest;
+use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\ColumnInterface;
 use Traversable;
 use Zend\Feed\Reader\Collection;
 use Zend\Json;
 use Zend\Session\SessionManager;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\Session\Container as SessionContainer;
 use Zend\Stdlib\PriorityQueue;
-use Zend\Stdlib\Parameters;
 use Zend\View\Model\JsonModel;
 
 class Grid implements GridInterface
 {
+    /**
+     * Default grid namespace
+     */
+    const NAMESPACE_DEFAULT = 'grid';
+
     /**
      * Adapter
      *
@@ -31,6 +39,11 @@ class Grid implements GridInterface
      * @var array
      */
     protected $columns = array();
+
+    /**
+     * @var SessionContainer
+     */
+    protected $container;
 
     /**
      * @var Factory
@@ -50,13 +63,6 @@ class Grid implements GridInterface
     protected $isPrepared = false;
 
     /**
-     * Is the request a Javascript XMLHttpRequest?
-     *
-     * @var bool
-     */
-    protected $isXmlHttpRequest = false;
-
-    /**
      * Grid name
      *
      * @var string
@@ -64,12 +70,19 @@ class Grid implements GridInterface
     protected $name;
 
     /**
+     * Instance namespace
+     *
+     * @var string
+     */
+    protected $namespace;
+
+    /**
      * @var GridOptions
      */
     protected $options;
 
     /**
-     * Parameter container responsible for query parameters
+     * Container parameters from query or session container
      *
      * @var array
      */
@@ -78,7 +91,7 @@ class Grid implements GridInterface
     /**
      * @var SessionManager
      */
-    protected $sessionManager;
+    protected $session;
 
     /**
      * Constructor
@@ -142,167 +155,6 @@ class Grid implements GridInterface
         }
 
         return $this->options;
-    }
-
-    /**
-     * Sets the grid adapter
-     *
-     * @param  AdapterInterface $adapter
-     * @return Grid
-     */
-    public function setAdapter(AdapterInterface $adapter)
-    {
-        $this->adapter = $adapter;
-
-        return $this;
-    }
-
-    /**
-     * Returns the grid adapter
-     *
-     * @return AdapterInterface|null
-     */
-    public function getAdapter()
-    {
-        return $this->adapter;
-    }
-
-    /**
-     * Compose a grid factory to use when calling add() with a non-element
-     *
-     * @param  Factory $factory
-     * @return Grid
-     */
-    public function setGridFactory(Factory $factory)
-    {
-        $this->factory = $factory;
-
-        return $this;
-    }
-
-    /**
-     * Retrieve composed grid factory
-     *
-     * Lazy-loads one if none present.
-     *
-     * @return Factory
-     */
-    public function getGridFactory()
-    {
-        if (null === $this->factory) {
-            $this->setGridFactory(new Factory());
-        }
-
-        return $this->factory;
-    }
-
-    /**
-     * Set if the request is a Javascript XMLHttpRequest
-     *
-     * @param  bool $flag
-     * @return Grid
-     */
-    public function setIsXmlHttpRequest($flag)
-    {
-        $this->isXmlHttpRequest = $flag;
-
-        return $this;
-    }
-
-    /**
-     * Is the request a Javascript XMLHttpRequest?
-     *
-     * @return bool
-     */
-    public function getIsXmlHttpRequest()
-    {
-        return $this->isXmlHttpRequest;
-    }
-
-    /**
-     * Set name
-     *
-     * @param  string $name
-     * @return Grid
-     */
-    public function setName($name)
-    {
-        return $this->name = (string) $name;
-    }
-
-    /**
-     * Get name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
-     * Set params
-     *
-     * @param  array $params
-     * @return Grid
-     */
-    public function setParams(array $params)
-    {
-        if(array_key_exists('filters', $params)) {
-            if(is_array($params['filters'])) {
-                $rules = $params['filters'];
-            } else {
-                $rules = Json\Decoder::decode(stripslashes($params['filters']), Json\Json::TYPE_ARRAY);
-            }
-
-            foreach($rules['rules'] as $rule) {
-                $params[$rule['field']] = $rule['data'];
-            }
-        }
-
-        $this->params = $params;
-
-        return $this;
-    }
-
-    /**
-     * Get params
-     *
-     * @return array
-     */
-    public function getParams()
-    {
-        return $this->params;
-    }
-
-    /**
-     * Get param
-     *
-     * @param  string $name
-     * @return string|null
-     */
-    public function getParam($name)
-    {
-        if(array_key_exists($name, $this->params)) {
-            return $this->params[$name];
-        }
-
-        return null;
-    }
-
-    /**
-     * Exist param with given name?
-     *
-     * @param  string $name
-     * @return bool
-     */
-    public function hasParam($name)
-    {
-        if(array_key_exists($name, $this->params)) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
@@ -411,22 +263,6 @@ class Grid implements GridInterface
     }
 
     /**
-     * Set/change the priority of a column
-     *
-     * @param  string $column
-     * @param  int    $priority
-     * @return Grid
-     */
-    public function setPriority($column, $priority)
-    {
-        $column = $this->get($column);
-        $this->remove($column);
-        $this->add($column, array('priority' => $priority));
-
-        return $this;
-    }
-
-    /**
      * Retrieve all attached columns
      *
      * Storage is an implementation detail of the concrete class.
@@ -456,6 +292,22 @@ class Grid implements GridInterface
     public function getIterator()
     {
         return $this->iterator;
+    }
+
+    /**
+     * Set/change the priority of a column
+     *
+     * @param  string $column
+     * @param  int    $priority
+     * @return Grid
+     */
+    public function setPriority($column, $priority)
+    {
+        $column = $this->get($column);
+        $this->remove($column);
+        $this->add($column, array('priority' => $priority));
+
+        return $this;
     }
 
     /**
@@ -502,7 +354,11 @@ class Grid implements GridInterface
 
         $this->byName    = array();
         $this->columns  = array();
+        $this->container = null;
         $this->iterator  = new PriorityQueue();
+        $this->namespace  = self::NAMESPACE_DEFAULT;
+        $this->params  = array();
+        $this->session = null;
 
         foreach ($items as $item) {
             $column = clone $item['data'];
@@ -530,8 +386,6 @@ class Grid implements GridInterface
             return $this;
         }
 
-//        $this->getInputFilter();
-
         // If the user wants to, elements names can be wrapped by the form's name
         foreach ($this->getIterator() as $column) {
             if ($column instanceof ColumnPrepareAwareInterface) {
@@ -544,109 +398,347 @@ class Grid implements GridInterface
         return $this;
     }
 
+    public function renderData()
+    {
+        $adapter = $this->getAdapter();
+
+        if(!$adapter instanceof AbstractAdapter) {
+            throw new Exception\InvalidArgumentException('No Adapter isntance given');
+        }
+
+        $items = array();
+        $data = $adapter->setGrid($this)->getData();
+
+        foreach($data->getArrayCopy() as $index => $item) {
+            $rowData = $item;
+
+            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_NESTED) {
+                $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
+                $item['expanded'] = 'true';
+            }
+
+            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_ADJACENCY) {
+                $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
+                $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
+                $item['expanded'] = 'true';
+            }
+
+            // Pridame radek
+            $items[] = array(
+                'id'   => $index +1,
+                'cell' => array_values($rowData)
+            );
+        }
+
+        ob_clean();
+        echo Json\Encoder::encode(array(
+            'page'    => $adapter->getNumberOfCurrentPage(),
+            'total'   => $adapter->getCountOfItemsTotal(),
+            'records' => $adapter->getCountOfItems(),
+            'rows'    => $items,
+        ));
+        exit;
+    }
+
     /**
-     * Render grid
+     * Sets the grid adapter
+     *
+     * @param  AdapterInterface $adapter
+     * @return Grid
+     */
+    public function setAdapter(AdapterInterface $adapter)
+    {
+        $this->adapter = $adapter;
+
+        return $this;
+    }
+
+    /**
+     * Returns the grid adapter
+     *
+     * @return AdapterInterface|null
+     */
+    public function getAdapter()
+    {
+        return $this->adapter;
+    }
+
+    /**
+     * Get session container for grid
+     *
+     * @return SessionContainer
+     */
+    public function getContainer()
+    {
+        if ($this->container instanceof SessionContainer) {
+            return $this->container;
+        }
+
+        $this->container = new SessionContainer('Grid', $this->getSessionManager());
+
+        return $this->container;
+    }
+
+    /**
+     * Compose a grid factory to use when calling add() with a non-element
+     *
+     * @param  Factory $factory
+     * @return Grid
+     */
+    public function setGridFactory(Factory $factory)
+    {
+        $this->factory = $factory;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve composed grid factory
+     *
+     * Lazy-loads one if none present.
+     *
+     * @return Factory
+     */
+    public function getGridFactory()
+    {
+        if (null === $this->factory) {
+            $this->setGridFactory(new Factory());
+        }
+
+        return $this->factory;
+    }
+
+    /**
+     * Is the grid rendered?
+     *
+     * @return bool
+     */
+    public function isRendered()
+    {
+        if(null === $this->getParam('_name')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Set name
+     *
+     * @param  string $name
+     * @return Grid
+     */
+    public function setName($name)
+    {
+        return $this->name = (string) $name;
+    }
+
+    /**
+     * Get name
      *
      * @return string
      */
-    public function render()
+    public function getName()
     {
-        if($this->getIsXmlHttpRequest() && $this->getParam('_name') != $this->getName()) {
-            return null;
-        }
+        return $this->name;
+    }
 
-        $sessionContainer = new \Zend\Session\Container($this->getOptions()->getSessionNamespace());
-        $query = $this->getParams();
-
-        $sessionName = 'grid_' . $this->getName();
-
-        if($this->getIsXmlHttpRequest() && $this->getParam('_name') != $this->getName()) {
-            return null;
-        }
-
-        if($sessionContainer->offsetExists($sessionName)) {
-            $session = $sessionContainer->offsetGet($sessionName);
-        } else {
-            $session = $sessionContainer->offsetSet($sessionName, array());
-        }
-
-        if(true === $this->getIsXmlHttpRequest()) {
-            if(isset($session['loaded']) && $session['loaded'] == true) {
-                if(isset($session['filters']) && $session['loaded'] == true && !isset($query['filters'])) {
-                    $query['filters'] = $session['filters'];
-                }
-
-                $session['page'] = @$query['page'];
-                $session['rows'] = @$query['rows'];
-                $session['sidx'] = @$query['sidx'];
-                $session['sord'] = @$query['sord'];
-                $session['filters'] = @$query['filters'];
-
-            } else {
-                $session['loaded'] = true;
-
-                if(isset($session['page'])) {
-                    $query['page'] = $session['page'];
-                    $query['rows'] = $session['rows'];
-                    $query['sidx'] = $session['sidx'];
-                    $query['sord'] = $session['sord'];
-                    $query['filters'] = $session['filters'];
-                }
-            }
-        } else {
-            unset($session['loaded']);
-
-            if(isset($session['page'])) {
-                $query['page'] = $session['page'];
-                $query['rows'] = $session['rows'];
-                $query['sidx'] = $session['sidx'];
-                $query['sord'] = $session['sord'];
-                $query['filters'] = $session['filters'];
-            }
-        }
-
-        $sessionContainer->offsetSet($sessionName, $session);
-        $this->setParams($query);
-
-    // ===== RENDERING =====
-
-        if(true == $this->getIsXmlHttpRequest()) {
-            $items = array();
-            $data = $this->getAdapter()->setGrid($this)->getData();
-
-            foreach($data->getArrayCopy() as $index => $item) {
-                $rowData = $item;
-
-                if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_NESTED) {
-                    $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
-                    $item['expanded'] = 'true';
-                }
-
-                if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_ADJACENCY) {
-                    $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
-                    $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
-                    $item['expanded'] = 'true';
-                }
-
-                // Pridame radek
-                $items[] = array(
-                    'id' => $index +1,
-                    'cell' => array_values($rowData)
-                );
-            }
-
-            @ob_clean();
-            echo Json\Encoder::encode(array(
-                'page' => $this->getAdapter()->getNumberOfCurrentPage(),
-                'total' => $this->getAdapter()->getCountOfItemsTotal(),
-                'records' => $this->getAdapter()->getCountOfItems(),
-                'rows' => $items,
-            ));
-            exit;
-        }
-
-        $this->isPrepared = true;
+    /**
+     * Change the grid namespace for params
+     *
+     * @param  string $namespace
+     * @return Grid
+     */
+    public function setNamespace($namespace = self::NAMESPACE_DEFAULT)
+    {
+        $this->namespace = (string) $namespace;
 
         return $this;
+    }
+
+    /**
+     * Get the grid namespace for params
+     *
+     * @return string
+     */
+    public function getNamespace()
+    {
+        if(null === $this->namespace) {
+            $this->namespace = $this->getName();
+        }
+
+        return $this->namespace;
+    }
+
+    /**
+     * Set params
+     *
+     * @param  array|ArrayAccess|Traversable $params
+     * @throws Exception\InvalidArgumentException
+     * @return Grid
+     */
+    public function setParams($params)
+    {
+        if (!is_array($params) && !$params instanceof Traversable) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s expects an array or Traversable argument; received "%s"',
+                __METHOD__,
+                (is_object($params) ? get_class($params) : gettype($params))
+            ));
+        }
+
+        foreach($params as $name => $value) {
+            $this->setParam($name, $value);
+        }
+
+//        \Zend\Debug\Debug::dump($container->{$namespace});
+//        if(array_key_exists('filters', $params)) {
+//            if(is_array($params['filters'])) {
+//                $rules = $params['filters'];
+//            } else {
+//                $rules = Json\Decoder::decode(stripslashes($params['filters']), Json\Json::TYPE_ARRAY);
+//            }
+//
+//            foreach($rules['rules'] as $rule) {
+//                $params[$rule['field']] = $rule['data'];
+//            }
+//        }
+
+        return $this;
+    }
+
+    /**
+     * Get params from a specific namespace
+     *
+     * @return array
+     */
+    public function getParams()
+    {
+        if ($this->hasParams()) {
+            return $this->params[$this->getNamespace()];
+        }
+
+        return array();
+    }
+
+    /**
+     * Whether a specific namespace has params
+     *
+     * @return bool
+     */
+    public function hasParams()
+    {
+        $this->getParamsFromContainer();
+
+        return isset($this->params[$this->getNamespace()]);
+    }
+
+    /**
+     * Set param
+     *
+     * @param  string $name
+     * @param  mixed  $value
+     * @return Grid
+     */
+    public function setParam($name, $value)
+    {
+        $container = $this->getContainer();
+        $namespace = $this->getNamespace();
+
+        if (!isset($container->{$namespace}) || !($container->{$namespace} instanceof Traversable)) {
+            $container->{$namespace} = new ArrayIterator();
+        }
+        if (!isset($this->params[$namespace]) || !($this->params[$namespace] instanceof Traversable)) {
+            $this->params[$namespace] = new ArrayIterator();
+        }
+
+        if($name != '_name') {
+            $container->{$namespace}->offsetSet($name, $value);
+        }
+
+        $this->params[$namespace]->offsetSet($name, $value);
+
+        return $this;
+    }
+
+    /**
+     * Get param
+     *
+     * @param  string $name
+     * @return string|null
+     */
+    public function getParam($name)
+    {
+        $this->getParamsFromContainer();
+
+        if (isset($this->params[$this->getNamespace()])) {
+            return $this->params[$this->getNamespace()]->offsetGet($name);
+        }
+
+        return null;
+    }
+
+    /**
+     * Exist param with given name?
+     *
+     * @param  string $name
+     * @return bool
+     */
+    public function hasParam($name)
+    {
+        $this->getParamsFromContainer();
+
+        if (isset($this->params[$this->getNamespace()])) {
+            return $this->params[$this->getNamespace()]->offsetExists($name);
+        }
+
+        return false;
+    }
+
+    /**
+     * Set the session manager
+     *
+     * @param  SessionManager $manager
+     * @return Grid
+     */
+    public function setSessionManager(SessionManager $manager)
+    {
+        $this->session = $manager;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve the session manager
+     *
+     * If none composed, lazy-loads a SessionManager instance
+     *
+     * @return SessionManager
+     */
+    public function getSessionManager()
+    {
+        if (!$this->session instanceof SessionManager) {
+            $this->setSessionManager(SessionContainer::getDefaultManager());
+        }
+
+        return $this->session;
+    }
+
+    /**
+     * Pull params from the session container
+     *
+     * @return void
+     */
+    protected function getParamsFromContainer()
+    {
+        if (!empty($this->params)) {
+            return;
+        }
+
+        $container = $this->getContainer();
+
+        foreach ($container as $namespace => $params) {
+            $this->params[$namespace] = $params;
+        }
     }
 }
