@@ -117,11 +117,14 @@ class QueryBuilder extends AbstractAdapter
         // WHERE
         foreach($grid->getColumns() as $col)
         {
-            if(true === $col->getAttributes()->getIsSearchable()) {
+            if($col->getAttributes()->getIsSearchable()) {
                 $prepend = null;
                 $append = null;
+//
+//                \Zend\Debug\Debug::dump($grid->getParams());
+//                exit;
 
-                if($grid->getParam($col->getName())) {
+                if($grid->hasParam($col->getName())) {
                     if($col instanceof Concat) {
                         $or = $this->getQueryBuilder()->expr()->orx();
                         foreach($col->getIdentifiers() as $identifier){
@@ -151,7 +154,9 @@ class QueryBuilder extends AbstractAdapter
 //                $this->getQueryBuilder()->{$method}($identifier, $this->getSortDirect());
 //            }
 //        } else {
+        if($grid->has($grid->getSortColumn())) {
             $this->getQueryBuilder()->orderBy($grid->get($grid->getSortColumn())->getIdentifier(), $grid->getSortDirect());
+        }
 //        }
 
         $offset = $grid->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getOptions()->getRecordsPerPage();
@@ -200,7 +205,7 @@ class QueryBuilder extends AbstractAdapter
     }
 
     /**
-     * Find relations by given alias name
+     * Find relations from given alias name
      *
      * @param  string $alias
      * @param  bool   $sub
@@ -212,8 +217,7 @@ class QueryBuilder extends AbstractAdapter
             return array();
         }
 
-        foreach($this->aliases[$alias] as $item)
-        {
+        foreach($this->aliases[$alias] as $item) {
             if($sub == false) {
                 $this->relations[$item['alias']] = $item['relation'];
             } else {

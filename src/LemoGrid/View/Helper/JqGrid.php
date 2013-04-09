@@ -3,6 +3,7 @@
 namespace LemoGrid\View\Helper;
 
 use LemoGrid\Column\ColumnAttributes;
+use LemoGrid\ColumnInterface;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\GridOptions;
@@ -11,9 +12,11 @@ use Zend\Stdlib\AbstractOptions;
 class JqGrid extends AbstractHelper
 {
     /**
+     * List of valid column attributes with jqGrid attribute name
+     *
      * @var array
      */
-    protected $attributeMapColumn = array(
+    protected $columnAttributes = array(
         'align'                => 'align',
         'column_attributes'    => 'cellattr',
         'class'                => 'classes',
@@ -43,9 +46,11 @@ class JqGrid extends AbstractHelper
     );
 
     /**
+     * List of valid grid attributes with jqGrid attribute name
+     *
      * @var array
      */
-    protected $attributeMapGrid = array(
+    protected $gridAttributes = array(
         'alternative_rows'                   => 'altRows',
         'alternative_rows_class'             => 'altclass',
         'auto_encode_incoming_and_post_data' => 'autoencode',
@@ -61,7 +66,6 @@ class JqGrid extends AbstractHelper
         'default_page'                       => 'page',
         'expand_column_identifier'           => 'ExpandColumn',
         'expand_column_on_click'             => 'ExpandColClick',
-        'filter_toolbar'                     => 'filterToolbar',
         'force_fit'                          => 'forceFit',
         'grid_state'                         => 'gridState',
         'grouping'                           => 'grouping',
@@ -91,19 +95,16 @@ class JqGrid extends AbstractHelper
         'shrink_to_fit'                      => 'shrinkToFit',
         'sorting_columns'                    => 'sortable',
         'sorting_columns_definition'         => 'viewsortcols',
-        'sortname'                           => 'sortname',
-        'sortorder'                          => 'sortorder',
+        'sort_name'                          => 'sortname',
+        'sort_order'                         => 'sortorder',
         'tree_grid'                          => 'treeGrid',
         'tree_grid_type'                     => 'treeGridModel',
         'tree_grid_icons'                    => 'treeIcons',
         'url'                                => 'url',
+        'user_data'                          => 'userData',
+        'user_data_on_footer'                => 'userDataOnFooter',
         'width'                              => 'width',
     );
-
-    /**
-     * @var GridInterface
-     */
-    protected $grid;
 
     /**
      * Invoke helper as function
@@ -134,30 +135,28 @@ class JqGrid extends AbstractHelper
      */
     public function render()
     {
-        if (null === $this->grid) {
-            throw new Exception\UnexpectedValueException('No instance of LemoGrid\GridInterface given');
-        }
+        $grid = $this->getGrid();
+        $view = $this->getView();
 
-        if (!$this->grid instanceof GridInterface) {
+        if (!$grid instanceof GridInterface) {
             throw new Exception\UnexpectedValueException(sprintf(
                 'Expected instance of LemoGrid\GridInterface; received "%s"',
-                get_class($this->grid)
+                get_class($grid)
             ));
         }
 
-        if($this->getGrid()->isRendered()) {
-            $this->getGrid()->renderData();
+        if($grid->isRendered()) {
+            $grid->renderData();
         } else {
-            $this->getGrid()->prepare();
-            $this->getGrid()->setOptions($this->modifyGridAttribute($this->getGrid()->getOptions()));
+            $grid->prepare();
+            $grid->setOptions($this->gridModifyAttributes($grid->getOptions()));
         }
 
         try {
-            $html = array();
-            $html[] = $this->renderHtml();
-            $html[] = $this->renderScript();
+            $view->inlineScript()->appendScript($this->renderScript());
+            $view->inlineScript()->appendScript($this->renderScriptAutoresize());
 
-            return implode(PHP_EOL, $html);
+            return $this->renderHtml();
         } catch (\Exception $e) {
             ob_clean();
             trigger_error($e->getMessage(), E_USER_WARNING);
@@ -171,11 +170,13 @@ class JqGrid extends AbstractHelper
      *
      * @return string
      */
-    protected function renderHtml()
+    public function renderHtml()
     {
+        $grid = $this->getGrid();
+
         $html = array();
-        $html[] = '<table id="' . $this->getGrid()->getName() . '"></table>';
-        $html[] = '<div id="' . $this->getGrid()->getOptions()->getPagerElementId() . '"></div>';
+        $html[] = '<table id="' . $grid->getName() . '"></table>';
+        $html[] = '<div id="' . $grid->getOptions()->getPagerElementId() . '"></div>';
 
         return implode(PHP_EOL, $html);
     }
@@ -185,10 +186,12 @@ class JqGrid extends AbstractHelper
      *
      * @return string
      */
-    protected function renderScript()
+    public function renderScript()
     {
+        $grid = $this->getGrid();
+
         $colNames = array();
-        foreach($this->getGrid()->getColumns() as $column) {
+        foreach($grid->getColumns() as $column) {
             $label = $column->getAttributes()->getLabel();
 
             if (null !== ($translator = $this->getTranslator()) && !empty($label)) {
@@ -200,38 +203,46 @@ class JqGrid extends AbstractHelper
             $colNames[] = $label;
         }
 
-        $script[] = '<script type="text/javascript">';
-        $script[] = '$(document).ready(function(){';
-        $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid({';
-        $script[] = '        ' . $this->renderScriptAttributes('grid', $this->getGrid()->getOptions()) . ', ' . PHP_EOL;
+        $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid({';
+        $script[] = '        ' . $this->buildScript('grid', $grid->getOptions()) . ', ' . PHP_EOL;
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
         $script[] = '        colModel: [';
 
         $i = 1;
-        $columns = $this->getGrid()->getColumns();
+        $columns = $grid->getColumns();
         $columnsCount = count($columns);
         foreach($columns as $column) {
+            $attributes = $this->columnModifyAttributes($column, $column->getAttributes());
+
             if($i != $columnsCount) { $delimiter = ','; } else { $delimiter = ''; }
-            $script[] = '            {' . $this->renderScriptAttributes('column', $column->getAttributes()) . '}' . $delimiter;
+            $script[] = '            {' . $this->buildScript('column', $attributes) . '}' . $delimiter;
             $i++;
         }
 
         $script[] = '        ]';
         $script[] = '    });';
 
-        $filterToolbar = $this->getGrid()->getOptions()->getFilterToolbar();
-
-        if(true === $filterToolbar['enabled']) {
-            if($filterToolbar['stringResult'] == true) { $stringResult = 'true'; } else { $stringResult = 'false'; }
-            if($filterToolbar['searchOnEnter'] == true) { $searchOnEnter = 'true'; } else { $searchOnEnter = 'false'; }
-            $script[] = '    $(\'#' . $this->getGrid()->getName() . '\').jqGrid(\'filterToolbar\', {stringResult: ' . $stringResult . ', searchOnEnter: ' . $searchOnEnter . '});' . PHP_EOL;
+        // Can render toolbar?
+        if($grid->getOptions()->getFilterToolbarEnabled()) {
+            $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
         }
 
+        return implode(PHP_EOL, $script);
+    }
+
+    /**
+     * Render script of grid
+     *
+     * @return string
+     */
+    public function renderScriptAutoresize()
+    {
+        $grid = $this->getGrid();
+
+        $script = array();
         $script[] = '    $(window).bind(\'resize\', function() {';
-        $script[] = '        $(\'#' . $this->getGrid()->getName() . '\').setGridWidth($(\'#gbox_' . $this->getGrid()->getName() . '\').parent().width());';
+        $script[] = '        $(\'#' . $grid->getName() . '\').setGridWidth($(\'#gbox_' . $grid->getName() . '\').parent().width());';
         $script[] = '    }).trigger(\'resize\');';
-        $script[] = '});';
-        $script[] = '</script>';
 
         return implode(PHP_EOL, $script);
     }
@@ -243,25 +254,12 @@ class JqGrid extends AbstractHelper
      * @param  AbstractOptions $attributes
      * @return string
      */
-    protected function renderScriptAttributes($type, AbstractOptions $attributes)
+    protected function buildScript($type, AbstractOptions $attributes)
     {
         $script = array();
 
         // Convert attributes to array
         $attributes = $attributes->toArray();
-
-        if('grid' == $type) {
-            if($this->getGrid()->hasParam('sidx')) {
-                $attributes['sortname'] = $this->getGrid()->getParam('sidx');
-            } else {
-                $attributes['sortname'] = $this->getGrid()->getOptions()->getDefaultSortColumn();
-            }
-            if($this->getGrid()->hasParam('sord')) {
-                $attributes['sortorder'] = $this->getGrid()->getParam('sord');
-            } else {
-                $attributes['sortorder'] = $this->getGrid()->getOptions()->getDefaultSortOrder();
-            }
-        }
 
         foreach($attributes as $key => $value) {
             if(null === $value) {
@@ -269,60 +267,26 @@ class JqGrid extends AbstractHelper
             }
 
             if('grid' == $type) {
-                if(!array_key_exists($key, $this->attributeMapGrid)) {
+                if(!array_key_exists($key, $this->gridAttributes)) {
                     continue;
                 }
 
-                $key = $this->convertGridAttributeName($key);
+                $key = $this->gridConvertAttributeName($key);
                 $separator = ', ' . PHP_EOL;
             }
             if('column' == $type) {
-                if(!array_key_exists($key, $this->attributeMapColumn)) {
+                if(!array_key_exists($key, $this->columnAttributes)) {
                     continue;
                 }
 
-//                if(!isset($attributes['searchoptions']) && $this->getGrid()->getQueryParam($this->getIdentifier())) {
-//                    $attribs['searchoptions'] = array('defaultValue' => $this->getGrid()->getQueryParam($this->getIdentifier()));
-//                }
-
-                $key = $this->convertColumnAttributeName($key);
+                $key = $this->columnConvertAttributeName($key);
                 $separator = ', ';
             }
 
-            if(is_array($value)) {
-                $values = array();
-                foreach($value as $k => $val) {
-                    if(is_bool($val)) {
-                        if($val == true) {
-                            $values[] = 'true';
-                        } else {
-                            $values[] = 'false';
-                        }
-                    } elseif(is_numeric($val)) {
-                        $values[] = $val;
-                    } elseif(strtolower($key) == 'treeIcons') {
-                        $values[] = $k . ":'" .  $val . "'";
-                    } else {
-                        $values[] = "'" .  $val . "'";
-                    }
-                }
+            $scriptRow = $this->buildScriptAttributes($key, $value);
 
-                if(strtolower($key) == 'treeIcons') {
-                    $script[] = $key . ': {' . implode(',', $values) . '}';
-                } else {
-                    $script[] = $key . ': [' . implode(',', $values) . ']';
-                }
-            } elseif(is_numeric($value)) {
-                $script[] = $key . ': ' . $value;
-            } elseif(is_bool($value)) {
-                if($value == true) {
-                    $value = 'true';
-                } else {
-                    $value = 'false';
-                }
-                $script[] = $key . ': ' . $value;
-            } else {
-                $script[] = $key . ': \'' . $value . '\'';
+            if(null !== $scriptRow) {
+                $script[] = $scriptRow;
             }
         }
 
@@ -330,18 +294,56 @@ class JqGrid extends AbstractHelper
     }
 
     /**
-     * Convert attribute name to jqGrid attribute name
-     *
-     * @param  string $name
-     * @return string
+     * @param  mixed $key
+     * @param  mixed $value
+     * @return int|string
      */
-    protected function convertColumnAttributeName($name)
+    protected function buildScriptAttributes($key, $value)
     {
-        if(array_key_exists($name, $this->attributeMapColumn)) {
-            $name = $this->attributeMapColumn[$name];
+        if(is_array($value)) {
+            if(empty($value)) {
+                return null;
+            }
+
+            $values = array();
+            foreach($value as $k => $val) {
+                $values[] = $this->buildScriptAttributes($k, $val);
+            }
+
+            if (in_array($key, array('filterToolbar'))) {
+                $r = '\'' . $key . '\', {' . implode(', ', array_values($values)) . '}';
+            } elseif (in_array($key, array('editoptions', 'formatoptions', 'searchoptions', 'treeicons'))) {
+                $r = $key . ': {' . implode(', ', $values) . '}';
+            } else {
+                $r = $key . ': [' . implode(', ', $values) . ']';
+            }
+        } elseif (is_numeric($key)) {
+            if(is_bool($value)) {
+                if($value == true) {
+                    $value = 'true';
+                } else {
+                    $value = 'false';
+                }
+            } elseif (is_numeric($value)) {
+            } else {
+                $value = '\'' . $value . '\'';
+            }
+
+            $r = $value;
+        } elseif (is_numeric($value)) {
+            $r = $key . ': ' . $value;
+        } elseif (is_bool($value)) {
+            if($value == true) {
+                $value = 'true';
+            } else {
+                $value = 'false';
+            }
+            $r = $key . ': ' . $value;
+        } else {
+            $r = $key . ': \'' . $value . '\'';
         }
 
-        return strtolower($name);
+        return $r;
     }
 
     /**
@@ -350,10 +352,42 @@ class JqGrid extends AbstractHelper
      * @param  string $name
      * @return string
      */
-    protected function convertGridAttributeName($name)
+    protected function columnConvertAttributeName($name)
     {
-        if(array_key_exists($name, $this->attributeMapGrid)) {
-            $name = $this->attributeMapGrid[$name];
+        if(array_key_exists($name, $this->columnAttributes)) {
+            $name = $this->columnAttributes[$name];
+        }
+
+        return strtolower($name);
+    }
+
+    /**
+     * Add, update or remove some column attributes
+     *
+     * @param  ColumnInterface  $column
+     * @param  ColumnAttributes $attributes
+     * @return ColumnAttributes
+     */
+    protected function columnModifyAttributes(ColumnInterface $column, ColumnAttributes $attributes)
+    {
+        // If default value is not set, add default value from search param
+        if(null == $attributes->getSearchOptions() && $this->getGrid()->getParam($column->getName())) {
+            $attributes->setSearchOptions(array('defaultValue' => $this->getGrid()->getParam($column->getName())));
+        }
+
+        return $attributes;
+    }
+
+    /**
+     * Convert attribute name to jqGrid attribute name
+     *
+     * @param  string $name
+     * @return string
+     */
+    protected function gridConvertAttributeName($name)
+    {
+        if(array_key_exists($name, $this->gridAttributes)) {
+            $name = $this->gridAttributes[$name];
         }
 
         return strtolower($name);
@@ -365,44 +399,24 @@ class JqGrid extends AbstractHelper
      * @param  GridOptions $attributes
      * @return GridOptions
      */
-    protected function modifyGridAttribute(GridOptions $attributes)
+    protected function gridModifyAttributes(GridOptions $attributes)
     {
+        // Pager element ID
         if(null === $attributes->getPagerElementId()) {
             $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
         }
 
-        // Modify grid data URL
+        $attributes->setSortName($this->getGrid()->getSortColumn());
+        $attributes->setSortOrder($this->getGrid()->getSortDirect());
+
+        // URL
         $url = $attributes->getUrl();
         if(empty($url)) {
-            $url = parse_url($_SERVER['REQUEST_URI']);
+            $url = parse_url($this->getView()->url());
         }
 
-        $attributes->setUrl($url['path'] . '?_name=' . $this->getGrid()->getName());
+        $attributes->setUrl($this->getView()->serverUrl() . $url['path'] . '?_name=' . $this->getGrid()->getName());
 
         return $attributes;
-    }
-
-    /**
-     * Set instance of Grid
-     *
-     * @param  GridInterface $grid
-     * @return Grid
-     */
-    public function setGrid(GridInterface $grid)
-    {
-        $this->grid = $grid;
-
-        return $this;
-    }
-
-    /**
-     * Retrieve instance of Grid
-     *
-     * @throws Exception\UnexpectedValueException
-     * @return GridInterface
-     */
-    public function getGrid()
-    {
-        return $this->grid;
     }
 }

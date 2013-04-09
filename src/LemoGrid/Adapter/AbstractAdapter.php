@@ -4,7 +4,6 @@ namespace LemoGrid\Adapter;
 
 use LemoGrid\GridInterface;
 use LemoGrid\Collection\Data;
-use LemoGrid\Collection\DataAll;
 
 abstract class AbstractAdapter implements AdapterInterface
 {
@@ -79,12 +78,12 @@ abstract class AbstractAdapter implements AdapterInterface
     }
 
     /**
-     * @param  Data $collection
+     * @param  Data $data
      * @return AbstractAdapter
      */
-    public function setData(Data $collection)
+    public function setData(Data $data)
     {
-        $this->data = $collection;
+        $this->data = $data;
 
         return $this;
     }

@@ -2,9 +2,11 @@
 
 namespace LemoGrid;
 
+use ArrayAccess;
 use Countable;
 use IteratorAggregate;
-use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Adapter\AdapterInterface;
+use LemoGrid\ColumnInterface;
 use Traversable;
 
 interface GridInterface extends
@@ -58,4 +60,107 @@ interface GridInterface extends
      * @return array|Traversable
      */
     public function getColumns();
+
+    /**
+     * Set params
+     *
+     * @param  array|ArrayAccess|Traversable $params
+     * @throws Exception\InvalidArgumentException
+     * @return GridInterface
+     */
+    public function setParams($params);
+
+    /**
+     * Get params from a specific namespace
+     *
+     * @return array
+     */
+    public function getParams();
+
+    /**
+     * Whether a specific namespace has params
+     *
+     * @return bool
+     */
+    public function hasParams();
+
+    /**
+     * Set param
+     *
+     * @param  string $name
+     * @param  mixed  $value
+     * @return GridInterface
+     */
+    public function setParam($name, $value);
+
+    /**
+     * Get param
+     *
+     * @param  string $name
+     * @return mixed
+     */
+    public function getParam($name);
+
+    /**
+     * Exist param with given name?
+     *
+     * @param  string $name
+     * @return bool
+     */
+    public function hasParam($name);
+
+    /**
+     * Sets the grid adapter
+     *
+     * @param  AdapterInterface $adapter
+     * @return GridInterface
+     */
+    public function setAdapter(AdapterInterface $adapter);
+
+    /**
+     * Returns the grid adapter
+     *
+     * @return AdapterInterface
+     */
+    public function getAdapter();
+
+    /**
+     * Is the grid rendered?
+     *
+     * @return bool
+     */
+    public function isRendered();
+
+    /**
+     * Set the name of this grid
+     *
+     * In most cases, this will proxy to the attributes for storage, but is
+     * present to indicate that grids are generally named.
+     *
+     * @param  string $name
+     * @return GridInterface
+     */
+    public function setName($name);
+
+    /**
+     * Retrieve the grid name
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
+     * Change the grid namespace for params
+     *
+     * @param  string $namespace
+     * @return GridInterface
+     */
+    public function setNamespace($namespace);
+
+    /**
+     * Get the grid namespace for params
+     *
+     * @return string
+     */
+    public function getNamespace();
 }

@@ -317,10 +317,10 @@ class Grid implements GridInterface
      */
     public function getSortColumn()
     {
-        if($this->hasParam('sidx')) {
+        if ($this->hasParam('sidx')) {
             return $this->getParam('sidx');
         } else {
-            return $this->getOptions()->getDefaultSortColumn();
+            return $this->getOptions()->getSortName();
         }
     }
 
@@ -332,14 +332,14 @@ class Grid implements GridInterface
      */
     public function getSortDirect()
     {
-        if($this->hasParam('sord')) {
+        if ($this->hasParam('sord')) {
             if(strtolower($this->getParam('sord')) != 'asc' && strtolower($this->getParam('sord')) != 'desc') {
                 throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
             }
 
             return $this->getParam('sord');
         } else {
-            return $this->getOptions()->getDefaultSortOrder();
+            return $this->getOptions()->getSortOrder();
         }
     }
 
@@ -402,14 +402,14 @@ class Grid implements GridInterface
     {
         $adapter = $this->getAdapter();
 
-        if(!$adapter instanceof AbstractAdapter) {
+        if (!$adapter instanceof AbstractAdapter) {
             throw new Exception\InvalidArgumentException('No Adapter isntance given');
         }
 
         $items = array();
         $data = $adapter->setGrid($this)->getData();
 
-        foreach($data->getArrayCopy() as $index => $item) {
+        foreach ($data->getArrayCopy() as $index => $item) {
             $rowData = $item;
 
             if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_NESTED) {
@@ -515,7 +515,7 @@ class Grid implements GridInterface
      */
     public function isRendered()
     {
-        if(null === $this->getParam('_name')) {
+        if (null === $this->getParam('_name')) {
             return false;
         }
 
@@ -563,7 +563,7 @@ class Grid implements GridInterface
      */
     public function getNamespace()
     {
-        if(null === $this->namespace) {
+        if (null === $this->namespace) {
             $this->namespace = $this->getName();
         }
 
@@ -587,22 +587,9 @@ class Grid implements GridInterface
             ));
         }
 
-        foreach($params as $name => $value) {
+        foreach ($params as $name => $value) {
             $this->setParam($name, $value);
         }
-
-//        \Zend\Debug\Debug::dump($container->{$namespace});
-//        if(array_key_exists('filters', $params)) {
-//            if(is_array($params['filters'])) {
-//                $rules = $params['filters'];
-//            } else {
-//                $rules = Json\Decoder::decode(stripslashes($params['filters']), Json\Json::TYPE_ARRAY);
-//            }
-//
-//            foreach($rules['rules'] as $rule) {
-//                $params[$rule['field']] = $rule['data'];
-//            }
-//        }
 
         return $this;
     }
@@ -614,6 +601,8 @@ class Grid implements GridInterface
      */
     public function getParams()
     {
+        $this->getParamsFromContainer();
+
         if ($this->hasParams()) {
             return $this->params[$this->getNamespace()];
         }
@@ -652,7 +641,21 @@ class Grid implements GridInterface
             $this->params[$namespace] = new ArrayIterator();
         }
 
-        if($name != '_name') {
+        // Modify params
+        if ('filters' == $name) {
+            if (is_array($value)) {
+                $rules = $value;
+            } else {
+                $rules = Json\Decoder::decode(stripslashes($value), Json\Json::TYPE_ARRAY);
+            }
+
+            foreach ($rules['rules'] as $rule) {
+                $this->setParam($rule['field'], $rule['data']);
+            }
+        }
+
+        // Dont save grid name to Session
+        if ('_name' != $name) {
             $container->{$namespace}->offsetSet($name, $value);
         }
 
@@ -665,7 +668,7 @@ class Grid implements GridInterface
      * Get param
      *
      * @param  string $name
-     * @return string|null
+     * @return mixed
      */
     public function getParam($name)
     {

@@ -6,8 +6,6 @@ use Zend\Stdlib\AbstractOptions;
 
 class GridOptions extends AbstractOptions
 {
-    const NAMESPACE_DEFAULT = 'LemoGrid';
-
     /**
      * Data types
      */
@@ -131,31 +129,6 @@ class GridOptions extends AbstractOptions
     protected $dataType = self::DATATYPE_JSON;
 
     /**
-     * Set the initial number of page when we make the request.This parameter is passed to the url for use by the server
-     * routine retrieving the data
-     *
-     * @var int
-     */
-    protected $defaultPage;
-
-    /**
-     * The initial sorting name when we use datatypes xml or json (data returned from server). This parameter is added
-     * to the url. If set and the index (name) match the name from colModel then to this column by default is added
-     * a image sorting icon, according to the parameter sortorder (below). See prmNames.
-     *
-     * @var string
-     */
-    protected $defaultSortColumn;
-
-    /**
-     * The initial sorting order when we use datatypes xml or json (data returned from server).This parameter is added
-     * to the url - see prnNames. Two possible values - asc or desc.
-     *
-     * @var string
-     */
-    protected $defaultSortOrder = self::SORT_ORDER_ASC;
-
-    /**
      * Enables grouping in grid.
      *
      * @var bool
@@ -182,10 +155,16 @@ class GridOptions extends AbstractOptions
      * @var array
      */
     protected $filterToolbar = array(
-        'enabled' => true,
         'stringResult' => true,
         'searchOnEnter' => false
     );
+
+    /**
+     * Is filter toolbat enabled?
+     *
+     * @var bool
+     */
+    protected $filterToolbarEnabled = true;
 
     /**
      * If set to true, and resizing the width of a column, the adjacent column (to the right) will resize so that
@@ -420,13 +399,6 @@ class GridOptions extends AbstractOptions
     protected $scrollTimeout;
 
     /**
-     * Name of session namespace
-     *
-     * @var string
-     */
-    protected $sessionNamespace = self::NAMESPACE_DEFAULT;
-
-    /**
      * This option describes the type of calculation of the initial width of each column against with the width of the
      * grid. If the value is true and the value in width option is set then: Every column width is scaled according to
      * the defined option width. Example: if we define two columns with a width of 80 and 120 pixels, but want the grid
@@ -449,7 +421,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $sortColumnName;
+    protected $sortName;
 
     /**
      * The initial sorting order (ascending or descending) when we fetch data from the server using datatypes xml or
@@ -457,7 +429,7 @@ class GridOptions extends AbstractOptions
      *
      * @var string
      */
-    protected $sortOrder = 'asc';
+    protected $sortOrder = self::SORT_ORDER_ASC;
 
     /**
      * When enabled this option allow column reordering with mouse. Since this option uses jQuery UI sortable widget,
@@ -497,14 +469,16 @@ class GridOptions extends AbstractOptions
     protected $treeGrid;
 
     /**
-     * Deteremines the method used for the treeGrid. Can be 'nested' or 'adjacency'
+     * Deteremines the method used for the treeGrid. Can be 'nested'
+     * or 'adjacency'
      *
      * @var string
      */
     protected $treeGridType;
 
     /**
-     * This array set the icons used in the tree. The icons should be a valid names from UI theme roller images.
+     * This array set the icons used in the tree. The icons should be a valid
+     * names from UI theme roller images.
      * The default values are:
      *
      * array(
@@ -525,8 +499,30 @@ class GridOptions extends AbstractOptions
     protected $url;
 
     /**
-     * If this option is not set, the width of the grid is a sum of the widths of the columns defined (in pixels).
-     * If this option is set, the initial width of each column is set according to the value of shrinkToFit option.
+     * This array contains custom information from the request. Can be used at
+     * any time.
+     *
+     * @var array
+     */
+    protected $userData = array();
+
+    /**
+     * When set to true we directly place the user data array userData in
+     * the footer. The rules are as follows: If the userData array contains
+     * a name which matches any name defined in colModel, then the value is
+     * placed in that column. If there are no such values nothing is placed.
+     * Note that if this option is used we use the current formatter options
+     * (if available) for that column.
+     *
+     * @var bool
+     */
+    protected $userDataOnFooter;
+
+    /**
+     * If this option is not set, the width of the grid is a sum of the widths
+     * of the columns defined (in pixels).
+     * If this option is set, the initial width of each column is set according
+     * to the value of shrinkToFit option.
      *
      * @var int
      */
@@ -785,74 +781,25 @@ class GridOptions extends AbstractOptions
         return $this->dataType;
     }
 
-    /**
-     * @param int $defaultPage
-     * @return GridOptions
-     */
-    public function setDefaultPage($defaultPage)
-    {
-        $this->defaultPage = $defaultPage;
-
-        return $this;
-    }
-
-    /**
-     * @return int
-     */
-    public function getDefaultPage()
-    {
-        return $this->defaultPage;
-    }
-
-    /**
-     * @param string $defaultSortColumn
-     * @return GridOptions
-     */
-    public function setDefaultSortColumn($defaultSortColumn)
-    {
-        $this->defaultSortColumn = $defaultSortColumn;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDefaultSortColumn($fromFirstColumn = true)
-    {
-        if(null === $this->defaultSortColumn) {
-            if(true === $fromFirstColumn) {
-                $col = current($this->getColumns());
-
-                if($col) {
-                    return $col->getName();
-                } else {
-                    throw new Exception\InvalidArgumentException('Default sort column was not defined');
-                }
-            }
-        }
-
-        return $this->defaultSortColumn;
-    }
-
-    /**
-     * @param string $defaultSortOrder
-     * @return GridOptions
-     */
-    public function setDefaultSortOrder($defaultSortOrder)
-    {
-        $this->defaultSortOrder = strtolower($defaultSortOrder);
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDefaultSortOrder()
-    {
-        return $this->defaultSortOrder;
-    }
+//    /**
+//     * @return string
+//     */
+//    public function getDefaultSortName($fromFirstColumn = true)
+//    {
+//        if(null === $this->defaultSortName) {
+//            if(true === $fromFirstColumn) {
+//                $col = current($this->getColumns());
+//
+//                if($col) {
+//                    return $col->getName();
+//                } else {
+//                    throw new Exception\InvalidArgumentException('Default sort column was not defined');
+//                }
+//            }
+//        }
+//
+//        return $this->defaultSortName;
+//    }
 
     /**
      * @param string $expandColumnIdentifier
@@ -892,10 +839,13 @@ class GridOptions extends AbstractOptions
         return $this->expandColumnOnClick;
     }
 
-    public function setFilterToolbar($enabled = true, $searchOnEnter = null)
+    /**
+     * @param  bool $searchOnEnter
+     * @return GridOptions
+     */
+    public function setFilterToolbar($searchOnEnter = true)
     {
         $this->filterToolbar = array(
-            'enabled' => $enabled,
             'stringResult' => true,
             'searchOnEnter' => $searchOnEnter,
         );
@@ -903,13 +853,39 @@ class GridOptions extends AbstractOptions
         return $this;
     }
 
+    /**
+     * @return array
+     */
     public function getFilterToolbar()
     {
         return $this->filterToolbar;
     }
 
     /**
-     * @param boolean $forceFit
+     * Set if filter toolbar is enabled
+     *
+     * @param  bool $filterToolbarEnabled
+     * @return GridOptions
+     */
+    public function setFilterToolbarEnabled($filterToolbarEnabled)
+    {
+        $this->filterToolbarEnabled = (bool) $filterToolbarEnabled;
+
+        return $this;
+    }
+
+    /**
+     * Is filter toolbar enabled?
+     *
+     * @return bool
+     */
+    public function getFilterToolbarEnabled()
+    {
+        return $this->filterToolbarEnabled;
+    }
+
+    /**
+     * @param  bool $forceFit
      * @return GridOptions
      */
     public function setForceFit($forceFit)
@@ -920,7 +896,7 @@ class GridOptions extends AbstractOptions
     }
 
     /**
-     * @return boolean
+     * @return bool
      */
     public function getForceFit()
     {
@@ -1422,7 +1398,7 @@ class GridOptions extends AbstractOptions
     }
 
     /**
-     * @param int $scrollTimeout
+     * @param  int $scrollTimeout
      * @return GridOptions
      */
     public function setScrollTimeout($scrollTimeout)
@@ -1441,26 +1417,7 @@ class GridOptions extends AbstractOptions
     }
 
     /**
-     * @param string $sessionNamespace
-     * @return GridOptions
-     */
-    public function setSessionNamespace($sessionNamespace)
-    {
-        $this->sessionNamespace = $sessionNamespace;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getSessionNamespace()
-    {
-        return $this->sessionNamespace;
-    }
-
-    /**
-     * @param boolean $shrinkToFit
+     * @param  bool $shrinkToFit
      * @return GridOptions
      */
     public function setShrinkToFit($shrinkToFit)
@@ -1479,34 +1436,41 @@ class GridOptions extends AbstractOptions
     }
 
     /**
-     * @param string $sortColumnName
+     * @param  string $sortName
+     * @return GridOptions
      */
-    public function setSortColumnName($sortColumnName)
+    public function setSortName($sortName)
     {
-        $this->sortColumnName = $sortColumnName;
+        $this->sortName = $sortName;
+
+        return $this;
     }
 
     /**
      * @return string
      */
-    public function getSortColumnName()
+    public function getSortName()
     {
-        return $this->sortColumnName;
+        return $this->sortName;
     }
 
     /**
      * @param  string $sortOrder
      * @throws Exception\InvalidArgumentException
+     * @return GridOptions
      */
     public function setSortOrder($sortOrder)
     {
         $order = (string) $sortOrder;
+        $order = strtolower($order);
 
-        if(in_array($order, array())) {
+        if(!in_array($order, array(self::SORT_ORDER_ASC, self::SORT_ORDER_DESC))) {
             throw new Exception\InvalidArgumentException("Order must by 'asc' or 'desc'");
         }
 
         $this->sortOrder = $order;
+
+        return $this;
     }
 
     /**
@@ -1624,7 +1588,7 @@ class GridOptions extends AbstractOptions
     }
 
     /**
-     * @param string $url
+     * @param  string $url
      * @return GridOptions
      */
     public function setUrl($url)
@@ -1643,7 +1607,45 @@ class GridOptions extends AbstractOptions
     }
 
     /**
-     * @param int $width
+     * @param  array $userData
+     * @return GridOptions
+     */
+    public function setUserData(array $userData)
+    {
+        $this->userData = $userData;
+
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getUserData()
+    {
+        return $this->userData;
+    }
+
+    /**
+     * @param  bool $userDataOnFooter
+     * @return GridOptions
+     */
+    public function setUserDataOnFooter($userDataOnFooter)
+    {
+        $this->userDataOnFooter = (bool) $userDataOnFooter;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getUserDataOnFooter()
+    {
+        return $this->userDataOnFooter;
+    }
+
+    /**
+     * @param  int $width
      * @return GridOptions
      */
     public function setWidth($width)
