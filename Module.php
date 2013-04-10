@@ -40,7 +40,9 @@ class Module implements AutoloaderProviderInterface, ConfigProviderInterface, Se
     {
         return array(
             'factories' => array(
-                'GridColumnManager'=> 'LemoGrid\Service\GridColumnManagerFactory',
+                'GridAdapterManager'  => 'LemoGrid\Service\GridAdapterManagerFactory',
+                'GridColumnManager'   => 'LemoGrid\Service\GridColumnManagerFactory',
+                'GridPlatformManager' => 'LemoGrid\Service\GridPlatformManagerFactory',
             )
         );
     }

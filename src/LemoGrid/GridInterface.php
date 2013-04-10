@@ -6,6 +6,7 @@ use ArrayAccess;
 use Countable;
 use IteratorAggregate;
 use LemoGrid\Adapter\AdapterInterface;
+use LemoGrid\Platform\PlatformInterface;
 use LemoGrid\ColumnInterface;
 use Traversable;
 
@@ -20,7 +21,7 @@ interface GridInterface extends
      * $flags could contain metadata such as the alias under which to register
      * the column, order in which to prioritize it, etc.
      *
-     * @param  array|Traversable|ColumnInterface $column Typically, only allow objects implementing ColumnInterface;
+     * @param  array|ArrayAccess|Traversable|ColumnInterface $column Typically, only allow objects implementing ColumnInterface;
      *                                                   however, keeping it flexible to allow a factory-based form
      *                                                   implementation as well
      * @param  array $flags
@@ -57,9 +58,57 @@ interface GridInterface extends
      *
      * Storage is an implementation detail of the concrete class.
      *
-     * @return array|Traversable
+     * @return array
      */
     public function getColumns();
+
+    /**
+     * Sets the grid adapter
+     *
+     * @param  AdapterInterface $adapter
+     * @return GridInterface
+     */
+    public function setAdapter(AdapterInterface $adapter);
+
+    /**
+     * Returns the grid adapter
+     *
+     * @return AdapterInterface
+     */
+    public function getAdapter();
+
+    /**
+     * Set the name of this grid
+     *
+     * In most cases, this will proxy to the attributes for storage, but is
+     * present to indicate that grids are generally named.
+     *
+     * @param  string $name
+     * @return GridInterface
+     */
+    public function setName($name);
+
+    /**
+     * Retrieve the grid name
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
+     * Change the grid namespace for params
+     *
+     * @param  string $namespace
+     * @return GridInterface
+     */
+    public function setNamespace($namespace);
+
+    /**
+     * Get the grid namespace for params
+     *
+     * @return string
+     */
+    public function getNamespace();
 
     /**
      * Set params
@@ -110,57 +159,17 @@ interface GridInterface extends
     public function hasParam($name);
 
     /**
-     * Sets the grid adapter
+     * Sets the grid platform
      *
-     * @param  AdapterInterface $adapter
+     * @param  PlatformInterface $platform
      * @return GridInterface
      */
-    public function setAdapter(AdapterInterface $adapter);
+    public function setPlatform(PlatformInterface $platform);
 
     /**
-     * Returns the grid adapter
+     * Returns the grid platform
      *
-     * @return AdapterInterface
+     * @return PlatformInterface
      */
-    public function getAdapter();
-
-    /**
-     * Is the grid rendered?
-     *
-     * @return bool
-     */
-    public function isRendered();
-
-    /**
-     * Set the name of this grid
-     *
-     * In most cases, this will proxy to the attributes for storage, but is
-     * present to indicate that grids are generally named.
-     *
-     * @param  string $name
-     * @return GridInterface
-     */
-    public function setName($name);
-
-    /**
-     * Retrieve the grid name
-     *
-     * @return string
-     */
-    public function getName();
-
-    /**
-     * Change the grid namespace for params
-     *
-     * @param  string $namespace
-     * @return GridInterface
-     */
-    public function setNamespace($namespace);
-
-    /**
-     * Get the grid namespace for params
-     *
-     * @return string
-     */
-    public function getNamespace();
+    public function getPlatform();
 }

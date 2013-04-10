@@ -4,7 +4,7 @@ namespace LemoGrid\Service;
 
 use LemoGrid\GridColumnManager;
 use LemoGrid\Column;
-use LemoGrid\Column\ColumnInterface;
+use LemoGrid\ColumnInterface;
 use Zend\Console\Console;
 use Zend\Mvc\Exception;
 use Zend\Mvc\Router\RouteMatch;

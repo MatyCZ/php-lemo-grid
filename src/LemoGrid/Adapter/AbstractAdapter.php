@@ -103,6 +103,8 @@ abstract class AbstractAdapter implements AdapterInterface
     }
 
     /**
+     * Set grid instance
+     *
      * @param  GridInterface $grid
      * @return AbstractAdapter
      */
@@ -114,6 +116,8 @@ abstract class AbstractAdapter implements AdapterInterface
     }
 
     /**
+     * Get grid instance
+     *
      * @return GridInterface
      */
     public function getGrid()

@@ -33,7 +33,7 @@ class QueryBuilder extends AbstractAdapter
 
     /**
      * @throws Exception\UnexpectedValueException
-     * @return Collection
+     * @return QueryBuilder
      */
     public function populateData()
     {
@@ -111,8 +111,8 @@ class QueryBuilder extends AbstractAdapter
 
         $resultCount = $this->getQueryBuilder()->getQuery()->getScalarResult();
 
-        $this->getQueryBuilder()->setMaxResults($grid->getOptions()->getRecordsPerPage());
-        $this->getQueryBuilder()->setFirstResult($grid->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getOptions()->getRecordsPerPage());
+        $this->getQueryBuilder()->setMaxResults($grid->getPlatform()->getOptions()->getRecordsPerPage());
+        $this->getQueryBuilder()->setFirstResult($grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage());
 
         // WHERE
         foreach($grid->getColumns() as $col)
@@ -154,18 +154,18 @@ class QueryBuilder extends AbstractAdapter
 //                $this->getQueryBuilder()->{$method}($identifier, $this->getSortDirect());
 //            }
 //        } else {
-        if($grid->has($grid->getSortColumn())) {
-            $this->getQueryBuilder()->orderBy($grid->get($grid->getSortColumn())->getIdentifier(), $grid->getSortDirect());
+        if($grid->has($grid->getPlatform()->getSortColumn())) {
+            $this->getQueryBuilder()->orderBy($grid->get($grid->getPlatform()->getSortColumn())->getIdentifier(), $grid->getPlatform()->getSortDirect());
         }
 //        }
 
-        $offset = $grid->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getOptions()->getRecordsPerPage();
+        $offset = $grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage();
 
         if($offset < 0) {
             $offset = 0;
         }
 
-        $this->getQueryBuilder()->setMaxResults($grid->getOptions()->getRecordsPerPage());
+        $this->getQueryBuilder()->setMaxResults($grid->getPlatform()->getOptions()->getRecordsPerPage());
         $this->getQueryBuilder()->setFirstResult($offset);
 
         $result = $this->getQueryBuilder()->getQuery()->getArrayResult();

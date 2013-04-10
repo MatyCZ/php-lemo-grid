@@ -3,7 +3,9 @@
 namespace LemoGrid;
 
 use LemoGrid\ColumnInterface;
+use Zend\Console\Console;
 use Zend\I18n\Translator\TranslatorAwareInterface;
+use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 use Zend\Stdlib\InitializableInterface;
@@ -16,7 +18,7 @@ use Zend\Stdlib\InitializableInterface;
 class GridColumnManager extends AbstractPluginManager
 {
     /**
-     * Default set of helpers
+     * Default set of columns
      *
      * @var array
      */
@@ -41,6 +43,7 @@ class GridColumnManager extends AbstractPluginManager
         parent::__construct($configuration);
 
         $this->addInitializer(array($this, 'injectFactory'));
+        $this->addInitializer(array($this, 'injectRouter'));
         $this->addInitializer(array($this, 'injectTranslator'));
     }
 
@@ -57,17 +60,43 @@ class GridColumnManager extends AbstractPluginManager
     }
 
     /**
-     * Inject a helper instance with the registered translator
+     * Inject translator to any column that implements TranslatorAwareInterface
      *
-     * @param  ColumnInterface $helper
+     * @param  ColumnInterface $column
      * @return void
      */
-    public function injectTranslator($helper)
+    public function injectTranslator($column)
     {
-        if ($helper instanceof TranslatorAwareInterface) {
+        if ($column instanceof TranslatorAwareInterface) {
             $locator = $this->getServiceLocator();
             if ($locator && $locator->has('translator')) {
-                $helper->setTranslator($locator->get('translator'));
+                $column->setTranslator($locator->get('translator'));
+            }
+        }
+    }
+
+    /**
+     * Inject router and route match to Route column
+     *
+     * @param  ColumnInterface $column
+     * @return void
+     */
+    public function injectRouter($column)
+    {
+        if($column instanceof Column\Route) {
+            $locator = $this->getServiceLocator();
+            $router = Console::isConsole() ? 'HttpRouter' : 'Router';
+
+            if ($locator && $locator->has($router)) {
+                $column->setRouter($locator->get($router));
+
+                $match = $locator->get('application')
+                    ->getMvcEvent()
+                    ->getRouteMatch();
+
+                if ($match instanceof RouteMatch) {
+                    $column->setRouteMatch($match);
+                }
             }
         }
     }

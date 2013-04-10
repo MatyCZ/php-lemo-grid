@@ -4,17 +4,16 @@ namespace LemoGrid;
 
 use ArrayAccess;
 use ArrayIterator;
-use Doctrine\Tests\DBAL\Types\ArrayTest;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\ColumnInterface;
+use LemoGrid\Platform\PlatformInterface;
 use Traversable;
 use Zend\Feed\Reader\Collection;
 use Zend\Json;
 use Zend\Session\SessionManager;
 use Zend\Session\Container as SessionContainer;
 use Zend\Stdlib\PriorityQueue;
-use Zend\View\Model\JsonModel;
 
 class Grid implements GridInterface
 {
@@ -56,7 +55,7 @@ class Grid implements GridInterface
     protected $iterator;
 
     /**
-     * Is the grid prepared ?
+     * Is the grid prepared?
      *
      * @var bool
      */
@@ -77,16 +76,18 @@ class Grid implements GridInterface
     protected $namespace;
 
     /**
-     * @var GridOptions
-     */
-    protected $options;
-
-    /**
      * Container parameters from query or session container
      *
      * @var array
      */
     protected $params = array();
+
+    /**
+     * Platform
+     *
+     * @var PlatformInterface
+     */
+    protected $platform;
 
     /**
      * @var SessionManager
@@ -96,12 +97,12 @@ class Grid implements GridInterface
     /**
      * Constructor
      *
-     * @param  null|string                        $name
-     * @param  null|AdapterInterface              $adapter
-     * @param  null|array|Traversable|GridOptions $options
+     * @param  null|string            $name
+     * @param  null|AdapterInterface  $adapter
+     * @param  null|PlatformInterface $platform
      * @return Grid
      */
-    public function __construct($name = null, AdapterInterface $adapter = null, $options = null)
+    public function __construct($name = null, AdapterInterface $adapter = null, $platform = null)
     {
         $this->iterator = new PriorityQueue();
 
@@ -113,48 +114,9 @@ class Grid implements GridInterface
             $this->setAdapter($adapter);
         }
 
-        if (null !== $options) {
-            $this->setOptions($options);
+        if (null !== $platform) {
+            $this->setPlatform($platform);
         }
-    }
-
-    /**
-     * Set grid options
-     *
-     * @param  array|\Traversable|GridOptions $options
-     * @throws Exception\InvalidArgumentException
-     * @return Grid
-     */
-    public function setOptions($options)
-    {
-        if (!$options instanceof GridOptions) {
-            if (is_object($options) && !$options instanceof Traversable) {
-                throw new Exception\InvalidArgumentException(sprintf(
-                    'Expected instance of LemoGrid\GridOptions; '
-                    . 'received "%s"', get_class($options))
-                );
-            }
-
-            $options = new GridOptions($options);
-        }
-
-        $this->options = $options;
-
-        return $this;
-    }
-
-    /**
-     * Get grid options
-     *
-     * @return GridOptions
-     */
-    public function getOptions()
-    {
-        if (!$this->options) {
-            $this->setOptions(new GridOptions());
-        }
-
-        return $this->options;
     }
 
     /**
@@ -174,7 +136,7 @@ class Grid implements GridInterface
         || ($column instanceof Traversable && !$column instanceof ColumnInterface)
         ) {
             $factory = $this->getGridFactory();
-            $column = $factory->create($column);
+            $column = $factory->createColumn($column);
         }
 
         if (!$column instanceof ColumnInterface) {
@@ -267,7 +229,7 @@ class Grid implements GridInterface
      *
      * Storage is an implementation detail of the concrete class.
      *
-     * @return array|Traversable
+     * @return array
      */
     public function getColumns()
     {
@@ -311,46 +273,13 @@ class Grid implements GridInterface
     }
 
     /**
-     * Return sort by column index
-     *
-     * @return string
-     */
-    public function getSortColumn()
-    {
-        if ($this->hasParam('sidx')) {
-            return $this->getParam('sidx');
-        } else {
-            return $this->getOptions()->getSortName();
-        }
-    }
-
-    /**
-     * Return sort direct
-     *
-     * @throws Exception\UnexpectedValueException
-     * @return string
-     */
-    public function getSortDirect()
-    {
-        if ($this->hasParam('sord')) {
-            if(strtolower($this->getParam('sord')) != 'asc' && strtolower($this->getParam('sord')) != 'desc') {
-                throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
-            }
-
-            return $this->getParam('sord');
-        } else {
-            return $this->getOptions()->getSortOrder();
-        }
-    }
-
-    /**
      * Make a deep clone of a grid
      *
      * @return void
      */
     public function __clone()
     {
-        $items = $this->iterator->toArray(PriorityQueue::EXTR_BOTH);
+        $items = $this->getIterator()->toArray(PriorityQueue::EXTR_BOTH);
 
         $this->byName    = array();
         $this->columns  = array();
@@ -393,6 +322,10 @@ class Grid implements GridInterface
             }
         }
 
+        if(!$this->getPlatform()->getGrid() instanceof GridInterface) {
+            $this->getPlatform()->setGrid($this);
+        }
+
         $this->isPrepared = true;
 
         return $this;
@@ -403,7 +336,7 @@ class Grid implements GridInterface
         $adapter = $this->getAdapter();
 
         if (!$adapter instanceof AbstractAdapter) {
-            throw new Exception\InvalidArgumentException('No Adapter isntance given');
+            throw new Exception\InvalidArgumentException('No Adapter instance given');
         }
 
         $items = array();
@@ -412,16 +345,16 @@ class Grid implements GridInterface
         foreach ($data->getArrayCopy() as $index => $item) {
             $rowData = $item;
 
-            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_NESTED) {
-                $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
-                $item['expanded'] = 'true';
-            }
-
-            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == GridOptions::TREE_MODEL_ADJACENCY) {
-                $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
-                $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
-                $item['expanded'] = 'true';
-            }
+//            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == JqGridOptions::TREE_MODEL_NESTED) {
+//                $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
+//                $item['expanded'] = 'true';
+//            }
+//
+//            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == JqGridOptions::TREE_MODEL_ADJACENCY) {
+//                $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
+//                $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
+//                $item['expanded'] = 'true';
+//            }
 
             // Pridame radek
             $items[] = array(
@@ -506,20 +439,6 @@ class Grid implements GridInterface
         }
 
         return $this->factory;
-    }
-
-    /**
-     * Is the grid rendered?
-     *
-     * @return bool
-     */
-    public function isRendered()
-    {
-        if (null === $this->getParam('_name')) {
-            return false;
-        }
-
-        return true;
     }
 
     /**
@@ -696,6 +615,29 @@ class Grid implements GridInterface
         }
 
         return false;
+    }
+
+    /**
+     * Set the platform
+     *
+     * @param  PlatformInterface $platform
+     * @return Grid
+     */
+    public function setPlatform(PlatformInterface $platform)
+    {
+        $this->platform = $platform;
+
+        return $this;
+    }
+
+    /**
+     * Get the platform
+     *
+     * @return PlatformInterface
+     */
+    public function getPlatform()
+    {
+        return $this->platform;
     }
 
     /**

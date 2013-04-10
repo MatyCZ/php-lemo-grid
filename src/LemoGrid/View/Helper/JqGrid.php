@@ -6,7 +6,7 @@ use LemoGrid\Column\ColumnAttributes;
 use LemoGrid\ColumnInterface;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
-use LemoGrid\GridOptions;
+use LemoGrid\Platform\JqGridOptions;
 use Zend\Stdlib\AbstractOptions;
 
 class JqGrid extends AbstractHelper
@@ -145,11 +145,12 @@ class JqGrid extends AbstractHelper
             ));
         }
 
-        if($grid->isRendered()) {
+        $grid->prepare();
+
+        if($grid->getPlatform()->isRendered()) {
             $grid->renderData();
         } else {
-            $grid->prepare();
-            $grid->setOptions($this->gridModifyAttributes($grid->getOptions()));
+            $grid->getPlatform()->setOptions($this->gridModifyAttributes($grid->getPlatform()->getOptions()));
         }
 
         try {
@@ -176,7 +177,7 @@ class JqGrid extends AbstractHelper
 
         $html = array();
         $html[] = '<table id="' . $grid->getName() . '"></table>';
-        $html[] = '<div id="' . $grid->getOptions()->getPagerElementId() . '"></div>';
+        $html[] = '<div id="' . $grid->getPlatform()->getOptions()->getPagerElementId() . '"></div>';
 
         return implode(PHP_EOL, $html);
     }
@@ -204,7 +205,7 @@ class JqGrid extends AbstractHelper
         }
 
         $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid({';
-        $script[] = '        ' . $this->buildScript('grid', $grid->getOptions()) . ', ' . PHP_EOL;
+        $script[] = '        ' . $this->buildScript('grid', $grid->getPlatform()->getOptions()) . ', ' . PHP_EOL;
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
         $script[] = '        colModel: [';
 
@@ -223,8 +224,8 @@ class JqGrid extends AbstractHelper
         $script[] = '    });';
 
         // Can render toolbar?
-        if($grid->getOptions()->getFilterToolbarEnabled()) {
-            $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
+        if($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
+            $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getPlatform()->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
         }
 
         return implode(PHP_EOL, $script);
@@ -396,23 +397,23 @@ class JqGrid extends AbstractHelper
     /**
      * Modify grid attributes before rendering
      *
-     * @param  GridOptions $attributes
-     * @return GridOptions
+     * @param  JqGridOptions $attributes
+     * @return JqGridOptions
      */
-    protected function gridModifyAttributes(GridOptions $attributes)
+    protected function gridModifyAttributes(JqGridOptions $attributes)
     {
         // Pager element ID
         if(null === $attributes->getPagerElementId()) {
             $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
         }
 
-        $attributes->setSortName($this->getGrid()->getSortColumn());
-        $attributes->setSortOrder($this->getGrid()->getSortDirect());
+        $attributes->setSortName($this->getGrid()->getPlatform()->getSortColumn());
+        $attributes->setSortOrder($this->getGrid()->getPlatform()->getSortDirect());
 
         // URL
         $url = $attributes->getUrl();
         if(empty($url)) {
-            $url = parse_url($this->getView()->url());
+            $url = parse_url($_SERVER['REQUEST_URI']);
         }
 
         $attributes->setUrl($this->getView()->serverUrl() . $url['path'] . '?_name=' . $this->getGrid()->getName());

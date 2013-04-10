@@ -3,7 +3,9 @@
 namespace LemoGrid;
 
 use ArrayAccess;
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\ColumnInterface;
+use LemoGrid\Platform\PlatformInterface;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Hydrator;
@@ -11,18 +13,65 @@ use Zend\Stdlib\Hydrator;
 class Factory
 {
     /**
+     * @var GridAdapterManager
+     */
+    protected $gridAdapterManager;
+
+    /**
      * @var GridColumnManager
      */
     protected $gridColumnManager;
 
     /**
+     * @var GridPlatformManager
+     */
+    protected $gridPlatformManager;
+
+    /**
+     * @param GridPlatformManager $gridPlatformManager
+     * @param GridAdapterManager $gridAdapterManager
      * @param GridColumnManager $gridColumnManager
      */
-    public function __construct(GridColumnManager $gridColumnManager = null)
+    public function __construct(GridPlatformManager $gridPlatformManager = null, GridAdapterManager $gridAdapterManager = null, GridColumnManager $gridColumnManager = null)
     {
-        if ($gridColumnManager) {
+        if (null !== $gridPlatformManager) {
+            $this->setGridPlatformManager($gridPlatformManager);
+        }
+
+        if (null !== $gridAdapterManager) {
+            $this->setGridAdapterManager($gridAdapterManager);
+        }
+
+        if (null !== $gridColumnManager) {
             $this->setGridColumnManager($gridColumnManager);
         }
+    }
+
+    /**
+     * Set the grid adapter manager
+     *
+     * @param  GridAdapterManager $gridAdapterManager
+     * @return Factory
+     */
+    public function setGridAdapterManager(GridAdapterManager $gridAdapterManager)
+    {
+        $this->gridAdapterManager = $gridAdapterManager;
+
+        return $this;
+    }
+
+    /**
+     * Get grid adapter manager
+     *
+     * @return GridAdapterManager
+     */
+    public function getGridAdapterManager()
+    {
+        if ($this->gridAdapterManager === null) {
+            $this->setGridAdapterManager(new GridAdapterManager());
+        }
+
+        return $this->gridAdapterManager;
     }
 
     /**
@@ -34,6 +83,7 @@ class Factory
     public function setGridColumnManager(GridColumnManager $gridColumnManager)
     {
         $this->gridColumnManager = $gridColumnManager;
+
         return $this;
     }
 
@@ -52,26 +102,75 @@ class Factory
     }
 
     /**
-     * Create an column or grid
+     * Set the grid platform manager
      *
-     * Introspects the 'type' key of the provided $spec, and determines what
-     * type is being requested; if none is provided, assumes the spec
-     * represents simply an column.
+     * @param  GridPlatformManager $gridPlatformManager
+     * @return Factory
+     */
+    public function setGridPlatformManager(GridPlatformManager $gridPlatformManager)
+    {
+        $this->gridPlatformManager = $gridPlatformManager;
+
+        return $this;
+    }
+
+    /**
+     * Get grid platform manager
+     *
+     * @return GridPlatformManager
+     */
+    public function getGridPlatformManager()
+    {
+        if ($this->gridPlatformManager === null) {
+            $this->setGridPlatformManager(new GridPlatformManager());
+        }
+
+        return $this->gridPlatformManager;
+    }
+
+    /**
+     * Create an adapter
+     *
+     * @param  array $spec
+     * @throws Exception\DomainException
+     * @return AdapterInterface
+     */
+    public function createAdapter($spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+        if (!isset($spec['type'])) {
+            $spec['type'] = 'LemoGrid\Adapter';
+        }
+
+        $adapter = $this->getGridAdapterManager()->get($spec['type']);
+
+        if ($adapter instanceof AdapterInterface) {
+            return $this->configureAdapter($adapter, $spec);
+        }
+
+        throw new Exception\DomainException(sprintf(
+            '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
+            __METHOD__,
+            'LemoGrid\AdapterInterface',
+            $spec['type']
+        ));
+    }
+
+    /**
+     * Create a column
      *
      * @param  array|Traversable $spec
      * @return ColumnInterface
      * @throws Exception\DomainException
      */
-    public function create($spec)
+    public function createColumn($spec)
     {
         $spec = $this->validateSpecification($spec, __METHOD__);
-        $type = isset($spec['type']) ? $spec['type'] : 'LemoGrid\Column';
-
-        $column = $this->getGridColumnManager()->get($type);
-
-        if ($column instanceof GridInterface) {
-            return $this->configureGrid($column, $spec);
+        if (!isset($spec['type'])) {
+            $spec['type'] = 'LemoGrid\Column';
         }
+
+        $column = $this->getGridColumnManager()->get($spec['type']);
 
         if ($column instanceof ColumnInterface) {
             return $this->configureColumn($column, $spec);
@@ -81,39 +180,74 @@ class Factory
             '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
             __METHOD__,
             'LemoGrid\ColumnInterface',
-            'LemoGrid\GridInterface',
-            $type
+            $spec['type']
         ));
-    }
-
-    /**
-     * Create a column
-     *
-     * @param  array $spec
-     * @return ColumnInterface
-     */
-    public function createColumn($spec)
-    {
-        if (!isset($spec['type'])) {
-            $spec['type'] = 'LemoGrid\Column';
-        }
-
-        return $this->create($spec);
     }
 
     /**
      * Create a grid
      *
      * @param  array $spec
+     * @throws Exception\DomainException
      * @return ColumnInterface
      */
     public function createGrid($spec)
     {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+
+        return $this->configureGrid(new Grid(), $spec);
+    }
+
+    /**
+     * Create a platform
+     *
+     * @param  array $spec
+     * @throws Exception\DomainException
+     * @return PlatformInterface
+     */
+    public function createPlatform($spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
         if (!isset($spec['type'])) {
-            $spec['type'] = 'LemoGrid\Grid';
+            $spec['type'] = 'LemoGrid\Platform';
         }
 
-        return $this->create($spec);
+        $platform = $this->getGridPlatformManager()->get($spec['type']);
+
+        if ($platform instanceof PlatformInterface) {
+            return $this->configurePlatform($platform, $spec);
+        }
+
+        throw new Exception\DomainException(sprintf(
+            '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
+            __METHOD__,
+            'LemoGrid\PlatformInterface',
+            $spec['type']
+        ));
+    }
+
+    /**
+     * Configure an adapter based on the provided specification
+     *
+     * Specification can contain any of the following:
+     * - options: an array, Traversable, or ArrayAccess object of adapter options
+     *
+     * @param  AdapterInterface              $adapter
+     * @param  array|Traversable|ArrayAccess $spec
+     * @throws Exception\DomainException
+     * @return AdapterInterface
+     */
+    public function configureAdapter(AdapterInterface $adapter, $spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+
+        $options = isset($spec['options']) ? $spec['options'] : null;
+
+        if ($adapter instanceof AdapterOptionsInterface && (is_array($options) || $options instanceof Traversable || $options instanceof ArrayAccess)) {
+            $adapter->setOptions($options);
+        }
+
+        return $adapter;
     }
 
     /**
@@ -161,6 +295,73 @@ class Factory
     }
 
     /**
+     * Configure a grid based on the provided specification
+     *
+     * Specification can contain any of the following:
+     * - type: the Grid class to use; defaults to \LemoGrid\Grid
+     * - name: what name to provide the grid, if any
+     * - adapter: adapter instance, named adapter class
+     * - columns: an array or Traversable object where each entry is an array
+     *   or ArrayAccess object containing the keys:
+     *   - flags: (optional) array of flags to pass to GridInterface::add()
+     *   - spec: the actual column specification, per {@link configureColumn()}
+     * - platform: platform instance, named platform class
+     *
+     * @param  GridInterface                 $grid
+     * @param  array|Traversable|ArrayAccess $spec
+     * @throws Exception\DomainException
+     * @return GridInterface
+     */
+    public function configureGrid(GridInterface $grid, $spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+
+        $name = isset($spec['name']) ? $spec['name'] : null;
+
+        if ($name !== null && $name !== '') {
+            $grid->setName($name);
+        }
+
+        if (isset($spec['adapter'])) {
+            $this->prepareAndInjectAdapter($spec['adapter'], $grid, __METHOD__);
+        }
+
+        if (isset($spec['columns'])) {
+            $this->prepareAndInjectColumns($spec['columns'], $grid, __METHOD__);
+        }
+
+        if (isset($spec['platform'])) {
+            $this->prepareAndInjectPlatform($spec['platform'], $grid, __METHOD__);
+        }
+
+        return $grid;
+    }
+
+    /**
+     * Configure an platform based on the provided specification
+     *
+     * Specification can contain any of the following:
+     * - options: an array, Traversable, or ArrayAccess object of platform options
+     *
+     * @param  PlatformInterface              $platform
+     * @param  array|Traversable|ArrayAccess $spec
+     * @throws Exception\DomainException
+     * @return PlatformInterface
+     */
+    public function configurePlatform(PlatformInterface $platform, $spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+
+        $options = isset($spec['options'])? $spec['options'] : null;
+
+        if (is_array($options) || $options instanceof Traversable || $options instanceof ArrayAccess) {
+            $platform->setOptions($options);
+        }
+
+        return $platform;
+    }
+
+    /**
      * Validate a provided specification
      *
      * Ensures we have an array, Traversable, or ArrayAccess object, and returns it.
@@ -193,6 +394,58 @@ class Factory
     }
 
     /**
+     * Prepare and inject a named adapter
+     *
+     * Takes a string indicating a adapter class name (or a concrete instance), try first to instantiates the class
+     * by pulling it from service manager, and injects the adapter instance into the form.
+     *
+     * @param  string|array|Adapter\AdapterInterface $adapterOrName
+     * @param  GridInterface                         $grid
+     * @param  string                                $method
+     * @return void
+     * @throws Exception\DomainException If $adapterOrName is not a string, does not resolve to a known class, or
+     *                                   the class does not implement Adapter\AdapterInterface
+     */
+    protected function prepareAndInjectAdapter($adapterOrName, GridInterface $grid, $method)
+    {
+        if (is_object($adapterOrName) && $adapterOrName instanceof Adapter\AdapterInterface) {
+            $grid->setAdapter($adapterOrName);
+            return;
+        }
+
+        if (is_array($adapterOrName)) {
+            if (!isset($adapterOrName['type'])) {
+                throw new Exception\DomainException(sprintf(
+                    '%s expects array specification to have a type value',
+                    $method
+                ));
+            }
+            $adapterOptions = (isset($adapterOrName['options'])) ? $adapterOrName['options'] : array();
+            $adapterOrName = $adapterOrName['type'];
+        } else {
+            $adapterOptions = array();
+        }
+
+        if (is_string($adapterOrName)) {
+            $adapter = $this->getAdapterFromName($adapterOrName);
+        }
+
+        if (!$adapter instanceof Adapter\AdapterInterface) {
+            throw new Exception\DomainException(sprintf(
+                '%s expects a valid implementation of LemoGrid\Adapter\AdapterInterface; received "%s"',
+                $method,
+                $adapterOrName
+            ));
+        }
+
+        if (!empty($adapterOptions) && $adapter instanceof Adapter\AdapterOptionsInterface) {
+            $adapter->setOptions($adapterOptions);
+        }
+
+        $grid->setAdapter($adapter);
+    }
+
+    /**
      * Takes a list of column specifications, creates the columns, and injects them into the provided grid
      *
      * @param  array|Traversable|ArrayAccess $columns
@@ -212,8 +465,109 @@ class Factory
                 $spec['type'] = 'LemoGrid\Column';
             }
 
-            $column = $this->create($spec);
+            $column = $this->createColumn($spec);
             $grid->add($column, $flags);
         }
+    }
+
+    /**
+     * Prepare and inject a named platform
+     *
+     * Takes a string indicating a platform class name (or a concrete instance), try first to instantiates the class
+     * by pulling it from service manager, and injects the platform instance into the form.
+     *
+     * @param  string|array|Platform\PlatformInterface $platformOrName
+     * @param  GridInterface                           $grid
+     * @param  string                                  $method
+     * @return void
+     * @throws Exception\DomainException If $platformOrName is not a string, does not resolve to a known class, or
+     *                                   the class does not implement Platform\PlatformInterface
+     */
+    protected function prepareAndInjectPlatform($platformOrName, GridInterface $grid, $method)
+    {
+        if (is_object($platformOrName) && $platformOrName instanceof Platform\PlatformInterface) {
+            $grid->setPlatform($platformOrName);
+            return;
+        }
+
+        if (is_array($platformOrName)) {
+            if (!isset($platformOrName['type'])) {
+                throw new Exception\DomainException(sprintf(
+                    '%s expects array specification to have a type value',
+                    $method
+                ));
+            }
+            $platformOptions = (isset($platformOrName['options'])) ? $platformOrName['options'] : array();
+            $platformOrName = $platformOrName['type'];
+        } else {
+            $platformOptions = array();
+        }
+
+        if (is_string($platformOrName)) {
+            $platform = $this->getPlatformFromName($platformOrName);
+        }
+
+        if (!$platform instanceof Platform\PlatformInterface) {
+            throw new Exception\DomainException(sprintf(
+                '%s expects a valid implementation of LemoGrid\Platform\PlatformInterface; received "%s"',
+                $method,
+                $platformOrName
+            ));
+        }
+
+        $platform->setOptions($platformOptions);
+        $grid->setPlatform($platform);
+    }
+
+    /**
+     * Try to pull adapter from service manager, or instantiates it from its name
+     *
+     * @param  string $adapterName
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    protected function getAdapterFromName($adapterName)
+    {
+        $serviceLocator = $this->getGridAdapterManager()->getServiceLocator();
+
+        if ($serviceLocator && $serviceLocator->has($adapterName)) {
+            return $serviceLocator->get($adapterName);
+        }
+
+        if (!class_exists($adapterName)) {
+            throw new Exception\DomainException(sprintf(
+                'Expects string adapter name to be a valid class name; received "%s"',
+                $adapterName
+            ));
+        }
+
+        $adapter = new $adapterName;
+        return $adapter;
+    }
+
+    /**
+     * Try to pull platform from service manager, or instantiates it from its name
+     *
+     * @param  string $platformName
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    protected function getPlatformFromName($platformName)
+    {
+        $serviceLocator = $this->getGridPlatformManager()->getServiceLocator();
+
+        if ($serviceLocator && $serviceLocator->has($platformName)) {
+            return $serviceLocator->get($platformName);
+        }
+
+        if (!class_exists($platformName)) {
+            throw new Exception\DomainException(sprintf(
+                'Expects string platform name to be a valid class name; received "%s"',
+                $platformName
+            ));
+        }
+
+        $platform = new $platformName;
+        return $platform;
     }
 }
