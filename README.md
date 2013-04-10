@@ -12,7 +12,19 @@ The LemoGrid module provides building of data grids similar to Zend Form quickly
 * Doctrine\QueryBuilder ([doctrine-project.org](http://www.doctrine-project.org/))
 * Zend\Db\Sql ([framework.zend.com](http://framework.zend.com/))
 
-## Installation
+Requirements
+------------
+
+* [Zend Framework 2](https://github.com/zendframework/zf2) (latest master)
+
+Features / Goals
+----------------
+
+* Write documentation
+* Write tests
+
+Installation
+----------
 
 Installation of this module uses composer. For composer documentation, please refer to
 [getcomposer.org](http://getcomposer.org/).
