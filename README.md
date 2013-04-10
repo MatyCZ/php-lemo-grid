@@ -1,18 +1,32 @@
 LemoGrid Module for Zend Framework 2
 ========
 
-The LemoGrid module provides building of data grids similar to Zend Form quickly and easily.
+The LemoGrid module provides building of data grids similar to Zend Form quickly and easily for many platforms.
 
-#### Supported grids
+#### Supported plaforms
 
-* jQuery Grid Plugin – jqGrid ([trirand.com](http://www.trirand.com/blog/))
+* jqGrid - jQuery Grid Plugin ([trirand.com](http://www.trirand.com/blog/))
 
 #### Supported data adapters
 
 * Doctrine\QueryBuilder ([doctrine-project.org](http://www.doctrine-project.org/))
 * Zend\Db\Sql ([framework.zend.com](http://framework.zend.com/))
 
-## Installation
+Requirements
+------------
+
+* [Zend Framework 2](https://github.com/zendframework/zf2) (latest master)
+
+Features / Goals
+----------------
+
+* Add column Concat [In progress]
+* Add column Route [In progress]
+* Write documentation
+* Write tests
+
+Installation
+----------
 
 Installation of this module uses composer. For composer documentation, please refer to
 [getcomposer.org](http://getcomposer.org/).
