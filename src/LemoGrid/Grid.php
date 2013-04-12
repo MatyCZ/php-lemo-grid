@@ -593,7 +593,7 @@ class Grid implements GridInterface
     {
         $this->getParamsFromContainer();
 
-        if (isset($this->params[$this->getNamespace()])) {
+        if (isset($this->params[$this->getNamespace()]) && $this->hasParam($name)) {
             return $this->params[$this->getNamespace()]->offsetGet($name);
         }
 
