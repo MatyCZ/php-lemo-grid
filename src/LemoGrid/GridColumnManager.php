@@ -50,7 +50,8 @@ class GridColumnManager extends AbstractPluginManager
     /**
      * Inject the factory to any column that implements GridFactoryAwareInterface
      *
-     * @param $column
+     * @param  ColumnInterface $column
+     * @return void
      */
     public function injectFactory($column)
     {
@@ -65,25 +66,9 @@ class GridColumnManager extends AbstractPluginManager
      * @param  ColumnInterface $column
      * @return void
      */
-    public function injectTranslator($column)
-    {
-        if ($column instanceof TranslatorAwareInterface) {
-            $locator = $this->getServiceLocator();
-            if ($locator && $locator->has('translator')) {
-                $column->setTranslator($locator->get('translator'));
-            }
-        }
-    }
-
-    /**
-     * Inject router and route match to Route column
-     *
-     * @param  ColumnInterface $column
-     * @return void
-     */
     public function injectRouter($column)
     {
-        if($column instanceof Column\Route) {
+        if ($column instanceof Column\Route) {
             $locator = $this->getServiceLocator();
             $router = Console::isConsole() ? 'HttpRouter' : 'Router';
 
@@ -97,6 +82,23 @@ class GridColumnManager extends AbstractPluginManager
                 if ($match instanceof RouteMatch) {
                     $column->setRouteMatch($match);
                 }
+            }
+        }
+    }
+
+    /**
+     * Inject translator to any column that implements TranslatorAwareInterface
+     *
+     * @param  ColumnInterface $column
+     * @return void
+     */
+    public function injectTranslator($column)
+    {
+        if ($column instanceof TranslatorAwareInterface) {
+            $locator = $this->getServiceLocator();
+
+            if ($locator && $locator->has('translator')) {
+                $column->setTranslator($locator->get('translator'));
             }
         }
     }

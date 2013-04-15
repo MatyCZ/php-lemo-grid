@@ -5,6 +5,7 @@ namespace LemoGrid\Column;
 use LemoGrid\Column;
 use LemoGrid\Exception;
 use Traversable;
+use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\Mvc\Router\RouteStackInterface;
 
@@ -92,11 +93,50 @@ class Route extends Column
 
     public function renderValue()
     {
-//        if (null === $this->router) {
-//            throw new Exception\RuntimeException('No RouteStackInterface instance provided');
-//        }
+        if (null === $this->router) {
+            throw new Exception\RuntimeException('No RouteStackInterface instance provided');
+        }
 
-        return $this->getValue();
+        $name = $this->getOptions()->getRoute();
+        $params = $this->getOptions()->getParams();
+        $reuseMatchedParams = $this->getOptions()->getReuseMatchedParams();
+
+        if (null === $name) {
+            if (null === $this->routeMatch) {
+                throw new Exception\RuntimeException('No RouteMatch instance provided');
+            }
+
+            $name = $this->routeMatch->getMatchedRouteName();
+
+            if (null === $name) {
+                throw new Exception\RuntimeException('RouteMatch does not contain a matched route name');
+            }
+        }
+
+        if ($reuseMatchedParams && $this->routeMatch !== null) {
+            $routeMatchParams = $this->routeMatch->getParams();
+
+            if (isset($routeMatchParams[ModuleRouteListener::ORIGINAL_CONTROLLER])) {
+                $routeMatchParams['controller'] = $routeMatchParams[ModuleRouteListener::ORIGINAL_CONTROLLER];
+                unset($routeMatchParams[ModuleRouteListener::ORIGINAL_CONTROLLER]);
+            }
+
+            if (isset($routeMatchParams[ModuleRouteListener::MODULE_NAMESPACE])) {
+                unset($routeMatchParams[ModuleRouteListener::MODULE_NAMESPACE]);
+            }
+
+            $params = array_merge($routeMatchParams, $params);
+        }
+
+        $options['name'] = $name;
+
+        $link = $this->router->assemble($params, $options);
+
+        return urldecode(sprintf(
+            $this->getOptions()->getTemplate(),
+            $link,
+            $this->getOptions()->getText()
+        ));
     }
 
     /**

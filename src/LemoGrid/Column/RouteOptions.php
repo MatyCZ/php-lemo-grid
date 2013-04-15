@@ -32,6 +32,11 @@ class RouteOptions extends AbstractOptions
     protected $text;
 
     /**
+     * @var string
+     */
+    protected $template = '<a href="%s">%s</a>';
+
+    /**
      * @param array $options
      * @return RouteOptions
      */
@@ -124,5 +129,24 @@ class RouteOptions extends AbstractOptions
     public function getText()
     {
         return $this->text;
+    }
+
+    /**
+     * @param  string $template
+     * @return RouteOptions
+     */
+    public function setTemplate($template)
+    {
+        $this->template = (string) $template;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getTemplate()
+    {
+        return $this->template;
     }
 }

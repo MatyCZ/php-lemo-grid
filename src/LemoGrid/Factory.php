@@ -94,7 +94,7 @@ class Factory
      */
     public function getGridColumnManager()
     {
-        if ($this->gridColumnManager === null) {
+        if (null === $this->gridColumnManager) {
             $this->setGridColumnManager(new GridColumnManager());
         }
 
