@@ -3,7 +3,7 @@
 namespace LemoGrid\Adapter;
 
 use LemoGrid\GridInterface;
-use LemoGrid\Collection\Data;
+use LemoGrid\ResultSet\Data;
 
 abstract class AbstractAdapter implements AdapterInterface
 {

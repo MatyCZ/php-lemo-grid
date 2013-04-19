@@ -2,7 +2,7 @@
 
 namespace LemoGrid\Column;
 
-use LemoGrid\Collection\Data;
+use LemoGrid\ResultSet\Data;
 use LemoGrid\Column;
 use LemoGrid\Exception;
 use Traversable;
