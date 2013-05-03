@@ -2,20 +2,20 @@
 
 namespace LemoGrid\Mvc\Service;
 
-use LemoGrid\ColumnInterface;
+use LemoGrid\Adapter\AdapterInterface;
 use Zend\Mvc\Exception;
 use Zend\Mvc\Service\AbstractPluginManagerFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class GridColumnManagerFactory extends AbstractPluginManagerFactory
+class GridAdapterManagerFactory extends AbstractPluginManagerFactory
 {
-    const PLUGIN_MANAGER_CLASS = 'LemoGrid\GridColumnManager';
+    const PLUGIN_MANAGER_CLASS = 'LemoGrid\GridAdapterManager';
 
     /**
      * Create and return the view helper manager
      *
      * @param  ServiceLocatorInterface $serviceLocator
-     * @return ColumnInterface
+     * @return AdapterInterface
      * @throws Exception\RuntimeException
      */
     public function createService(ServiceLocatorInterface $serviceLocator)

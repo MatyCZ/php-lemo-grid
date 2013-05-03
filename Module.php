@@ -2,16 +2,14 @@
 
 namespace LemoGrid;
 
-use Zend\EventManager\EventInterface;
 use Zend\Loader\AutoloaderFactory;
 use Zend\Loader\StandardAutoloader;
 use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
 use Zend\ModuleManager\Feature\ConfigProviderInterface;
-use Zend\ModuleManager\Feature\BootstrapListenerInterface;
 use Zend\ModuleManager\Feature\ServiceProviderInterface;
 use Zend\ModuleManager\Feature\ViewHelperProviderInterface;
 
-class Module implements AutoloaderProviderInterface, BootstrapListenerInterface, ConfigProviderInterface, ServiceProviderInterface, ViewHelperProviderInterface
+class Module implements AutoloaderProviderInterface, ConfigProviderInterface, ServiceProviderInterface, ViewHelperProviderInterface
 {
     /**
      * @inheritdoc
@@ -28,31 +26,6 @@ class Module implements AutoloaderProviderInterface, BootstrapListenerInterface,
     }
 
     /**
-     * Listen to the bootstrap event
-     *
-     * @param EventInterface $e
-     * @return array
-     */
-    public function onBootstrap(EventInterface $e)
-    {
-//        $serviceLocator = $e->getApplication()->getServiceManager();
-//
-//        $serviceListener = $serviceLocator->get('ServiceListener');
-//        $serviceListener->addServiceManager(
-//            'GridColumnManager',
-//            'grid_columns',
-//            'LemoGrid\ModuleManager\Feature\GridColumnProviderInterface',
-//            'getGridColumnConfig'
-//        );
-//
-//        $events = $serviceLocator->get('EventManager');
-//        $events->attach($serviceListener);
-//
-//        $moduleManager = $serviceLocator->get('ModuleManager');
-//        $moduleManager->attach($serviceListener);
-    }
-
-    /**
      * @inheritdoc
      */
     public function getConfig()
@@ -66,14 +39,29 @@ class Module implements AutoloaderProviderInterface, BootstrapListenerInterface,
     public function getServiceConfig()
     {
         return array(
+            'abstract_factories' => array(
+                'LemoGrid\GridAbstractServiceFactory',
+            ),
             'factories' => array(
-                'GridColumnManager' => 'LemoGrid\Mvc\Service\GridColumnManagerFactory',
-                'LemoGrid\Factory' => function($serviceManager) {
-                    $factory = new Factory();
-                    $factory->setGridColumnManager($serviceManager->get('GridColumnManager'));
-                    return $factory;
+                'GridAdapterManager'  => 'LemoGrid\Mvc\Service\GridAdapterManagerFactory',
+                'GridColumnManager'   => 'LemoGrid\Mvc\Service\GridColumnManagerFactory',
+                'GridPlatformManager' => 'LemoGrid\Mvc\Service\GridPlatformManagerFactory',
+                'LemoGrid\Factory' => function ($sm) {
+                    $instance = new Factory();
+                    $instance->setGridAdapterManager($sm->get('GridAdapterManager'));
+                    $instance->setGridColumnManager($sm->get('GridColumnManager'));
+                    $instance->setGridPlatformManager($sm->get('GridPlatformManager'));
+                    return $instance;
                 },
-            )
+            ),
+            'initializers' => array(
+                function ($instance, $sm) {
+                    if ($instance instanceof GridFactoryAwareInterface) {
+                        $factory = $sm->get('LemoGrid\Factory');
+                        $instance->setGridFactory($factory);
+                    }
+                }
+            ),
         );
     }
 

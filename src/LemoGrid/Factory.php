@@ -334,6 +334,8 @@ class Factory
             $this->prepareAndInjectPlatform($spec['platform'], $grid, __METHOD__);
         }
 
+        $grid->init();
+
         return $grid;
     }
 
