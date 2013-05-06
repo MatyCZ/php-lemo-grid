@@ -132,6 +132,16 @@ class Grid implements GridInterface
     }
 
     /**
+     * This function is automatically called when creating grid with factory. It
+     * allows to perform various operations (add columns...)
+     *
+     * @return void
+     */
+    public function init()
+    {
+    }
+
+    /**
      * Add a column
      *
      * $flags could contain metadata such as the alias under which to register
