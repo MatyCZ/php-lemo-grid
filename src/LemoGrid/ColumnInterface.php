@@ -23,6 +23,21 @@ interface ColumnInterface
     public function getName();
 
     /**
+     * Set the column identifier
+     *
+     * @param  string $identifier
+     * @return string
+     */
+    public function setIdentifier($identifier);
+
+    /**
+     * Retrieve the column identifier
+     *
+     * @return string
+     */
+    public function getIdentifier();
+
+    /**
      * Set options for a column
      *
      * @param  array|Traversable|AbstractOptions $options

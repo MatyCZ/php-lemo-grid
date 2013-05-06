@@ -117,6 +117,18 @@ class Grid implements GridInterface
         if (null !== $platform) {
             $this->setPlatform($platform);
         }
+
+        $this->init();
+    }
+
+    /**
+     * This function is automatically called when creating grid with factory. It
+     * allows to perform various operations (add columns...)
+     *
+     * @return void
+     */
+    public function init()
+    {
     }
 
     /**

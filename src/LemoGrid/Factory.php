@@ -166,11 +166,9 @@ class Factory
     public function createColumn($spec)
     {
         $spec = $this->validateSpecification($spec, __METHOD__);
-        if (!isset($spec['type'])) {
-            $spec['type'] = 'LemoGrid\Column';
-        }
+        $type = isset($spec['type']) ? $spec['type'] : 'LemoGrid\Column';
 
-        $column = $this->getGridColumnManager()->get($spec['type']);
+        $column = $this->getGridColumnManager()->get($type);
 
         if ($column instanceof ColumnInterface) {
             return $this->configureColumn($column, $spec);

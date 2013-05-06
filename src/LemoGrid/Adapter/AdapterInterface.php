@@ -2,7 +2,7 @@
 
 namespace LemoGrid\Adapter;
 
-use LemoGrid\Collection\Data;
+use LemoGrid\ResultSet\Data;
 use LemoGrid\GridInterface;
 
 interface AdapterInterface

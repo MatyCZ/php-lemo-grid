@@ -1,6 +1,6 @@
 <?php
 
-namespace LemoGrid\Collection;
+namespace LemoGrid\ResultSet;
 
 use Zend\Stdlib\ArrayObject;
 
