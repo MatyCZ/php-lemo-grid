@@ -7,7 +7,7 @@ use Countable;
 use IteratorAggregate;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Platform\PlatformInterface;
-use LemoGrid\ColumnInterface;
+use LemoGrid\Column\ColumnInterface;
 use Traversable;
 
 interface GridInterface extends

@@ -4,7 +4,7 @@ namespace LemoGrid;
 
 use ArrayAccess;
 use LemoGrid\Adapter\AdapterInterface;
-use LemoGrid\ColumnInterface;
+use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Platform\PlatformInterface;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
@@ -274,7 +274,6 @@ class Factory
 
         if ($name !== null && $name !== '') {
             $column->setName($name);
-            $attributes['name'] = $name;
         }
 
         if ($identifier !== null && $identifier !== '') {
@@ -331,8 +330,6 @@ class Factory
         if (isset($spec['platform'])) {
             $this->prepareAndInjectPlatform($spec['platform'], $grid, __METHOD__);
         }
-
-        $grid->init();
 
         return $grid;
     }
@@ -464,7 +461,6 @@ class Factory
             if (!isset($spec['type'])) {
                 $spec['type'] = 'LemoGrid\Column';
             }
-
             $column = $this->createColumn($spec);
             $grid->add($column, $flags);
         }

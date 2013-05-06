@@ -58,7 +58,7 @@ class JqGrid extends AbstractPlatform
      */
     public function isRendered()
     {
-        if (null === $this->getGrid()->getParam('_name')) {
+        if (!$this->getGrid()->hasParam('_name')) {
             return false;
         }
 

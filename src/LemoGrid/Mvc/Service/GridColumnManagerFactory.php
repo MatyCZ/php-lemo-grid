@@ -2,8 +2,11 @@
 
 namespace LemoGrid\Mvc\Service;
 
-use LemoGrid\ColumnInterface;
+use LemoGrid\Column;
+use LemoGrid\Column\ColumnInterface;
+use Zend\Console\Console;
 use Zend\Mvc\Exception;
+use Zend\Mvc\Router\RouteMatch;
 use Zend\Mvc\Service\AbstractPluginManagerFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -21,10 +24,25 @@ class GridColumnManagerFactory extends AbstractPluginManagerFactory
     public function createService(ServiceLocatorInterface $serviceLocator)
     {
         $plugins = parent::createService($serviceLocator);
-        if ($serviceLocator->has('Di')) {
-            $plugins->addPeeringServiceManager($serviceLocator);
-            $plugins->setRetrieveFromPeeringManagerFirst(true);
-        }
+
+        // Configure URL view helper with router
+        $plugins->setFactory('route', function ($sm) use($serviceLocator) {
+            $router = Console::isConsole() ? 'HttpRouter' : 'Router';
+
+            $column = new Column\Route;
+            $column->setRouter($serviceLocator->get($router));
+
+            $match = $serviceLocator->get('application')
+                ->getMvcEvent()
+                ->getRouteMatch();
+
+            if ($match instanceof RouteMatch) {
+                $column->setRouteMatch($match);
+            }
+
+            return $column;
+        });
+
         return $plugins;
     }
 }

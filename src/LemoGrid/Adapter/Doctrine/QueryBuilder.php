@@ -120,9 +120,6 @@ class QueryBuilder extends AbstractAdapter
             if($col->getAttributes()->getIsSearchable()) {
                 $prepend = null;
                 $append = null;
-//
-//                \Zend\Debug\Debug::dump($grid->getParams());
-//                exit;
 
                 if($grid->hasParam($col->getName())) {
                     if($col instanceof Concat) {

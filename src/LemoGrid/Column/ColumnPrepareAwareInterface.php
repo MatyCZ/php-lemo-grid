@@ -1,6 +1,8 @@
 <?php
 
-namespace LemoGrid;
+namespace LemoGrid\Column;
+
+use LemoGrid\GridInterface;
 
 interface ColumnPrepareAwareInterface
 {

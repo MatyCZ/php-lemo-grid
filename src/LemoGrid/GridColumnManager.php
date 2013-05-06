@@ -2,7 +2,7 @@
 
 namespace LemoGrid;
 
-use LemoGrid\ColumnInterface;
+use LemoGrid\Column\ColumnInterface;
 use Zend\Console\Console;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\Mvc\Router\RouteMatch;
@@ -29,8 +29,6 @@ class GridColumnManager extends AbstractPluginManager
     );
 
     /**
-     * Don't share grid columns by default
-     *
      * @var bool
      */
     protected $shareByDefault = false;
@@ -42,22 +40,8 @@ class GridColumnManager extends AbstractPluginManager
     {
         parent::__construct($configuration);
 
-        $this->addInitializer(array($this, 'injectFactory'));
         $this->addInitializer(array($this, 'injectRouter'));
         $this->addInitializer(array($this, 'injectTranslator'));
-    }
-
-    /**
-     * Inject the factory to any column that implements GridFactoryAwareInterface
-     *
-     * @param  ColumnInterface $column
-     * @return void
-     */
-    public function injectFactory($column)
-    {
-        if ($column instanceof GridFactoryAwareInterface) {
-            $column->getGridFactory()->setGridColumnManager($this);
-        }
     }
 
     /**

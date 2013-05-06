@@ -48,11 +48,12 @@ class Module implements
         $event = $moduleManager->getEvent();
         $eventManager = $moduleManager->getEventManager();
 
-        $serviceLocator = $event->getParam('ServiceManager');
-        $serviceListener = $serviceLocator->get('ServiceListener');
+        $serviceManager = $event->getParam('ServiceManager');
+        $serviceListener = $serviceManager->get('ServiceListener');
 
         $eventManager->detach($serviceListener);
 
+        // Add managers to listener
         $serviceListener->addServiceManager(
             'ServiceManager',
             'grids',
@@ -77,6 +78,13 @@ class Module implements
             'LemoGrid\ModuleManager\Feature\GridPlatformProviderInterface',
             'getGridPlatformConfig'
         );
+
+        // Add initializer to service manager
+        $serviceManager->addInitializer(function ($instance) use ($serviceManager) {
+            if ($instance instanceof GridFactoryAwareInterface) {
+                $instance->setGridFactory($serviceManager->get('LemoGrid\Factory'));
+            }
+        });
 
         $eventManager->attach($serviceListener);
     }
@@ -108,14 +116,6 @@ class Module implements
                     $instance->setGridPlatformManager($sm->get('GridPlatformManager'));
                     return $instance;
                 },
-            ),
-            'initializers' => array(
-                function ($instance, $sm) {
-                    if ($instance instanceof GridFactoryAwareInterface) {
-                        $factory = $sm->get('LemoGrid\Factory');
-                        $instance->setGridFactory($factory);
-                    }
-                }
             ),
         );
     }

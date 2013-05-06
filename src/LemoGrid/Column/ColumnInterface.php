@@ -1,6 +1,6 @@
 <?php
 
-namespace LemoGrid;
+namespace LemoGrid\Column;
 
 use Zend\Stdlib\AbstractOptions;
 use Traversable;

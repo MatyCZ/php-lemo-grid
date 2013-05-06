@@ -175,13 +175,6 @@ class ColumnAttributes extends AbstractOptions
     protected $label;
 
     /**
-     * Set the unique name in the grid for the column. This property is required. As well as other words used as property/event names, the reserved words (which cannot be used for names) include subgrid, cb and rn.
-     *
-     * @var string
-     */
-    protected $name;
-
-    /**
      * Determines the type of the element when searching. Possible values: text and select.
      *
      * @var string
@@ -231,7 +224,6 @@ class ColumnAttributes extends AbstractOptions
     public function setAlign($align)
     {
         $this->align = $align;
-
         return $this;
     }
 
@@ -250,7 +242,6 @@ class ColumnAttributes extends AbstractOptions
     public function setClass($class)
     {
         $this->class = $class;
-
         return $this;
     }
 
@@ -269,7 +260,6 @@ class ColumnAttributes extends AbstractOptions
     public function setDateFormat($dateFormat)
     {
         $this->dateFormat = $dateFormat;
-
         return $this;
     }
 
@@ -288,7 +278,6 @@ class ColumnAttributes extends AbstractOptions
     public function setDefaultValue($defaultValue)
     {
         $this->defaultValue = $defaultValue;
-
         return $this;
     }
 
@@ -307,7 +296,6 @@ class ColumnAttributes extends AbstractOptions
     public function setEditElement($editElement)
     {
         $this->editElement = $editElement;
-
         return $this;
     }
 
@@ -326,7 +314,6 @@ class ColumnAttributes extends AbstractOptions
     public function setEditElementOptions($editElementOptions)
     {
         $this->editElementOptions = $editElementOptions;
-
         return $this;
     }
 
@@ -345,7 +332,6 @@ class ColumnAttributes extends AbstractOptions
     public function setEditOptions($editOptions)
     {
         $this->editOptions = $editOptions;
-
         return $this;
     }
 
@@ -364,7 +350,6 @@ class ColumnAttributes extends AbstractOptions
     public function setEditRules($editRules)
     {
         $this->editRules = $editRules;
-
         return $this;
     }
 
@@ -383,7 +368,6 @@ class ColumnAttributes extends AbstractOptions
     public function setFormat($format)
     {
         $this->format = $format;
-
         return $this;
     }
 
@@ -402,7 +386,6 @@ class ColumnAttributes extends AbstractOptions
     public function setFormatOptions($formatOptions)
     {
         $this->formatOptions = $formatOptions;
-
         return $this;
     }
 
@@ -421,7 +404,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIdentifier($identifier)
     {
         $this->identifier = (string) $identifier;
-
         return $this;
     }
 
@@ -440,7 +422,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsEditable($isEditable)
     {
         $this->isEditable = $isEditable;
-
         return $this;
     }
 
@@ -459,7 +440,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsFixed($isFixed)
     {
         $this->isFixed = $isFixed;
-
         return $this;
     }
 
@@ -478,7 +458,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsFrozen($isFrozen)
     {
         $this->isFrozen = $isFrozen;
-
         return $this;
     }
 
@@ -497,7 +476,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsHidden($isHidden)
     {
         $this->isHidden = $isHidden;
-
         return $this;
     }
 
@@ -516,7 +494,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsResizable($isResizable)
     {
         $this->isResizable = $isResizable;
-
         return $this;
     }
 
@@ -535,7 +512,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsHideable($isHideable)
     {
         $this->isHideable = $isHideable;
-
         return $this;
     }
 
@@ -554,7 +530,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsSearchable($isSearchable)
     {
         $this->isSearchable = $isSearchable;
-
         return $this;
     }
 
@@ -573,7 +548,6 @@ class ColumnAttributes extends AbstractOptions
     public function setIsSortable($isSortable)
     {
         $this->isSortable = $isSortable;
-
         return $this;
     }
 
@@ -592,7 +566,6 @@ class ColumnAttributes extends AbstractOptions
     public function setLabel($label)
     {
         $this->label = $label;
-
         return $this;
     }
 
@@ -605,32 +578,12 @@ class ColumnAttributes extends AbstractOptions
     }
 
     /**
-     * @param  string $name
-     * @return ColumnAttributes
-     */
-    public function setName($name)
-    {
-        $this->name = (string) $name;
-
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getName()
-    {
-        return $this->name;
-    }
-
-    /**
      * @param string $searchElement
      * @return ColumnAttributes
      */
     public function setSearchElement($searchElement)
     {
         $this->searchElement = $searchElement;
-
         return $this;
     }
 
@@ -649,7 +602,6 @@ class ColumnAttributes extends AbstractOptions
     public function setSearchUrl($searchUrl)
     {
         $this->searchUrl = $searchUrl;
-
         return $this;
     }
 
@@ -668,7 +620,6 @@ class ColumnAttributes extends AbstractOptions
     public function setSearchOptions($searchOptions)
     {
         $this->searchOptions = $searchOptions;
-
         return $this;
     }
 
@@ -687,7 +638,6 @@ class ColumnAttributes extends AbstractOptions
     public function setSortType($sortType)
     {
         $this->sortType = $sortType;
-
         return $this;
     }
 
@@ -706,7 +656,6 @@ class ColumnAttributes extends AbstractOptions
     public function setWidth($width)
     {
         $this->width = $width;
-
         return $this;
     }
 

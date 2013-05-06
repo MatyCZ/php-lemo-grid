@@ -1,24 +1,21 @@
 <?php
 
-namespace LemoGrid;
+namespace LemoGrid\Column;
 
-use LemoGrid\ColumnAttributeRemovalInterface;
-use LemoGrid\ColumnInterface;
-use LemoGrid\Column\ColumnAttributes;
+use Zend\Stdlib\ArrayUtils;
 use LemoGrid\Exception;
 use Traversable;
 use Zend\Stdlib\AbstractOptions;
 use Zend\Stdlib\InitializableInterface;
 
-class Column implements
-    ColumnAttributeRemovalInterface,
+abstract class AbstractColumn implements
     ColumnInterface,
     InitializableInterface
 {
     /**
-     * @var array
+     * @var ColumnAttributes
      */
-    protected $attributes = array();
+    protected $attributes;
 
     /**
      * @var string
@@ -43,7 +40,7 @@ class Column implements
     /**
      * @param  null|int|string $name    Optional name for the column
      * @param  array $options Optional options for the column
-     * @return \LemoGrid\Column
+     * @return AbstractColumn
      */
     public function __construct($name = null, $options = array())
     {
@@ -71,7 +68,7 @@ class Column implements
      * - label: label to associate with the column
      *
      * @param  array|Traversable $options
-     * @return Column|ColumnInterface
+     * @return AbstractColumn|ColumnInterface
      * @throws Exception\InvalidArgumentException
      */
     public function setOptions($options)
@@ -119,66 +116,11 @@ class Column implements
     }
 
     /**
-     * Set a single column attribute
-     *
-     * @param  string $key
-     * @param  mixed  $value
-     * @return Column|ColumnInterface
-     */
-    public function setAttribute($key, $value)
-    {
-        // Do not include the value in the list of attributes
-        if ($key === 'value') {
-            $this->setValue($value);
-            return $this;
-        }
-        $this->attributes[$key] = $value;
-        return $this;
-    }
-
-    /**
-     * Retrieve a single column attribute
-     *
-     * @param  $key
-     * @return mixed|null
-     */
-    public function getAttribute($key)
-    {
-        if (!array_key_exists($key, $this->attributes)) {
-            return null;
-        }
-        return $this->attributes[$key];
-    }
-
-    /**
-     * Remove a single attribute
-     *
-     * @param string $key
-     * @return ColumnInterface
-     */
-    public function removeAttribute($key)
-    {
-        unset($this->attributes[$key]);
-        return $this;
-    }
-
-    /**
-     * Does the column has a specific attribute ?
-     *
-     * @param  string $key
-     * @return bool
-     */
-    public function hasAttribute($key)
-    {
-        return array_key_exists($key, $this->attributes);
-    }
-
-    /**
      * Set column attributes
      *
      * @param  array|\Traversable|ColumnAttributes $attributes
      * @throws Exception\InvalidArgumentException
-     * @return Column
+     * @return AbstractColumn
      */
     public function setAttributes($attributes)
     {
@@ -189,7 +131,6 @@ class Column implements
                             . 'received "%s"', get_class($attributes))
                 );
             }
-
             $attributes = new ColumnAttributes($attributes);
         }
 
@@ -213,28 +154,13 @@ class Column implements
     }
 
     /**
-     * Remove many attributes at once
-     *
-     * @param array $keys
-     * @return ColumnInterface
-     */
-    public function removeAttributes(array $keys)
-    {
-        foreach ($keys as $key) {
-            unset($this->attributes[$key]);
-        }
-
-        return $this;
-    }
-
-    /**
      * Clear all attributes
      *
-     * @return Column|ColumnInterface
+     * @return AbstractColumn|ColumnInterface
      */
     public function clearAttributes()
     {
-        $this->attributes = array();
+        $this->attributes = new ColumnAttributes();
         return $this;
     }
 
@@ -242,12 +168,11 @@ class Column implements
      * Set the column identifier
      *
      * @param  string $identifier
-     * @return Column
+     * @return AbstractColumn
      */
     public function setIdentifier($identifier)
     {
         $this->identifier = $identifier;
-
         return $this;
     }
 
@@ -269,13 +194,11 @@ class Column implements
      * Set the column name
      *
      * @param  string $name
-     * @return Column
+     * @return AbstractColumn
      */
     public function setName($name)
     {
         $this->name = $name;
-        $this->getAttributes()->setName($name);
-
         return $this;
     }
 
@@ -293,12 +216,11 @@ class Column implements
      * Set the column value
      *
      * @param string $value
-     * @return Column
+     * @return AbstractColumn
      */
     public function setValue($value)
     {
         $this->value = $value;
-
         return $this;
     }
 

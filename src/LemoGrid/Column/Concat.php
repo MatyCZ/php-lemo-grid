@@ -2,12 +2,10 @@
 
 namespace LemoGrid\Column;
 
-use LemoGrid\Column;
-use LemoGrid\Column\ConcatOptions;
 use LemoGrid\Exception;
 use Traversable;
 
-class Concat extends Column
+class Concat extends AbstractColumn
 {
     /**
      * Column options

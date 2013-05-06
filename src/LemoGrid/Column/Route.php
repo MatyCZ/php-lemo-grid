@@ -2,14 +2,13 @@
 
 namespace LemoGrid\Column;
 
-use LemoGrid\Column;
 use LemoGrid\Exception;
 use Traversable;
 use Zend\Mvc\ModuleRouteListener;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\Mvc\Router\RouteStackInterface;
 
-class Route extends Column
+class Route extends AbstractColumn
 {
     /**
      * Column options

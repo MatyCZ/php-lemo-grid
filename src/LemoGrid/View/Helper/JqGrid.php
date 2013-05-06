@@ -3,7 +3,7 @@
 namespace LemoGrid\View\Helper;
 
 use LemoGrid\Column\ColumnAttributes;
-use LemoGrid\ColumnInterface;
+use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\JqGridOptions;

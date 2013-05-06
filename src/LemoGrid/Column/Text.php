@@ -2,12 +2,10 @@
 
 namespace LemoGrid\Column;
 
-use LemoGrid\ResultSet\Data;
-use LemoGrid\Column;
 use LemoGrid\Exception;
 use Traversable;
 
-class Text extends Column
+class Text extends AbstractColumn
 {
     /**
      * Column options

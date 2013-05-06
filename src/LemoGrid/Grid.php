@@ -6,10 +6,9 @@ use ArrayAccess;
 use ArrayIterator;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
-use LemoGrid\ColumnInterface;
+use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Platform\PlatformInterface;
 use Traversable;
-use Zend\Feed\Reader\Collection;
 use Zend\Json;
 use Zend\Session\SessionManager;
 use Zend\Session\Container as SessionContainer;
@@ -45,6 +44,11 @@ class Grid implements GridInterface
     protected $container;
 
     /**
+     * @var string
+     */
+    protected $defaultPlatform = 'JqGrid';
+
+    /**
      * @var Factory
      */
     protected $factory;
@@ -66,7 +70,7 @@ class Grid implements GridInterface
      *
      * @var string
      */
-    protected $name;
+    protected $name = 'grid';
 
     /**
      * Instance namespace
@@ -117,18 +121,6 @@ class Grid implements GridInterface
         if (null !== $platform) {
             $this->setPlatform($platform);
         }
-
-        $this->init();
-    }
-
-    /**
-     * This function is automatically called when creating grid with factory. It
-     * allows to perform various operations (add columns...)
-     *
-     * @return void
-     */
-    public function init()
-    {
     }
 
     /**
@@ -326,9 +318,9 @@ class Grid implements GridInterface
 
     /**
      * Ensures state is ready for use
+     * Prepares grid and any columns that require  preparation.
      *
-     * Prepares any columns that require  preparation.
-     *
+     * @throws Exception\InvalidArgumentException
      * @return Grid
      */
     public function prepare()
@@ -337,8 +329,18 @@ class Grid implements GridInterface
             return $this;
         }
 
+        $this->init();
+
+        $name = $this->getName();
+        if ((null === $name || '' === $name)) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s: grid is not named',
+                __METHOD__
+            ));
+        }
+
         // If the user wants to, elements names can be wrapped by the form's name
-        foreach ($this->getIterator() as $column) {
+        foreach ($this->getColumns() as $column) {
             if ($column instanceof ColumnPrepareAwareInterface) {
                 $column->prepareColumn($this);
             }
@@ -432,6 +434,29 @@ class Grid implements GridInterface
         $this->container = new SessionContainer('Grid', $this->getSessionManager());
 
         return $this->container;
+    }
+
+    /**
+     * Set name of default platform
+     *
+     * @param string $defaultPlatform
+     * @return Grid
+     */
+    public function setDefaultPlatform($defaultPlatform)
+    {
+        $this->defaultPlatform = $defaultPlatform;
+
+        return $this;
+    }
+
+    /**
+     * Retrieve name of default platform
+     *
+     * @return string
+     */
+    public function getDefaultPlatform()
+    {
+        return $this->defaultPlatform;
     }
 
     /**
@@ -659,6 +684,10 @@ class Grid implements GridInterface
      */
     public function getPlatform()
     {
+        if(null === $this->platform) {
+            $this->platform = $this->getGridFactory()->createPlatform(array('type' => $this->getDefaultPlatform()));
+        }
+
         return $this->platform;
     }
 
