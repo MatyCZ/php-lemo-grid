@@ -63,10 +63,12 @@ namespace Foo;
 
 use LemoGrid\ModuleManager\Feature\GridProviderInterface;
 use Zend\ModuleManager\Feature\ControllerProviderInterface;
+use Zend\ModuleManager\Feature\ServiceProviderInterface;
 
 class Module implements
     ControllerProviderInterface,
-    GridProviderInterface
+    GridProviderInterface,
+    ServiceProviderInterface
 {
     ...
 
