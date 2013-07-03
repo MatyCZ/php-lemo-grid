@@ -28,6 +28,7 @@ class JqGrid extends AbstractHelper
         'edit_rules'           => 'editrules',
         'format'               => 'formatter',
         'format_options'       => 'formatoptions',
+        'identifier'           => 'name',
         'is_editable'          => 'isEditable',
         'is_fixed'             => 'page',
         'is_frozen'            => 'frozen',
@@ -37,7 +38,6 @@ class JqGrid extends AbstractHelper
         'is_sortable'          => 'sortable',
         'is_resizable'         => 'resizable',
         'label'                => 'label',
-        'name'                 => 'name',
         'search_element'       => 'stype',
         'search_options'       => 'searchOptions',
         'search_url'           => 'surl',
@@ -371,9 +371,15 @@ class JqGrid extends AbstractHelper
      */
     protected function columnModifyAttributes(ColumnInterface $column, ColumnAttributes $attributes)
     {
+        $filters = $this->getGrid()->getParam('filters');
+
         // If default value is not set, add default value from search param
-        if(null == $attributes->getSearchOptions() && $this->getGrid()->getParam($column->getName())) {
-            $attributes->setSearchOptions(array('defaultValue' => $this->getGrid()->getParam($column->getName())));
+        if(null == $attributes->getSearchOptions() && array_key_exists($column->getName(), $filters)) {
+            $attributes->setSearchOptions(array('defaultValue' => $filters[$column->getName()]['value']));
+        }
+
+        if (null == $attributes->getIdentifier()) {
+            $attributes->setIdentifier($column->getName());
         }
 
         return $attributes;

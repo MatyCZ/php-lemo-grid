@@ -406,7 +406,6 @@ class Grid implements GridInterface
     public function setAdapter(AdapterInterface $adapter)
     {
         $this->adapter = $adapter;
-
         return $this;
     }
 
@@ -445,7 +444,6 @@ class Grid implements GridInterface
     public function setDefaultPlatform($defaultPlatform)
     {
         $this->defaultPlatform = $defaultPlatform;
-
         return $this;
     }
 
@@ -468,7 +466,6 @@ class Grid implements GridInterface
     public function setGridFactory(Factory $factory)
     {
         $this->factory = $factory;
-
         return $this;
     }
 
@@ -496,7 +493,8 @@ class Grid implements GridInterface
      */
     public function setName($name)
     {
-        return $this->name = (string) $name;
+        $this->name = (string) $name;
+        return $this;
     }
 
     /**
@@ -518,7 +516,6 @@ class Grid implements GridInterface
     public function setNamespace($namespace = self::NAMESPACE_DEFAULT)
     {
         $this->namespace = (string) $namespace;
-
         return $this;
     }
 
@@ -615,8 +612,12 @@ class Grid implements GridInterface
                 $rules = Json\Decoder::decode(stripslashes($value), Json\Json::TYPE_ARRAY);
             }
 
+            $value = array();
             foreach ($rules['rules'] as $rule) {
-                $this->setParam($rule['field'], $rule['data']);
+                $value[$rule['field']] = array(
+                    'condition' => $rule['op'],
+                    'value' => $rule['data'],
+                );
             }
         }
 
@@ -642,6 +643,16 @@ class Grid implements GridInterface
 
         if (isset($this->params[$this->getNamespace()]) && $this->hasParam($name)) {
             return $this->params[$this->getNamespace()]->offsetGet($name);
+        }
+
+        if ('filters' == $name) {
+            $container = $this->getContainer();
+
+            if (isset($container[$this->getNamespace()]) && isset($container[$this->getNamespace()][$name])) {
+                return $container[$this->getNamespace()]->offsetGet($name);
+            }
+
+            return array();
         }
 
         return null;
@@ -673,7 +684,6 @@ class Grid implements GridInterface
     public function setPlatform(PlatformInterface $platform)
     {
         $this->platform = $platform;
-
         return $this;
     }
 
@@ -700,7 +710,6 @@ class Grid implements GridInterface
     public function setSessionManager(SessionManager $manager)
     {
         $this->session = $manager;
-
         return $this;
     }
 
@@ -731,9 +740,7 @@ class Grid implements GridInterface
             return;
         }
 
-        $container = $this->getContainer();
-
-        foreach ($container as $namespace => $params) {
+        foreach ($this->getContainer() as $namespace => $params) {
             $this->params[$namespace] = $params;
         }
     }

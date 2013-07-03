@@ -62,6 +62,10 @@ class QueryBuilder extends AbstractAdapter
 
                 $value = $column->renderValue();
 
+                if (null === $value) {
+                    continue;
+                }
+
                 if($value instanceof DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
                 }
@@ -80,7 +84,7 @@ class QueryBuilder extends AbstractAdapter
                         }
                     }
 
-                    $value = implode($column->getSeparator(), $values);
+                    $value = vsprintf($column->getOptions()->getPattern(), $values);
 
                     unset($values, $identifier);
                 }
@@ -108,7 +112,7 @@ class QueryBuilder extends AbstractAdapter
     protected function executeQuery()
     {
         $grid = $this->getGrid();
-
+        $filters = $grid->getParam('filters');
         $resultCount = $this->getQueryBuilder()->getQuery()->getScalarResult();
 
         $this->getQueryBuilder()->setMaxResults($grid->getPlatform()->getOptions()->getRecordsPerPage());
@@ -121,11 +125,11 @@ class QueryBuilder extends AbstractAdapter
                 $prepend = null;
                 $append = null;
 
-                if($grid->hasParam($col->getName())) {
+                if(array_key_exists($col->getName(), $filters)) {
                     if($col instanceof Concat) {
                         $or = $this->getQueryBuilder()->expr()->orx();
-                        foreach($col->getIdentifiers() as $identifier){
-                            $or->add($identifier . " LIKE '%" . $grid->getParam($col->getName()) . "%'");
+                        foreach($col->getOptions()->getIdentifiers() as $identifier){
+                            $or->add($identifier . " LIKE '%" . $filters[$col->getName()]['value'] . "%'");
                         }
                         $this->getQueryBuilder()->andWhere($or);
                     } else {
@@ -133,28 +137,27 @@ class QueryBuilder extends AbstractAdapter
                             $prepend = $append = '%';
                         }
 
-                        $this->getQueryBuilder()->andWhere($col->getIdentifier() . " LIKE '" . $prepend . $grid->getParam($col->getName()) . $append . "'");
+                        $this->getQueryBuilder()->andWhere($col->getIdentifier() . " LIKE '" . $prepend . $filters[$col->getName()]['value'] . $append . "'");
                     }
                 }
             }
         }
 
-        // ORDER
-//        if('concat' == $grid->get($this->getSortColumn())->getType()) {
-//            foreach($grid->get($this->getSortColumn())->getIdentifiers() as $identifier){
-//                if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
-//                    $method = 'orderBy';
-//                } else {
-//                    $method = 'addOrderBy';
-//                }
-//
-//                $this->getQueryBuilder()->{$method}($identifier, $this->getSortDirect());
-//            }
-//        } else {
         if($grid->has($grid->getPlatform()->getSortColumn())) {
-            $this->getQueryBuilder()->orderBy($grid->get($grid->getPlatform()->getSortColumn())->getIdentifier(), $grid->getPlatform()->getSortDirect());
+            if($grid->get($grid->getPlatform()->getSortColumn()) instanceof Concat) {
+                foreach($grid->get($grid->getPlatform()->getSortColumn())->getOptions()->getIdentifiers() as $identifier){
+                    if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
+                        $method = 'orderBy';
+                    } else {
+                        $method = 'addOrderBy';
+                    }
+
+                    $this->getQueryBuilder()->{$method}($identifier, $grid->getPlatform()->getSortDirect());
+                }
+            } else {
+                $this->getQueryBuilder()->orderBy($grid->get($grid->getPlatform()->getSortColumn())->getIdentifier(), $grid->getPlatform()->getSortDirect());
+            }
         }
-//        }
 
         $offset = $grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage();
 
@@ -265,14 +268,17 @@ class QueryBuilder extends AbstractAdapter
 
             // Read data from relation
             foreach ($relation as $rel) {
-                if(count($itemRelation[$rel]) == 1 && isset($itemRelation[$rel][0])) {
+                $founded = false;
+                if(isset($itemRelation[$rel][0]) && count($itemRelation[$rel]) == 1) {
                     $itemRelation = $itemRelation[$rel][0];
-                } else {
+                    $founded = true;
+                } elseif(isset($itemRelation[$rel])) {
                     $itemRelation = $itemRelation[$rel];
+                    $founded = true;
                 }
             }
 
-            if(isset($itemRelation[$name])) {
+            if(true === $founded) {
                 return $itemRelation[$name];
             } else {
                 return null;

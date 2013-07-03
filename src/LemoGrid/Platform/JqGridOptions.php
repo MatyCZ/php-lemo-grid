@@ -156,7 +156,7 @@ class JqGridOptions extends AbstractOptions
      */
     protected $filterToolbar = array(
         'stringResult' => true,
-        'searchOnEnter' => false
+        'searchOnEnter' => true
     );
 
     /**

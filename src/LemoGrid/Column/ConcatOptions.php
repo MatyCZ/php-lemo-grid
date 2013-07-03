@@ -14,7 +14,7 @@ class ConcatOptions extends AbstractOptions
     /**
      * @var string
      */
-    protected $separator = ' ';
+    protected $pattern;
 
     /**
      * @param  array $identifiers
@@ -23,7 +23,6 @@ class ConcatOptions extends AbstractOptions
     public function setIdentifiers(array $identifiers)
     {
         $this->identifiers = $identifiers;
-
         return $this;
     }
 
@@ -36,21 +35,20 @@ class ConcatOptions extends AbstractOptions
     }
 
     /**
-     * @param  string $separator
+     * @param  string $pattern
      * @return ConcatOptions
      */
-    public function setSeparator($separator)
+    public function setPattern($pattern)
     {
-        $this->separator = $separator;
-
+        $this->pattern = $pattern;
         return $this;
     }
 
     /**
      * @return string
      */
-    public function getSeparator()
+    public function getPattern()
     {
-        return $this->separator;
+        return $this->pattern;
     }
 }
