@@ -5,7 +5,8 @@ namespace LemoGrid\Adapter\Doctrine;
 use DateTime;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use LemoGrid\Adapter\AbstractAdapter;
-use LemoGrid\Column\Concat;
+use LemoGrid\Column\Concat as ColumnConcat;
+use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 
@@ -50,14 +51,13 @@ class QueryBuilder extends AbstractAdapter
         foreach ($this->executeQuery() as $item)
         {
             $data = array();
-
             foreach($this->getGrid()->getColumns() as $column) {
                 $colIdentifier = $column->getIdentifier();
                 $colname = $column->getName();
                 $data[$colname] = null;
 
                 // Nacteme si data radku
-                $value = $this->findValue($colIdentifier, $item);
+                $value = $this->findValueByRowData($colIdentifier, $item);
                 $column->setValue($value);
 
                 $value = $column->renderValue();
@@ -66,14 +66,16 @@ class QueryBuilder extends AbstractAdapter
                     continue;
                 }
 
+                // COLUMN - DateTime
                 if($value instanceof DateTime) {
                     $value = $value->format('Y-m-d H:i:s');
                 }
 
-                if($column instanceof \LemoGrid\Column\Concat) {
+                // COLUMN - Concat
+                if($column instanceof ColumnConcat) {
                     $values = array();
                     foreach($column->getOptions()->getIdentifiers() as $identifier) {
-                        $val = $this->findValue($identifier, $item);
+                        $val = $this->findValueByColumnData($identifier, $column->getValue());
 
                         if(!empty($val)) {
                             if($val instanceof DateTime) {
@@ -89,10 +91,39 @@ class QueryBuilder extends AbstractAdapter
                     unset($values, $identifier);
                 }
 
+                // COLUMN - Concat group
+                if($column instanceof ColumnConcatGroup) {
+                    $values = array();
+
+                    if (is_array($column->getValue())) {
+                        foreach ($column->getValue() as $value) {
+
+                            $valuesLine = array();
+                            foreach($column->getOptions()->getIdentifiers() as $identifier) {
+                                $val = $this->findValueByColumnData($identifier, $value);
+
+                                if(!empty($val)) {
+                                    if($val instanceof DateTime) {
+                                        $val = $value->format('Y-m-d H:i:s');
+                                    }
+
+                                    $valuesLine[] = $val;
+                                }
+                            }
+
+                            $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                        }
+                    }
+
+                    $value = implode($column->getOptions()->getSeparator(), $values);
+
+                    unset($values, $valuesLine, $identifier);
+                }
+
                 // Projdeme data a nahradime data ve formatu %xxx%
                 if(preg_match_all('/%([a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
-                        $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
+                        $value = str_replace($matches[0][$key], $this->findValueByRowData($matches[1][$key], $item), $value);
                     }
                 }
 
@@ -126,7 +157,7 @@ class QueryBuilder extends AbstractAdapter
                 $append = null;
 
                 if(array_key_exists($col->getName(), $filters)) {
-                    if($col instanceof Concat) {
+                    if($col instanceof ColumnConcat) {
                         $or = $this->getQueryBuilder()->expr()->orx();
                         foreach($col->getOptions()->getIdentifiers() as $identifier){
                             $or->add($identifier . " LIKE '%" . $filters[$col->getName()]['value'] . "%'");
@@ -144,7 +175,7 @@ class QueryBuilder extends AbstractAdapter
         }
 
         if($grid->has($grid->getPlatform()->getSortColumn())) {
-            if($grid->get($grid->getPlatform()->getSortColumn()) instanceof Concat) {
+            if($grid->get($grid->getPlatform()->getSortColumn()) instanceof ColumnConcat) {
                 foreach($grid->get($grid->getPlatform()->getSortColumn())->getOptions()->getIdentifiers() as $identifier){
                     if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
                         $method = 'orderBy';
@@ -240,10 +271,10 @@ class QueryBuilder extends AbstractAdapter
      * Find value for column
      *
      * @param  string $columnName
-     * @param  array $item
+     * @param  array  $item
      * @return null|string
      */
-    protected function findValue($columnName, array $item)
+    protected function findValueByRowData($columnName, array $item)
     {
         // Determinate column name and alias name
         $explode = explode('.', $columnName);
@@ -282,6 +313,34 @@ class QueryBuilder extends AbstractAdapter
                 return $itemRelation[$name];
             } else {
                 return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find value for column
+     *
+     * @param  string $identifier
+     * @param  array $value
+     * @return null|string
+     */
+    protected function findValueByColumnData($identifier, $value)
+    {
+        // Determinate column name and alias name
+        $explode = explode('.', $identifier);
+
+        if(isset($explode[1])) {
+            $name = $explode[1];
+        } else {
+            $name = $explode[0];
+        }
+
+        // Try find item in root
+        if (is_array($value)) {
+            if(array_key_exists($name, $value)) {
+                return $value[$name];
             }
         }
 
