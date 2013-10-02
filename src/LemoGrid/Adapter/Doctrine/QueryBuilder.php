@@ -201,7 +201,7 @@ class QueryBuilder extends AbstractAdapter
 
         $result = $this->getQueryBuilder()->getQuery()->getArrayResult();
         $this->countItems = count($result);
-        $this->countItemsTotal = ceil(count($resultCount) / $grid->getPlatform()->getOptions()->getRecordsPerPage());
+        $this->countItemsTotal = count($resultCount);
 
         return $result;
     }

@@ -187,7 +187,7 @@ class Factory
      *
      * @param  array $spec
      * @throws Exception\DomainException
-     * @return ColumnInterface
+     * @return GridInterface
      */
     public function createGrid($spec)
     {

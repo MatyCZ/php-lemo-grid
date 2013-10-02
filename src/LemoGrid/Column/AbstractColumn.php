@@ -227,7 +227,7 @@ abstract class AbstractColumn implements
     /**
      * Get the column value
      *
-     * @return string
+     * @return string|array
      */
     public function getValue()
     {

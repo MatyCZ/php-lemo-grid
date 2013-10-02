@@ -2,29 +2,34 @@
 
 namespace LemoGrid\Adapter\Php;
 
+use DateTime;
 use LemoGrid\Adapter\AbstractAdapter;
+use LemoGrid\Column\Concat as ColumnConcat;
+use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
+use LemoGrid\ResultSet\Data;
 
-class ArrayAdapter extends AbstractAdapter
+class PhpArray extends AbstractAdapter
 {
-    protected $_array = null;
-
-    protected $_arrayMap = null;
+    /**
+     * @var array
+     */
+    protected $rawData = array();
 
     /**
      * @var array
      */
-    protected $_internalMap = array();
+    protected $relations = array();
 
     /**
      * Constuctor
      *
-     * @param array      $dql     Data as key => value or only values
-     * @param array|null $arrayMap  Data map
+     * @param array $rawData   Data as key => value or only values
+     * @param array $relations Relation as relation alias => array field
      */
-    public function __construct(array $dql, array $arrayMap = null)
+    public function __construct(array $rawData = array(), array $relations = array())
     {
-        $this->_array = $dql;
-        $this->_arrayMap = $arrayMap;
+        $this->rawData = $rawData;
+        $this->relations = $relations;
     }
 
     /**
@@ -32,212 +37,200 @@ class ArrayAdapter extends AbstractAdapter
      *
      * @return array
      */
-    public function getData()
+    public function populateData()
     {
         $grid = $this->getGrid();
-        $array = $this->getArray();
-        $arrayMap = $this->getArrayMap();
+        $collection = array();
 
-        foreach($array as $item)
+        foreach($this->getRawData() as $item)
         {
-            $colIndex = 0;
-            $rowData = array();
+            $data = array();
 
-            foreach($grid->getColumns() as $column)
-            {
-                if($this->getArrayMap() === null) {
-                    $value = isset($item[$column->getIndex()]) ? $item[$column->getIndex()] : null;
+            foreach($grid->getColumns() as $column) {
+                $colIdentifier = $column->getIdentifier();
+                $data[$colIdentifier] = null;
 
-                    $this->_internalMap[$column->getIndex()] = $colIndex;
-                } else {
+                // Nacteme si data radku
+                $value = $this->findValueByRowData($colIdentifier, $item);
+                $column->setValue($value);
 
-                    $item = array_values($item);
+                $value = $column->renderValue();
 
-                    if(in_array($column->getIndex(), $arrayMap)) {
-                        $value = $item[array_search($column->getIndex(),$arrayMap)];
-                        $this->_internalMap[$column->getIndex()] = array_search($column->getIndex(),$arrayMap);
-                    } else {
-                        $value = null;
-                    }
+                if (null === $value) {
+                    continue;
                 }
 
-                //$condition = $column->getCondition();
-                $condition = null;
+                // COLUMN - DateTime
+                if($value instanceof DateTime) {
+                    $value = $value->format('Y-m-d H:i:s');
+                }
 
-                if($condition == null) {
-                    $value = $column->render($value);
-                } else {
-                    $conditionValue = $this->_getRowData($condition['column'], $item, $relations);
+                // COLUMN - Concat
+                if($column instanceof ColumnConcat) {
+                    $values = array();
+                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
+                        $val = $this->findValueByColumnData($identifier, $column->getValue());
 
-                    switch($condition['expression']) {
-                        case '==':
-                            if($conditionValue == $condition['value']) {
-                                $value = $column->render($value);
+                        if(!empty($val)) {
+                            if($val instanceof DateTime) {
+                                $val = $value->format('Y-m-d H:i:s');
                             }
-                            break;
-                        case '!=':
-                            if($conditionValue != $condition['value']) {
-                                $value = $column->render($value);
-                            }
-                            break;
-                        case '>':
-                            if($conditionValue > $condition['value']) {
-                                $value = $column->render($value);
-                            }
-                            break;
-                        case '>=':
-                            if($conditionValue >= $condition['value']) {
-                                $value = $column->render($value);
-                            }
-                            break;
-                        case '<=':
-                            if($conditionValue <= $condition['value']) {
-                                $value = $column->render($value);
-                            }
-                            break;
-                        case '<':
-                            if($conditionValue < $condition['value']) {
-                                $value = $column->render($value);
-                            }
-                            break;
+
+                            $values[] = $val;
+                        }
                     }
+
+                    $value = vsprintf($column->getOptions()->getPattern(), $values);
+
+                    unset($values, $identifier);
+                }
+
+                // COLUMN - Concat group
+                if($column instanceof ColumnConcatGroup) {
+                    $values = array();
+
+                    if (is_array($column->getValue())) {
+                        foreach ($column->getValue() as $value) {
+
+                            $valuesLine = array();
+                            foreach($column->getOptions()->getIdentifiers() as $identifier) {
+                                $val = $this->findValueByColumnData($identifier, $value);
+
+                                if(!empty($val)) {
+                                    if($val instanceof DateTime) {
+                                        $val = $value->format('Y-m-d H:i:s');
+                                    }
+
+                                    $valuesLine[] = $val;
+                                }
+                            }
+
+                            $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                        }
+                    }
+
+                    $value = implode($column->getOptions()->getSeparator(), $values);
+
+                    unset($values, $valuesLine, $identifier);
                 }
 
                 // Projdeme data a nahradime data ve formatu %xxx%
                 if(preg_match_all('/%([a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
-                        $value = str_replace($matches[0][$key], $item[$matches[1][$key]], $value);
+                        $value = str_replace($matches[0][$key], $this->findValueByRowData($matches[1][$key], $item), $value);
                     }
                 }
 
-                $rowData[] = $value;
-
-                $colIndex++;
+                $data[$colIdentifier] = $value;
+                $column->setValue($value);
             }
 
-            $data[] = $rowData;
+            $collection[] = $data;
         }
 
-        $this->_records = count($data);
+        $this->countItemsTotal = count($collection);
+        $collection = $this->_filterCollection($collection);
+        $this->countItems = count($collection);
 
-        $data = $this->_sortCollection($data);
+        $collection = $this->_sortCollection($collection);
+        $collection = array_slice($collection, $grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage(), $grid->getPlatform()->getOptions()->getRecordsPerPage());
 
-        $data = array_slice($data, $grid->getRecordsPerPage() * $grid->getAdapter()->getNumberOfCurrentPage() - $grid->getRecordsPerPage(), $grid->getRecordsPerPage());
+        $this->setData(new Data($collection));
 
-        $this->_recordsFiltered = count($data);
-
-        return $data;
+        return $this;
     }
 
-    private function _filterCollection($items, $columns, $query)
+    /**
+     * Filtr collection
+     *
+     * @param  array $collection
+     * @return array
+     */
+    private function _filterCollection(array $collection)
     {
-        if($items == null OR $columns == null OR $query == null) {
-            return $items;
+        $grid = $this->getGrid();
+        $filters = $grid->getParam('filters');
+
+        if(empty($collection) || empty($filters)) {
+            return $collection;
         }
 
-        $filteredItems = null;
-
-        // Aplikujeme filtr na zdrojova data
-        $a = 1;
-        $b = 1;
-        foreach($items as $item)
+        foreach($collection as $index => $item)
         {
-            $item['grid_id'] = $a;
-
-            $valid = true;
-
-            foreach($columns as $column)
+            foreach($grid->getColumns() as $col)
             {
-                // Pokud je mezi GET parametry filtr na dany sloupec
-                if(isset($query[$column->getName()]) AND $query[$column->getName()] != '') {
-                    // Pokud byl nalezen sloupec primo mezi daty
-                    if(isset($item[$column->getSourceField()])) {
-                        // Pokud zaznam ve sloupci neodpovida filtru
-                        if(!preg_match('/' . strtolower($query[$column->getName()]) . '/', strtolower($item[$column->getSourceField()]))) {
-                            $valid = false;
-                            break;
-                        }
-                    } else {
+                if($col->getAttributes()->getIsSearchable()) {
+                    $prepend = null;
+                    $append = null;
 
-                        $relationName = $column->getRelationName();
-                        $sourceField = $column->getSourceField();
-                        $string = null;
+                    if(array_key_exists($col->getName(), $filters)) {
 
-                        if($relationName == null AND isset($item['Translation']) OR $relationName == 'Translation' AND isset($item['Translation'])) {
-                            foreach($item['Translation'] as $lang => $values)
-                            {
-                                if(isset($values[$sourceField])) {
-                                    $string .= $values[$sourceField] . ' ';
+                        if($col instanceof ColumnConcat) {
+                            $isValid = true;
+                            foreach($col->getOptions()->getIdentifiers() as $identifier){
+                                if(!preg_match('/' . $filters[$col->getName()]['value'] . '/i', $item[$identifier])) {
+                                    $isValid == false;
                                 }
                             }
-                        }
-
-                        if($relationName != null AND isset($item[$relationName])) {
-                            // Pokud byla nalezena prekladova tabulka
-                            if(isset($item[$relationName]['Translation'])) {
-                                foreach($item[$relationName]['Translation'] as $lang => $values)
-                                {
-                                    if(isset($values[$sourceField])) {
-                                        $string .= $values[$sourceField] . ' ';
-                                    }
-                                }
+                            if (false === $isValid) {
+                                unset($collection[$index]);
                             }
-
-                            // Pokud byl nalezen odpovidajici zaznam v relaci
-                            if(isset($item[$relationName][$sourceField])) {
-                                $string .= $item[$relationName][$sourceField] . ' ';
+                        } else {
+                            if(!preg_match('/' . $filters[$col->getName()]['value'] . '/i', $item[$col->getIdentifier()])) {
+                                unset($collection[$index]);
                             }
-                        }
-
-                        if(!preg_match('/' . mb_strtolower($query[$column->getName()]) . '/', mb_strtolower($string))) {
-                            $valid = false;
-                            break;
                         }
                     }
                 }
             }
-
-            // Pokud zaznam odpovida vsem filtrum
-            if($valid === true) {
-                $item['grid_order'] = $b;
-                $filteredItems[] = $item;
-
-                $b++;
-            }
-
-            $a++;
         }
 
-        return $filteredItems;
+        return $collection;
     }
 
-    private function _sortCollection($records)
+    /**
+     * Sort collection
+     *
+     * @param  array $collection
+     * @return array
+     */
+    private function _sortCollection($collection)
     {
-        if($records == null) {
-            return $records;
+        $dataSorted = array();
+        $grid = $this->getGrid();
+
+        if($collection == null) {
+            return $collection;
         }
 
-        $queryParams = $this->getGrid()->getParams();
-
-        if(isset($queryParams['sortColumn'])) {
-            $sortBy = $queryParams['sortColumn'];
-
-            if(isset($queryParams['sortDirect'])) {
-                if(strtolower($queryParams['sortDirect']) != 'asc' AND strtolower($queryParams['sortDirect']) != 'desc') {
-                    throw new Lemo_Grid_Exception('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
+        if($grid->has($grid->getPlatform()->getSortColumn())) {
+            if($grid->get($grid->getPlatform()->getSortColumn()) instanceof ColumnConcat) {
+                foreach($grid->get($grid->getPlatform()->getSortColumn())->getOptions()->getIdentifiers() as $identifier){
+                    $sortColumn = $identifier;
+                    $sortDirect = $grid->getPlatform()->getSortDirect();
                 }
-
-                $sortDirect = $queryParams['sortDirect'];
             } else {
-                $sortDirect = 'asc';
+                $sortColumn = $grid->get($grid->getPlatform()->getSortColumn())->getIdentifier();
+                $sortDirect = $grid->getPlatform()->getSortDirect();
             }
-        } else {
-            $sortBy = $defaultSort['sortBy'];
-            $sortDirect = $defaultSort['sortDirect'];
         }
 
-        foreach(array_keys($records) as $key) {
-            $temp[$key] = $records[$key][$this->_internalMap[$sortBy]];
+        if (!isset($sortColumn)) {
+            foreach($grid->getColumns() as $col) {
+                if($col->getAttributes()->getIsSortable()) {
+                    $sortColumn = $col->getIdentifier();
+                    $sortDirect = 'asc';
+                    break;
+                }
+            }
+        }
+
+        if (empty($sortColumn) || empty($sortDirect)) {
+            return $collection;
+        }
+
+        foreach(array_keys($collection) as $key) {
+            $temp[$key] = $collection[$key];
 
             if(strtolower($sortDirect) == 'asc') {
                 asort($temp);
@@ -246,16 +239,105 @@ class ArrayAdapter extends AbstractAdapter
             }
         }
 
-        foreach(array_keys($temp) as $key)
-        {
+        foreach(array_keys($temp) as $key) {
             if(is_numeric($key)) {
-                $sortedItems[] = $records[$key];
+                $dataSorted[] = $collection[$key];
             } else {
-                $sortedItems[$key] = $records[$key];
+                $dataSorted[$key] = $collection[$key];
             }
         }
 
-        return $sortedItems;
+        return $dataSorted;
+    }
+
+    /**
+     * Find value for column
+     *
+     * @param  string $columnName
+     * @param  array  $item
+     * @return null|string
+     */
+    protected function findValueByRowData($columnName, array $item)
+    {
+        // Determinate column name and alias name
+        $explode = explode('.', $columnName);
+
+        if(isset($explode[1])) {
+            $name = $explode[1];
+            $relationAlias = $explode[0];
+        } else {
+            $name = $explode[0];
+            $relationAlias = null;
+        }
+
+        // Try find item in root
+        if(array_key_exists($name, $item) && (null === $relationAlias || !array_key_exists($relationAlias, $this->relations))) {
+            return $item[$name];
+        }
+
+        // Try find item in relations
+        if(array_key_exists($relationAlias, $this->relations)) {
+            $relation = explode('/', $this->relations[$relationAlias]);
+            $itemRelation = $item;
+
+            // Read data from relation
+            $founded = false;
+            foreach ($relation as $rel) {
+                if(isset($itemRelation[$rel][0]) && count($itemRelation[$rel]) == 1) {
+                    $itemRelation = $itemRelation[$rel][0];
+                    $founded = true;
+                } elseif(isset($itemRelation[$rel])) {
+                    $itemRelation = $itemRelation[$rel];
+                    $founded = true;
+                }
+            }
+
+            if(true === $founded) {
+                return $itemRelation[$name];
+            } else {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Find value for column
+     *
+     * @param  string $identifier
+     * @param  array $value
+     * @return null|string
+     */
+    protected function findValueByColumnData($identifier, $value)
+    {
+        // Determinate column name and alias name
+        $explode = explode('.', $identifier);
+
+        if(isset($explode[1])) {
+            $name = $explode[1];
+        } else {
+            $name = $explode[0];
+        }
+
+        // Try find item in root
+        if (is_array($value)) {
+            if(array_key_exists($name, $value)) {
+                return $value[$name];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param  array $rawData
+     * @return PhpArray
+     */
+    public function setRawData(array $rawData)
+    {
+        $this->rawData = $rawData;
+        return $this;
     }
 
     /**
@@ -263,18 +345,26 @@ class ArrayAdapter extends AbstractAdapter
      *
      * @return array|null
      */
-    public function getArray()
+    public function getRawData()
     {
-        return $this->_array;
+        return $this->rawData;
     }
 
     /**
-     * Get data source array map
-     *
-     * @return array|null
+     * @param  array $relations
+     * @return PhpArray
      */
-    public function getArrayMap()
+    public function setRelations(array $relations)
     {
-        return array_values($this->_arrayMap);
+        $this->relations = $relations;
+        return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function getRelations()
+    {
+        return $this->relations;
     }
 }

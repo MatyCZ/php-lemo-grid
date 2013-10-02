@@ -390,8 +390,8 @@ class Grid implements GridInterface
         ob_clean();
         echo Json\Encoder::encode(array(
             'page'    => $adapter->getNumberOfCurrentPage(),
-            'total'   => $adapter->getCountOfItemsTotal(),
-            'records' => $adapter->getCountOfItems(),
+            'total'   => $adapter->getNumberOfPages(),
+            'records' => $adapter->getCountOfItemsTotal(),
             'rows'    => $items,
         ));
         exit;
