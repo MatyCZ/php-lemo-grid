@@ -38,7 +38,7 @@ abstract class AbstractAdapter implements AdapterInterface
      */
     public function getNumberOfPages()
     {
-        return ceil($this->getCountOfItemsTotal() / $this->getGrid()->getPlatform()->getOptions()->getRecordsPerPage());
+        return ceil($this->getCountOfItemsTotal() / $this->getNumberOfVisibleRows());
     }
 
     /**
@@ -55,6 +55,22 @@ abstract class AbstractAdapter implements AdapterInterface
         }
 
         return $page;
+    }
+
+    /**
+     * Get number of current page
+     *
+     * @return int
+     */
+    public function getNumberOfVisibleRows()
+    {
+        $rows = $this->getGrid()->getParam('rows');
+
+        if(null === $rows) {
+            $rows = $this->getGrid()->getPlatform()->getOptions()->getRecordsPerPage();
+        }
+
+        return $rows;
     }
 
     /**

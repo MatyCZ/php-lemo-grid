@@ -146,9 +146,6 @@ class QueryBuilder extends AbstractAdapter
         $filters = $grid->getParam('filters');
         $resultCount = $this->getQueryBuilder()->getQuery()->getScalarResult();
 
-        $this->getQueryBuilder()->setMaxResults($grid->getPlatform()->getOptions()->getRecordsPerPage());
-        $this->getQueryBuilder()->setFirstResult($grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage());
-
         // WHERE
         foreach($grid->getColumns() as $col)
         {
@@ -190,13 +187,13 @@ class QueryBuilder extends AbstractAdapter
             }
         }
 
-        $offset = $grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage();
+        $offset = $this->getNumberOfVisibleRows() * $this->getNumberOfCurrentPage() - $this->getNumberOfVisibleRows();
 
         if($offset < 0) {
             $offset = 0;
         }
 
-        $this->getQueryBuilder()->setMaxResults($grid->getPlatform()->getOptions()->getRecordsPerPage());
+        $this->getQueryBuilder()->setMaxResults($this->getNumberOfVisibleRows());
         $this->getQueryBuilder()->setFirstResult($offset);
 
         $result = $this->getQueryBuilder()->getQuery()->getArrayResult();

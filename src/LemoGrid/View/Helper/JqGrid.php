@@ -61,18 +61,18 @@ class JqGrid extends AbstractHelper
         'cell_edit_url'                      => 'editurl',
         'cell_save_type'                     => 'cellsubmit',
         'cell_save_url'                      => 'cellurl',
-        'data_string'                        => 'dataString',
-        'data_type'                          => 'dataType',
+        'data_string'                        => 'datastr',
+        'data_type'                          => 'datatype',
         'default_page'                       => 'page',
         'expand_column_identifier'           => 'ExpandColumn',
         'expand_column_on_click'             => 'ExpandColClick',
         'force_fit'                          => 'forceFit',
-        'grid_state'                         => 'gridState',
+        'grid_state'                         => 'gridstate',
         'grouping'                           => 'grouping',
-        'header_titles'                      => 'headerTitles',
+        'header_titles'                      => 'headertitles',
         'height'                             => 'height',
         'hover_rows'                         => 'hoverrows',
-        'load_once'                          => 'loadOnce',
+        'load_once'                          => 'loadonce',
         'load_type'                          => 'loadui',
         'multi_select'                       => 'multiselect',
         'multi_select_key'                   => 'multikey',
@@ -85,7 +85,7 @@ class JqGrid extends AbstractHelper
         'render_records_info'                => 'viewrecords',
         'render_row_numbers_column'          => 'rownumbers',
         'request_type'                       => 'mtype',
-        'resize_class'                       => 'resizeClass',
+        'resize_class'                       => 'resizeclass',
         'records_per_page'                   => 'rowNum',
         'records_per_page_list'              => 'rowList',
         'scroll'                             => 'scroll',
@@ -397,7 +397,7 @@ class JqGrid extends AbstractHelper
             $name = $this->gridAttributes[$name];
         }
 
-        return strtolower($name);
+        return $name;
     }
 
     /**

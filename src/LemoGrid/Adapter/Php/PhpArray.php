@@ -133,7 +133,7 @@ class PhpArray extends AbstractAdapter
         $this->countItems = count($collection);
 
         $collection = $this->_sortCollection($collection);
-        $collection = array_slice($collection, $grid->getPlatform()->getOptions()->getRecordsPerPage() * $this->getNumberOfCurrentPage() - $grid->getPlatform()->getOptions()->getRecordsPerPage(), $grid->getPlatform()->getOptions()->getRecordsPerPage());
+        $collection = array_slice($collection, $this->getNumberOfVisibleRows() * $this->getNumberOfCurrentPage() - $this->getNumberOfVisibleRows(), $this->getNumberOfVisibleRows());
 
         $this->setData(new Data($collection));
 
