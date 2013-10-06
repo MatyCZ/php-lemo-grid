@@ -23,6 +23,7 @@ class GridColumnManager extends AbstractPluginManager
      * @var array
      */
     protected $invokableClasses = array(
+        'button'       => 'LemoGrid\Column\Button',
         'concat'       => 'LemoGrid\Column\Concat',
         'concatgroup'  => 'LemoGrid\Column\ConcatGroup',
         'concat_group' => 'LemoGrid\Column\ConcatGroup',
