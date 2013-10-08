@@ -48,7 +48,7 @@ class QueryBuilder extends AbstractAdapter
         $this->findAliases();
         $this->findRelations($this->aliasRoot);
 
-        foreach ($this->executeQuery() as $item)
+        foreach ($this->executeQuery() as $index => $item)
         {
             $data = array();
             foreach($this->getGrid()->getColumns() as $column) {
@@ -123,7 +123,11 @@ class QueryBuilder extends AbstractAdapter
                 // Projdeme data a nahradime data ve formatu %xxx%
                 if(preg_match_all('/%([a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
-                        $value = str_replace($matches[0][$key], $this->findValueByRowData($matches[1][$key], $item), $value);
+                        if ($key == '%_index%') {
+                            $value = str_replace($matches[0][$key], $index, $value);
+                        } else {
+                            $value = str_replace($matches[0][$key], $this->findValueByRowData($matches[1][$key], $item), $value);
+                        }
                     }
                 }
 
