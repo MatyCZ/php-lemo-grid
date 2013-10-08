@@ -121,9 +121,9 @@ class QueryBuilder extends AbstractAdapter
                 }
 
                 // Projdeme data a nahradime data ve formatu %xxx%
-                if(preg_match_all('/%([a-zA-Z0-9\._-]+)%/', $value, $matches)) {
+                if(preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
-                        if ($key == '%_index%') {
+                        if ('%_index%' == $matches[0][$key]) {
                             $value = str_replace($matches[0][$key], $index, $value);
                         } else {
                             $value = str_replace($matches[0][$key], $this->findValueByRowData($matches[1][$key], $item), $value);
