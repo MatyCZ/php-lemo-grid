@@ -125,7 +125,7 @@ class PhpArray extends AbstractAdapter
                     }
                 }
 
-                $data[$colIdentifier] = $value;
+                $data[$column->getName()] = $value;
                 $column->setValue($value);
             }
 
