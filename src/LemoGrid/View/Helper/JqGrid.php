@@ -427,6 +427,7 @@ class JqGrid extends AbstractHelper
         if (isset($url['query'])) {
             parse_str($url['query'], $queryParams);
         }
+
         $queryParams['_name'] = $this->getGrid()->getName();
 
         $attributes->setUrl($this->getView()->serverUrl() . $url['path'] . '?' . http_build_query($queryParams));

@@ -2,6 +2,7 @@
 
 namespace LemoGrid\Platform;
 
+use LemoGrid\Exception;
 use Zend\Stdlib\AbstractOptions;
 
 class JqGridOptions extends AbstractOptions
@@ -757,7 +758,8 @@ class JqGridOptions extends AbstractOptions
     }
 
     /**
-     * @param string $dataType
+     * @param  string $dataType
+     * @throws Exception\InvalidArgumentException
      * @return JqGridOptions
      */
     public function setDataType($dataType)
@@ -780,26 +782,6 @@ class JqGridOptions extends AbstractOptions
     {
         return $this->dataType;
     }
-
-//    /**
-//     * @return string
-//     */
-//    public function getDefaultSortName($fromFirstColumn = true)
-//    {
-//        if(null === $this->defaultSortName) {
-//            if(true === $fromFirstColumn) {
-//                $col = current($this->getColumns());
-//
-//                if($col) {
-//                    return $col->getName();
-//                } else {
-//                    throw new Exception\InvalidArgumentException('Default sort column was not defined');
-//                }
-//            }
-//        }
-//
-//        return $this->defaultSortName;
-//    }
 
     /**
      * @param string $expandColumnIdentifier
@@ -1095,7 +1077,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $pagerElementId
-     * @return Grid
+     * @return JqGridOptions
      */
     public function setPagerElementId($pagerElementId)
     {
