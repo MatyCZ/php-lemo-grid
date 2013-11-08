@@ -111,7 +111,9 @@ class QueryBuilder extends AbstractAdapter
                                 }
                             }
 
-                            $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                            if (!empty($valuesLine)) {
+                                $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                            }
                         }
                     }
 

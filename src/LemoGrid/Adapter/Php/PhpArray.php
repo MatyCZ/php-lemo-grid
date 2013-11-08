@@ -105,7 +105,9 @@ class PhpArray extends AbstractAdapter
                                 }
                             }
 
-                            $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                            if (!empty($valuesLine)) {
+                                $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                            }
                         }
                     }
 
@@ -295,8 +297,7 @@ class PhpArray extends AbstractAdapter
                     $founded = true;
                 }
             }
-
-            if(true === $founded) {
+            if(true === $founded && isset($itemRelation[$name])) {
                 return $itemRelation[$name];
             } else {
                 return null;
