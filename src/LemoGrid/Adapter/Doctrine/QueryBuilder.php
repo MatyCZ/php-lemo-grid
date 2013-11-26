@@ -57,7 +57,7 @@ class QueryBuilder extends AbstractAdapter
                 $data[$colname] = null;
 
                 // Nacteme si data radku
-                $value = $this->findValueByRowData($colIdentifier, $item);
+                $value = $this->findValue($colIdentifier, $item);
                 $column->setValue($value);
 
                 $value = $column->renderValue();
@@ -73,9 +73,11 @@ class QueryBuilder extends AbstractAdapter
 
                 // COLUMN - Concat
                 if($column instanceof ColumnConcat) {
+                    $value = null;
                     $values = array();
+
                     foreach($column->getOptions()->getIdentifiers() as $identifier) {
-                        $val = $this->findValueByColumnData($identifier, $column->getValue());
+                        $val = $this->findValue($identifier, $item);
 
                         if(!empty($val)) {
                             if($val instanceof DateTime) {
@@ -86,34 +88,39 @@ class QueryBuilder extends AbstractAdapter
                         }
                     }
 
-                    $value = vsprintf($column->getOptions()->getPattern(), $values);
+                    if (!empty($values)) {
+                        $value = vsprintf($column->getOptions()->getPattern(), $values);
+                    }
 
                     unset($values, $identifier);
                 }
 
                 // COLUMN - Concat group
                 if($column instanceof ColumnConcatGroup) {
+                    $value = null;
                     $values = array();
 
-                    if (is_array($column->getValue())) {
-                        foreach ($column->getValue() as $value) {
+                    $valuesLine = array();
+                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
+                        $val = $this->findValue($identifier, $item);
 
-                            $valuesLine = array();
-                            foreach($column->getOptions()->getIdentifiers() as $identifier) {
-                                $val = $this->findValueByColumnData($identifier, $value);
-
-                                if(!empty($val)) {
-                                    if($val instanceof DateTime) {
-                                        $val = $value->format('Y-m-d H:i:s');
-                                    }
-
-                                    $valuesLine[] = $val;
+                        if (null !== $val) {
+                            foreach ($val as $index => $v) {
+                                if($v instanceof DateTime) {
+                                    $v = $v->format('Y-m-d H:i:s');
                                 }
-                            }
 
-                            if (!empty($valuesLine)) {
-                                $values[] = vsprintf($column->getOptions()->getPattern(), $valuesLine);
+                                $valuesLine[$index][] = $v;
                             }
+                        }
+                    }
+
+                    // Slozime jednotlive casti na radak
+                    foreach ($valuesLine as $line) {
+                        if (!empty($line)) {
+                            $values[] = vsprintf($column->getOptions()->getPattern(), $line);
+                        } else {
+                            $values[] = null;
                         }
                     }
 
@@ -128,7 +135,7 @@ class QueryBuilder extends AbstractAdapter
                         if ('%_index%' == $matches[0][$key]) {
                             $value = str_replace($matches[0][$key], $index, $value);
                         } else {
-                            $value = str_replace($matches[0][$key], $this->findValueByRowData($matches[1][$key], $item), $value);
+                            $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                         }
                     }
                 }
@@ -258,11 +265,7 @@ class QueryBuilder extends AbstractAdapter
             }
 
             if(isset($this->aliases[$item['alias']])) {
-                $rel = $this->findRelations($item['alias'], true);
-
-                foreach($rel as $key => $value) {
-                    $this->relations[$key] = $value;
-                }
+                $this->findRelations($item['alias'], true);
             }
         }
 
@@ -272,77 +275,33 @@ class QueryBuilder extends AbstractAdapter
     /**
      * Find value for column
      *
-     * @param  string $columnName
+     * @param  string $identifier
      * @param  array  $item
      * @return null|string
      */
-    protected function findValueByRowData($columnName, array $item)
+    protected function findValue($identifier, array $item)
     {
         // Determinate column name and alias name
-        $explode = explode('.', $columnName);
+        $identifier = substr($identifier, strpos($identifier, '.') +1);
+        $parts = explode('.', $identifier);
 
-        if(isset($explode[1])) {
-            $name = $explode[1];
-            $relationAlias = $explode[0];
+        if (isset($item[$parts[0]]) && count($parts) > 1) {
+            return $this->findValue($identifier, $item[$parts[0]]);
+        }
+
+        if (isset($item[$identifier])) {
+            return $item[$identifier];
         } else {
-            $name = $explode[0];
-            $relationAlias = null;
-        }
+            if (isset($item[0])) {
 
-        // Try find item in root
-        if(array_key_exists($name, $item) && (null === $relationAlias || !array_key_exists($relationAlias, $this->relations))) {
-            return $item[$name];
-        }
-
-        // Try find item in relations
-        if(array_key_exists($relationAlias, $this->relations)) {
-            $relation = explode('/', $this->relations[$relationAlias]);
-            $itemRelation = $item;
-
-            // Read data from relation
-            foreach ($relation as $rel) {
-                $founded = false;
-                if(isset($itemRelation[$rel][0]) && count($itemRelation[$rel]) == 1) {
-                    $itemRelation = $itemRelation[$rel][0];
-                    $founded = true;
-                } elseif(isset($itemRelation[$rel])) {
-                    $itemRelation = $itemRelation[$rel];
-                    $founded = true;
+                $return = array();
+                foreach ($item as $it) {
+                    if (isset($it[$identifier])) {
+                        $return[] = $it[$identifier];
+                    }
                 }
-            }
 
-            if(true === $founded) {
-                return $itemRelation[$name];
-            } else {
-                return null;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Find value for column
-     *
-     * @param  string $identifier
-     * @param  array $value
-     * @return null|string
-     */
-    protected function findValueByColumnData($identifier, $value)
-    {
-        // Determinate column name and alias name
-        $explode = explode('.', $identifier);
-
-        if(isset($explode[1])) {
-            $name = $explode[1];
-        } else {
-            $name = $explode[0];
-        }
-
-        // Try find item in root
-        if (is_array($value)) {
-            if(array_key_exists($name, $value)) {
-                return $value[$name];
+                return $return;
             }
         }
 
