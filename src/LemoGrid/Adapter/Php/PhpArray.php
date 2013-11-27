@@ -42,7 +42,7 @@ class PhpArray extends AbstractAdapter
         $grid = $this->getGrid();
         $collection = array();
 
-        foreach($this->getRawData() as $index => $item)
+        foreach($this->getRawData() as $indexRow => $item)
         {
             $data = array();
 
@@ -82,7 +82,9 @@ class PhpArray extends AbstractAdapter
                         }
                     }
 
-                    if (!empty($values)) {
+                    $patternCount = count($values);
+                    $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
+                    if ($patternCount > 0 && $patternCount == $patternCountParts) {
                         $value = vsprintf($column->getOptions()->getPattern(), $values);
                     }
 
@@ -111,7 +113,9 @@ class PhpArray extends AbstractAdapter
 
                     // Slozime jednotlive casti na radak
                     foreach ($valuesLine as $line) {
-                        if (!empty($line)) {
+                        $patternCount = count($line);
+                        $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
+                        if ($patternCount > 0 && $patternCount == $patternCountParts) {
                             $values[] = vsprintf($column->getOptions()->getPattern(), $line);
                         } else {
                             $values[] = null;
@@ -127,7 +131,7 @@ class PhpArray extends AbstractAdapter
                 if(preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
                         if ('%_index%' == $matches[0][$key]) {
-                            $value = str_replace($matches[0][$key], $index, $value);
+                            $value = str_replace($matches[0][$key], $indexRow, $value);
                         } else {
                             $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                         }
