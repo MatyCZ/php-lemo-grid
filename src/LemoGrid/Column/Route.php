@@ -147,7 +147,6 @@ class Route extends AbstractColumn
     public function setRouter(RouteStackInterface $router)
     {
         $this->router = $router;
-
         return $this;
     }
 
@@ -160,7 +159,6 @@ class Route extends AbstractColumn
     public function setRouteMatch(RouteMatch $routeMatch)
     {
         $this->routeMatch = $routeMatch;
-
         return $this;
     }
 }

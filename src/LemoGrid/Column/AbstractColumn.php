@@ -2,20 +2,44 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\GridInterface;
 use Zend\Stdlib\ArrayUtils;
 use LemoGrid\Exception;
 use Traversable;
-use Zend\Stdlib\AbstractOptions;
 use Zend\Stdlib\InitializableInterface;
 
 abstract class AbstractColumn implements
     ColumnInterface,
-    InitializableInterface
+    InitializableInterface,
+    ColumnPrepareAwareInterface
 {
     /**
      * @var ColumnAttributes
      */
     protected $attributes;
+
+    /**
+     * Prepare the grid column (mostly used for rendering purposes)
+     *
+     * @param  GridInterface $grid
+     * @return mixed
+     */
+    public function prepareColumn(GridInterface $grid)
+    {
+        $filters = $grid->getParam('filters');
+
+        if (isset($filters[$this->getName()])) {
+            $name = $this->getName();
+            $operator = $filters[$this->getName()]['operator'];
+            $operatorOutput = $grid->getPlatform()->getFilterOperatorOutput($operator);
+            $value = $filters[$this->getName()]['value'];
+
+            $this->getAttributes()->setSearchDataInit("function(elem) {
+                $(elem).val('{$value}');
+                $(elem).parents('tr').find(\"[colname='{$name}']\").attr('soper', '{$operatorOutput}').text('{$operator}');
+            }");
+        }
+    }
 
     /**
      * Standard boolean attributes, with expected values for enabling/disabling

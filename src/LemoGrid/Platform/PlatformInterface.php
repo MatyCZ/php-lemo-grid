@@ -31,17 +31,18 @@ interface PlatformInterface
     public function isRendered();
 
     /**
-     * Return sort by column index
+     * Return converted filter operator
      *
+     * @param  string $operator
      * @return string
+     * @throws Exception\InvalidArgumentException
      */
-    public function getSortColumn();
+    public function getFilterOperator($operator);
 
     /**
-     * Return sort direct
+     * Return sort by column name => direct
      *
-     * @throws Exception\UnexpectedValueException
-     * @return string
+     * @return array
      */
-    public function getSortDirect();
+    public function getSort();
 }

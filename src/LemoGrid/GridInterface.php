@@ -136,19 +136,19 @@ interface GridInterface extends
     /**
      * Set param
      *
-     * @param  string $name
+     * @param  string $key
      * @param  mixed  $value
      * @return GridInterface
      */
-    public function setParam($name, $value);
+    public function setParam($key, $value);
 
     /**
      * Get param
      *
-     * @param  string $name
+     * @param  string $key
      * @return mixed
      */
-    public function getParam($name);
+    public function getParam($key);
 
     /**
      * Exist param with given name?

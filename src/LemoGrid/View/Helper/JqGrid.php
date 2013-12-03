@@ -22,13 +22,13 @@ class JqGrid extends AbstractHelper
         'class'                => 'classes',
         'date_format'          => 'datefmt',
         'default_value'        => 'defval',
-        'edi_element'          => 'edittype',
+        'edit_element'         => 'edittype',
         'edit_element_options' => 'formoptions',
         'edit_options'         => 'editoptions',
         'edit_rules'           => 'editrules',
         'format'               => 'formatter',
         'format_options'       => 'formatoptions',
-        'identifier'           => 'name',
+        'name'                 => 'name',
         'is_editable'          => 'isEditable',
         'is_fixed'             => 'page',
         'is_frozen'            => 'frozen',
@@ -42,6 +42,7 @@ class JqGrid extends AbstractHelper
         'search_options'       => 'searchOptions',
         'search_url'           => 'surl',
         'sort_type'            => 'sortType',
+        'show_title'           => 'title',
         'width'                => 'width',
     );
 
@@ -68,6 +69,7 @@ class JqGrid extends AbstractHelper
         'expand_column_on_click'             => 'ExpandColClick',
         'force_fit'                          => 'forceFit',
         'grid_state'                         => 'gridstate',
+        'grid_view'                          => 'gridview',
         'grouping'                           => 'grouping',
         'header_titles'                      => 'headertitles',
         'height'                             => 'height',
@@ -77,6 +79,7 @@ class JqGrid extends AbstractHelper
         'multi_select'                       => 'multiselect',
         'multi_select_key'                   => 'multikey',
         'multi_select_width'                 => 'multiselectWidth',
+        'multi_sort'                         => 'multiSort',
         'pager_element_id'                   => 'pager',
         'pager_position'                     => 'pagerpos',
         'pager_show_buttions'                => 'pgbuttons',
@@ -147,7 +150,7 @@ class JqGrid extends AbstractHelper
 
         $grid->prepare();
 
-        if($grid->getPlatform()->isRendered()) {
+        if(isset($_GET['_name'])) {
             $grid->renderData();
         } else {
             $grid->getPlatform()->setOptions($this->gridModifyAttributes($grid->getPlatform()->getOptions()));
@@ -222,6 +225,7 @@ class JqGrid extends AbstractHelper
 
         $script[] = '        ]';
         $script[] = '    });';
+//        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false,add:false,edit:false,search:false,clear:true});";
 
         // Can render toolbar?
         if($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
@@ -306,9 +310,21 @@ class JqGrid extends AbstractHelper
                 return null;
             }
 
+            if ($key == 'value') {
+                foreach($value as $k => $val) {
+                    $values[] = $k . ':' . $val;
+                }
+
+                return 'value: "' . implode(';', $values) . '"';
+            }
+
             $values = array();
             foreach($value as $k => $val) {
-                $values[] = $this->buildScriptAttributes($k, $val);
+                $da = $this->buildScriptAttributes($k, $val);
+
+                if (!empty($da)) {
+                    $values[] = $this->buildScriptAttributes($k, $val);
+                }
             }
 
             if (in_array($key, array('filterToolbar'))) {
@@ -339,6 +355,8 @@ class JqGrid extends AbstractHelper
             } else {
                 $value = 'false';
             }
+            $r = $key . ': ' . $value;
+        } elseif (in_array($key, array('dataInit'))) {
             $r = $key . ': ' . $value;
         } else {
             $r = $key . ': \'' . $value . '\'';
@@ -371,15 +389,8 @@ class JqGrid extends AbstractHelper
      */
     protected function columnModifyAttributes(ColumnInterface $column, ColumnAttributes $attributes)
     {
-        $filters = $this->getGrid()->getParam('filters');
-
-        // If default value is not set, add default value from search param
-        if(null == $attributes->getSearchOptions() && array_key_exists($column->getName(), $filters)) {
-            $attributes->setSearchOptions(array('defaultValue' => $filters[$column->getName()]['value']));
-        }
-
-        if (null == $attributes->getIdentifier()) {
-            $attributes->setIdentifier($column->getName());
+        if (null === $attributes->getName()) {
+            $attributes->setName($column->getName());
         }
 
         return $attributes;
@@ -413,8 +424,32 @@ class JqGrid extends AbstractHelper
             $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
         }
 
-        $attributes->setSortName($this->getGrid()->getPlatform()->getSortColumn());
-        $attributes->setSortOrder($this->getGrid()->getPlatform()->getSortDirect());
+        $sort = $this->getGrid()->getPlatform()->getSort();
+
+        $sidx = '';
+        $sord = '';
+        $sortCount = count($sort);
+        $i=0;
+        foreach ($sort as $column => $direct) {
+            $i++;
+
+            if (1 == $sortCount) {
+                $sidx = $column;
+                $sord = $direct;
+            } else {
+                if ($i == $sortCount) {
+                    $sidx .= $column;
+                    $sord = $direct;
+                } else {
+                    $sidx .= $column . ' ' . $direct . ', ';
+                }
+            }
+        }
+
+        if (!empty($sidx) || !empty($sord)) {
+            $attributes->setSortName($sidx);
+            $attributes->setSortOrder($sord);
+        }
 
         // URL
         $url = $attributes->getUrl();

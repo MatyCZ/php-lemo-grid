@@ -2,7 +2,9 @@
 
 namespace LemoGrid;
 
+use LemoGrid\Column\Button;
 use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Column\Route;
 use Zend\Console\Console;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\Mvc\Router\RouteMatch;
@@ -24,6 +26,7 @@ class GridColumnManager extends AbstractPluginManager
      */
     protected $invokableClasses = array(
         'button'       => 'LemoGrid\Column\Button',
+        'buttons'      => 'LemoGrid\Column\Buttons',
         'concat'       => 'LemoGrid\Column\Concat',
         'concatgroup'  => 'LemoGrid\Column\ConcatGroup',
         'concat_group' => 'LemoGrid\Column\ConcatGroup',
@@ -55,7 +58,7 @@ class GridColumnManager extends AbstractPluginManager
      */
     public function injectRouter($column)
     {
-        if ($column instanceof Column\Route) {
+        if ($column instanceof Column\Route || $column instanceof Column\Buttons) {
             $locator = $this->getServiceLocator();
             $router = Console::isConsole() ? 'HttpRouter' : 'Router';
 

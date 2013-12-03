@@ -59,7 +59,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $autowidth = true;
+    protected $autowidth;
 
     /**
      * Defines the Caption layer for the grid. This caption appears above the Header layer. If the string is empty
@@ -157,7 +157,8 @@ class JqGridOptions extends AbstractOptions
      */
     protected $filterToolbar = array(
         'stringResult' => true,
-        'searchOnEnter' => true
+        'searchOnEnter' => true,
+        'searchOperators' => false,
     );
 
     /**
@@ -175,7 +176,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $forceFit;
+    protected $forceFit = true;
 
     /**
      * Determines the current state of the grid (i.e. when used with hiddengrid, hidegrid and caption options). Can
@@ -184,6 +185,20 @@ class JqGridOptions extends AbstractOptions
      * @var string
      */
     protected $gridState;
+
+    /**
+     * In the previous versions of jqGrid including 3.4.X, reading a relatively large data set (number of rows >= 100)
+     * caused speed problems. The reason for this was that as every cell was inserted into the grid we applied about
+     * 5 to 6 jQuery calls to it. Now this problem is resolved; we now insert the entry row at once with a jQuery
+     * append. The result is impressive - about 3 to 5 times faster. What will be the result if we insert all the data
+     * at once? Yes, this can be done with a help of gridview option (set it to true). The result is a grid that is
+     * 5 to 10 times faster. Of course, when this option is set to true we have some limitations. If set to true we can
+     * not use treeGrid, subGrid, or the afterInsertRow event. If you do not use these three options in the grid you can
+     * set this option to true and enjoy the speed.
+     *
+     * @var bool
+     */
+    protected $gridView = true;
 
     /**
      * If the option is set to true the title attribute is added to the column headers.
@@ -249,6 +264,18 @@ class JqGridOptions extends AbstractOptions
      * @var int
      */
     protected $multiSelectWidth;
+
+    /**
+     * If set to true enables the multisorting. The options work if the datatype is local. In case when the data is
+     * obtained from the server the sidx parameter contain the order clause. It is a comma separated string in format
+     * field1 asc, field2 desc …, fieldN. Note that the last field does not not have asc or desc. It should be obtained
+     * from sord parameter. When the option is true the behavior is a s follow. The first click of the header field sort
+     * the field depending on the firstsortoption parameter in colModel or sortorder grid parameter. The next click sort
+     * it in reverse order. The third click removes the sorting from this field
+     *
+     * @var bool
+     */
+    protected $multiSort = true;
 
     /**
      * Defines that we want to use a pager bar to navigate through the records. This must be a valid html element;
@@ -351,7 +378,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var int
      */
-    protected $recordsPerPage = 25;
+    protected $recordsPerPage = 15;
 
     /**
      * An array to construct a select box element in the pager in which we can change the number of the visible rows.
@@ -361,7 +388,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var array
      */
-    protected $recordsPerPageList = array(5,10,25,50);
+    protected $recordsPerPageList = array(5, 15, 25, 50);
 
     /**
      * Creates dynamic scrolling grids. When enabled, the pager elements are disabled and we can use the vertical
@@ -439,7 +466,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $sortingColumns;
+    protected $sortingColumns = true;
 
     /**
      * The purpose of this parameter is to define different look and behavior of sorting icons that appear near the header.
@@ -823,13 +850,15 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  bool $searchOnEnter
+     * @param  bool $showOperators
      * @return JqGridOptions
      */
-    public function setFilterToolbar($searchOnEnter = true)
+    public function setFilterToolbar($searchOnEnter, $showOperators)
     {
         $this->filterToolbar = array(
             'stringResult' => true,
             'searchOnEnter' => $searchOnEnter,
+            'searchOperators' => $showOperators,
         );
 
         return $this;
@@ -841,6 +870,50 @@ class JqGridOptions extends AbstractOptions
     public function getFilterToolbar()
     {
         return $this->filterToolbar;
+    }
+
+    /**
+     * Set if filter toolbar search only on Enter
+     *
+     * @param  bool $searchOnEnter
+     * @return JqGridOptions
+     */
+    public function setFilterToolbarSearchOnEnter($searchOnEnter)
+    {
+        $this->filterToolbar['searchOnEnter'] = (bool) $searchOnEnter;
+        return $this;
+    }
+
+    /**
+     * Filter toolbar only on Enter?
+     *
+     * @return bool
+     */
+    public function getFilterToolbarSearchOnEnter()
+    {
+        return $this->filterToolbar['searchOnEnter'];
+    }
+
+    /**
+     * Set if filter toolbar show operators
+     *
+     * @param  bool $showOperators
+     * @return JqGridOptions
+     */
+    public function setFilterToolbarShowOperators($showOperators)
+    {
+        $this->filterToolbar['searchOperators'] = (bool) $showOperators;
+        return $this;
+    }
+
+    /**
+     * Show operators in filer toolbar?
+     *
+     * @return bool
+     */
+    public function getFilterToolbarShowOperators()
+    {
+        return $this->filterToolbar['searchOperators'];
     }
 
     /**
@@ -913,6 +986,24 @@ class JqGridOptions extends AbstractOptions
         $this->grouping = $grouping;
 
         return $this;
+    }
+
+    /**
+     * @param  boolean $gridView
+     * @return JqGridOptions
+     */
+    public function setGridView($gridView)
+    {
+        $this->gridView = $gridView;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getGridView()
+    {
+        return $this->gridView;
     }
 
     /**
@@ -1073,6 +1164,25 @@ class JqGridOptions extends AbstractOptions
     public function getMultiSelectWidth()
     {
         return $this->multiSelectWidth;
+    }
+
+    /**
+     * @param  boolean $multiSort
+     * @return JqGridOptions
+     */
+    public function setMultiSort($multiSort)
+    {
+        $this->multiSort = $multiSort;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getMultiSort()
+    {
+        return $this->multiSort;
     }
 
     /**

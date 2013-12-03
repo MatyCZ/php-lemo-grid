@@ -51,14 +51,6 @@ class ColumnAttributes extends AbstractOptions
     protected $dateFormat;
 
     /**
-     * The default value for the search field. This option is used only in Custom Searching and will be set as initial
-     * search.
-     *
-     * @var string
-     */
-    protected $defaultValue;
-
-    /**
      * Defines the edit type for inline and form editing Possible values: text, textarea, select, checkbox, password,
      * button, image and file.
      *
@@ -150,7 +142,7 @@ class ColumnAttributes extends AbstractOptions
      *
      * @var bool
      */
-    protected $isResizable = false;
+    protected $isResizable = true;
 
     /**
      * When used in search modules, disables or enables searching on that column.
@@ -175,6 +167,11 @@ class ColumnAttributes extends AbstractOptions
     protected $label;
 
     /**
+     * @var string
+     */
+    protected $name;
+
+    /**
      * Determines the type of the element when searching. Possible values: text and select.
      *
      * @var string
@@ -186,7 +183,10 @@ class ColumnAttributes extends AbstractOptions
      *
      * @var array
      */
-    protected $searchOptions;
+    protected $searchOptions = array(
+        'sopt' => null,
+        'value' => null,
+    );
 
     /**
      * Valid only in Custom Searching and edittype : 'select' and describes the url from where we can get
@@ -195,6 +195,13 @@ class ColumnAttributes extends AbstractOptions
      * @var string
      */
     protected $searchUrl;
+
+    /**
+     * If this option is false the title is not displayed in that column when we hover a cell with the mouse
+     *
+     * @var bool
+     */
+    protected $showTitle = true;
 
     /**
      * Used when datatype is local. Defines the type of the column for appropriate sorting. Possible values:
@@ -269,24 +276,6 @@ class ColumnAttributes extends AbstractOptions
     public function getDateFormat()
     {
         return $this->dateFormat;
-    }
-
-    /**
-     * @param string $defaultValue
-     * @return ColumnAttributes
-     */
-    public function setDefaultValue($defaultValue)
-    {
-        $this->defaultValue = $defaultValue;
-        return $this;
-    }
-
-    /**
-     * @return string
-     */
-    public function getDefaultValue()
-    {
-        return $this->defaultValue;
     }
 
     /**
@@ -578,6 +567,25 @@ class ColumnAttributes extends AbstractOptions
     }
 
     /**
+     * @param  string $name
+     * @return ColumnAttributes
+     */
+    public function setName($name)
+    {
+        $this->name = $name;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
      * @param string $searchElement
      * @return ColumnAttributes
      */
@@ -614,10 +622,76 @@ class ColumnAttributes extends AbstractOptions
     }
 
     /**
-     * @param array $searchOptions
+     * Set a default value in the search input element.
+     *
+     * @param  mixed $dataInit
      * @return ColumnAttributes
      */
-    public function setSearchOptions($searchOptions)
+    public function setSearchDataInit($dataInit)
+    {
+        $this->searchOptions['dataInit'] = $dataInit;
+        return $this;
+    }
+
+    /**
+     * Get a default value in the search input element.
+     *
+     * @return mixed
+     */
+    public function getSearchDataInit()
+    {
+        return $this->searchOptions['dataInit'];
+    }
+
+    /**
+     * Set a default value in the search input element.
+     *
+     * @param  mixed $defaultValue
+     * @return ColumnAttributes
+     */
+    public function setSearchDefaultValue($defaultValue)
+    {
+        $this->searchOptions['defaultValue'] = $defaultValue;
+        return $this;
+    }
+
+    /**
+     * Get a default value in the search input element.
+     *
+     * @return mixed
+     */
+    public function getSearchDefaultValue()
+    {
+        return $this->searchOptions['defaultValue'];
+    }
+
+    /**
+     * Set search input element operators.
+     *
+     * @param  array $operator
+     * @return ColumnAttributes
+     */
+    public function setSearchOperators(array $operator)
+    {
+        $this->searchOptions['sopt'] = $operator;
+        return $this;
+    }
+
+    /**
+     * Get search input element operators.
+     *
+     * @return array
+     */
+    public function getSearchOperators()
+    {
+        return $this->searchOptions['sopt'];
+    }
+
+    /**
+     * @param  array   $searchOptions
+     * @return ColumnAttributes
+     */
+    public function setSearchOptions(array $searchOptions)
     {
         $this->searchOptions = $searchOptions;
         return $this;
@@ -629,6 +703,46 @@ class ColumnAttributes extends AbstractOptions
     public function getSearchOptions()
     {
         return $this->searchOptions;
+    }
+
+    /**
+     * Set a default value in the search input element.
+     *
+     * @param  mixed $value
+     * @return ColumnAttributes
+     */
+    public function setSearchValue($value)
+    {
+        $this->searchOptions['value'] = $value;
+        return $this;
+    }
+
+    /**
+     * Get a default value in the search input element.
+     *
+     * @return mixed
+     */
+    public function getSearchValue()
+    {
+        return $this->searchOptions['value'];
+    }
+
+    /**
+     * @param  boolean $showTitle
+     * @return ColumnAttributes
+     */
+    public function setShowTitle($showTitle)
+    {
+        $this->showTitle = $showTitle;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getShowTitle()
+    {
+        return $this->showTitle;
     }
 
     /**

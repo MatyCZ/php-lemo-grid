@@ -3,12 +3,15 @@
 namespace LemoGrid\Adapter\Doctrine;
 
 use DateTime;
+use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use LemoGrid\Adapter\AbstractAdapter;
+use LemoGrid\Column\AbstractColumn;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
+use LemoGrid\Platform\AbstractPlatform;
 
 class QueryBuilder extends AbstractAdapter
 {
@@ -28,11 +31,6 @@ class QueryBuilder extends AbstractAdapter
     protected $queryBuilder = null;
 
     /**
-     * @var array
-     */
-    protected $relations = array();
-
-    /**
      * @throws Exception\UnexpectedValueException
      * @return QueryBuilder
      */
@@ -46,9 +44,8 @@ class QueryBuilder extends AbstractAdapter
         }
 
         $this->findAliases();
-        $this->findRelations($this->aliasRoot);
 
-        foreach ($this->executeQuery() as $index => $item)
+        foreach ($this->executeQuery() as $indexRow => $item)
         {
             $data = array();
             foreach($this->getGrid()->getColumns() as $column) {
@@ -88,7 +85,9 @@ class QueryBuilder extends AbstractAdapter
                         }
                     }
 
-                    if (!empty($values)) {
+                    $patternCount = count($values);
+                    $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
+                    if ($patternCount > 0 && $patternCount == $patternCountParts) {
                         $value = vsprintf($column->getOptions()->getPattern(), $values);
                     }
 
@@ -133,7 +132,7 @@ class QueryBuilder extends AbstractAdapter
                 if(preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
                         if ('%_index%' == $matches[0][$key]) {
-                            $value = str_replace($matches[0][$key], $index, $value);
+                            $value = str_replace($matches[0][$key], $indexRow, $value);
                         } else {
                             $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                         }
@@ -158,6 +157,7 @@ class QueryBuilder extends AbstractAdapter
         $grid = $this->getGrid();
         $filters = $grid->getParam('filters');
         $resultCount = $this->getQueryBuilder()->getQuery()->getScalarResult();
+        $sort = $grid->getPlatform()->getSort();
 
         // WHERE
         foreach($grid->getColumns() as $col)
@@ -167,36 +167,44 @@ class QueryBuilder extends AbstractAdapter
                 $append = null;
 
                 if(array_key_exists($col->getName(), $filters)) {
-                    if($col instanceof ColumnConcat) {
+                    if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
                         $or = $this->getQueryBuilder()->expr()->orx();
                         foreach($col->getOptions()->getIdentifiers() as $identifier){
                             $or->add($identifier . " LIKE '%" . $filters[$col->getName()]['value'] . "%'");
                         }
                         $this->getQueryBuilder()->andWhere($or);
                     } else {
-                        if('text' == $col->getAttributes()->getSearchElement()) {
-                            $prepend = $append = '%';
-                        }
-
-                        $this->getQueryBuilder()->andWhere($col->getIdentifier() . " LIKE '" . $prepend . $filters[$col->getName()]['value'] . $append . "'");
+                        $this->addWhereFromFilter($col, $filters[$col->getName()]);
                     }
                 }
             }
         }
 
-        if($grid->has($grid->getPlatform()->getSortColumn())) {
-            if($grid->get($grid->getPlatform()->getSortColumn()) instanceof ColumnConcat) {
-                foreach($grid->get($grid->getPlatform()->getSortColumn())->getOptions()->getIdentifiers() as $identifier){
-                    if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
-                        $method = 'orderBy';
-                    } else {
-                        $method = 'addOrderBy';
-                    }
+        // ORDER
+        if (!empty($sort)) {
+            foreach ($sort as $sortColumn => $sortDirect) {
+                if($grid->has($sortColumn)) {
+                    if($grid->get($sortColumn) instanceof ColumnConcat || $grid->get($sortColumn) instanceof ColumnConcatGroup) {
+                        foreach($grid->get($sortColumn)->getOptions()->getIdentifiers() as $identifier){
+                            if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
+                                $method = 'orderBy';
+                            } else {
+                                $method = 'addOrderBy';
+                                $sortDirect = 'asc';
+                            }
 
-                    $this->getQueryBuilder()->{$method}($identifier, $grid->getPlatform()->getSortDirect());
+                            $this->getQueryBuilder()->{$method}($identifier, $sortDirect);
+                        }
+                    } else {
+                        if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
+                            $method = 'orderBy';
+                        } else {
+                            $method = 'addOrderBy';
+                        }
+
+                        $this->getQueryBuilder()->{$method}($grid->get($sortColumn)->getIdentifier(), $sortDirect);
+                    }
                 }
-            } else {
-                $this->getQueryBuilder()->orderBy($grid->get($grid->getPlatform()->getSortColumn())->getIdentifier(), $grid->getPlatform()->getSortDirect());
             }
         }
 
@@ -227,45 +235,13 @@ class QueryBuilder extends AbstractAdapter
         $join = $this->getQueryBuilder()->getDqlPart('join');
         $root = $from[0]->getAlias();
 
-        $this->aliasRoot = $root;
         $this->aliases = array();
 
         if(!empty($join[$root])) {
             foreach($join[$root] as $j) {
                 preg_match('/JOIN (([a-zA-Z0-9_-]+)\.([a-zA-Z0-9\._-]+))( as| AS)?( )?([a-zA-Z0-9_]+)?/', $j->__toString(), $match);
 
-                $this->aliases[$match[2]][] = array(
-                    'alias' => $match[6],
-                    'relation' => $match[3]
-                );
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Find relations from given alias name
-     *
-     * @param  string $alias
-     * @param  bool   $sub
-     * @return QueryBuilder
-     */
-    protected function findRelations($alias, $sub = false)
-    {
-        if(count($this->aliases) == 0) {
-            return array();
-        }
-
-        foreach($this->aliases[$alias] as $item) {
-            if($sub == false) {
-                $this->relations[$item['alias']] = $item['relation'];
-            } else {
-                $this->relations[$item['alias']] = $this->relations[$alias] . '/' . $item['relation'];
-            }
-
-            if(isset($this->aliases[$item['alias']])) {
-                $this->findRelations($item['alias'], true);
+                $this->aliases[$match[6]] = $match[2] . '.' . $match[3];
             }
         }
 
@@ -281,7 +257,15 @@ class QueryBuilder extends AbstractAdapter
      */
     protected function findValue($identifier, array $item)
     {
+        $identifier = str_replace('_', '.', $identifier);
+
         // Determinate column name and alias name
+        $identifierFirst = substr($identifier, 0, strpos($identifier, '.'));
+
+        if (isset($this->aliases[$identifierFirst])) {
+            $identifier = str_replace($identifierFirst, $this->aliases[$identifierFirst], $identifier);
+        }
+
         $identifier = substr($identifier, strpos($identifier, '.') +1);
         $parts = explode('.', $identifier);
 
@@ -309,10 +293,74 @@ class QueryBuilder extends AbstractAdapter
     }
 
     /**
+     * @param  AbstractColumn $column
+     * @param  array $filter
+     * @return Expr\Comparison
+     * @throws Exception\InvalidArgumentException
+     */
+    protected function addWhereFromFilter($column, $filter)
+    {
+        $expr = new Expr();
+        $identifier = $column->getIdentifier();
+        $value = $filter['value'];
+
+        switch ($filter['operator']) {
+            case AbstractPlatform::OPERATOR_EQUAL:
+                $where = $expr->eq($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_NOT_EQUAL:
+                $where = $expr->neq($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_LESS:
+                $where = $expr->lt($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_LESS_OR_EQUAL:
+                $where = $expr->lte($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_GREATER:
+                $where = $expr->gt($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_GREATER_OR_EQUAL:
+                $where = $expr->gte($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_BEGINS_WITH:
+                $where = $expr->like($identifier, "'" . $value . "%'");
+                break;
+            case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
+                $where = $expr->notLike($identifier, "'" . $value . "%'");
+                break;
+            case AbstractPlatform::OPERATOR_IN:
+                $where = $expr->in($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_NOT_IN:
+                $where = $expr->notIn($identifier, "'" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_ENDS_WITH:
+                $where = $expr->like($identifier, "'%" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_NOT_ENDS_WITH:
+                $where = $expr->notLike($identifier, "'%" . $value . "'");
+                break;
+            case AbstractPlatform::OPERATOR_CONTAINS:
+                $where = $expr->like($identifier, "'%" . $value . "%'");
+                break;
+            case AbstractPlatform::OPERATOR_NOT_CONTAINS:
+                $where = $expr->notLike($identifier, "'%" . $value . "%'");
+                break;
+            default:
+                throw new Exception\InvalidArgumentException('Invalid filter operator');
+        }
+
+        $this->getQueryBuilder()->andWhere($where);
+
+        return $where;
+    }
+
+    /**
      * Set QueryBuilder
      *
      * @param  DoctrineQueryBuilder $queryBuilder
-     * @return QueryBuilder
+     * @return DoctrineQueryBuilder
      */
     public function setQueryBuilder(DoctrineQueryBuilder $queryBuilder)
     {
@@ -324,7 +372,7 @@ class QueryBuilder extends AbstractAdapter
     /**
      * Return QueryBuilder
      *
-     * @return QueryBuilder
+     * @return DoctrineQueryBuilder
      */
     public function getQueryBuilder()
     {

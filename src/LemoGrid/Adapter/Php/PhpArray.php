@@ -4,8 +4,11 @@ namespace LemoGrid\Adapter\Php;
 
 use DateTime;
 use LemoGrid\Adapter\AbstractAdapter;
+use LemoGrid\Column\AbstractColumn;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
+use LemoGrid\Exception;
+use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\ResultSet\Data;
 
 class PhpArray extends AbstractAdapter
@@ -42,7 +45,7 @@ class PhpArray extends AbstractAdapter
         $grid = $this->getGrid();
         $collection = array();
 
-        foreach($this->getRawData() as $index => $item)
+        foreach($this->getRawData() as $indexRow => $item)
         {
             $data = array();
 
@@ -82,7 +85,9 @@ class PhpArray extends AbstractAdapter
                         }
                     }
 
-                    if (!empty($values)) {
+                    $patternCount = count($values);
+                    $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
+                    if ($patternCount > 0 && $patternCount == $patternCountParts) {
                         $value = vsprintf($column->getOptions()->getPattern(), $values);
                     }
 
@@ -111,7 +116,9 @@ class PhpArray extends AbstractAdapter
 
                     // Slozime jednotlive casti na radak
                     foreach ($valuesLine as $line) {
-                        if (!empty($line)) {
+                        $patternCount = count($line);
+                        $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
+                        if ($patternCount > 0 && $patternCount == $patternCountParts) {
                             $values[] = vsprintf($column->getOptions()->getPattern(), $line);
                         } else {
                             $values[] = null;
@@ -127,7 +134,7 @@ class PhpArray extends AbstractAdapter
                 if(preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
                     foreach($matches[0] as $key => $match) {
                         if ('%_index%' == $matches[0][$key]) {
-                            $value = str_replace($matches[0][$key], $index, $value);
+                            $value = str_replace($matches[0][$key], $indexRow, $value);
                         } else {
                             $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                         }
@@ -178,7 +185,7 @@ class PhpArray extends AbstractAdapter
 
                     if(array_key_exists($col->getName(), $filters)) {
 
-                        if($col instanceof ColumnConcat) {
+                        if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
                             $isValid = true;
                             foreach($col->getOptions()->getIdentifiers() as $identifier){
                                 if(!preg_match('/' . $filters[$col->getName()]['value'] . '/i', $item[$identifier])) {
@@ -189,7 +196,7 @@ class PhpArray extends AbstractAdapter
                                 unset($collection[$index]);
                             }
                         } else {
-                            if(!preg_match('/' . $filters[$col->getName()]['value'] . '/i', $item[$col->getIdentifier()])) {
+                            if(false === $this->addWhereFromFilter($col, $filters[$col->getName()], $item[$col->getName()])) {
                                 unset($collection[$index]);
                             }
                         }
@@ -209,58 +216,32 @@ class PhpArray extends AbstractAdapter
      */
     private function _sortCollection($collection)
     {
-        $dataSorted = array();
-        $grid = $this->getGrid();
+        $sort = $this->getGrid()->getPlatform()->getSort();
 
-        if($collection == null) {
+        if(empty($collection) || empty($sort)) {
             return $collection;
         }
 
-        if($grid->has($grid->getPlatform()->getSortColumn())) {
-            if($grid->get($grid->getPlatform()->getSortColumn()) instanceof ColumnConcat) {
-                foreach($grid->get($grid->getPlatform()->getSortColumn())->getOptions()->getIdentifiers() as $identifier){
-                    $sortColumn = $identifier;
-                    $sortDirect = $grid->getPlatform()->getSortDirect();
-                }
-            } else {
-                $sortColumn = $grid->get($grid->getPlatform()->getSortColumn())->getIdentifier();
-                $sortDirect = $grid->getPlatform()->getSortDirect();
+        // Obtain a list of columns
+        foreach ($collection as $index => $column) {
+            $keys = array_keys($column);
+
+            foreach ($keys as $key) {
+                $parts[$key][$index] = $column[$key];
             }
         }
 
-        if (!isset($sortColumn)) {
-            foreach($grid->getColumns() as $col) {
-                if($col->getAttributes()->getIsSortable()) {
-                    $sortColumn = $col->getIdentifier();
-                    $sortDirect = 'asc';
-                    break;
-                }
-            }
+        $arguments = array();
+        foreach ($sort as $sortColumn => $sortDirect) {
+            $arguments[] = $parts[$sortColumn];
+            $arguments[] = ('asc' == $sortDirect) ? SORT_ASC : SORT_DESC;
+            $arguments[] = SORT_REGULAR;
         }
+        $arguments[] = &$collection;
 
-        if (empty($sortColumn) || empty($sortDirect)) {
-            return $collection;
-        }
+        call_user_func_array('array_multisort', $arguments);
 
-        foreach(array_keys($collection) as $key) {
-            $temp[$key] = $collection[$key];
-
-            if(strtolower($sortDirect) == 'asc') {
-                asort($temp);
-            } else {
-                arsort($temp);
-            }
-        }
-
-        foreach(array_keys($temp) as $key) {
-            if(is_numeric($key)) {
-                $dataSorted[] = $collection[$key];
-            } else {
-                $dataSorted[$key] = $collection[$key];
-            }
-        }
-
-        return $dataSorted;
+        return $collection;
     }
 
     /**
@@ -297,6 +278,95 @@ class PhpArray extends AbstractAdapter
         }
 
         return null;
+    }
+
+    /**
+     * @param  AbstractColumn $column
+     * @param  array          $filter
+     * @param  string         $value
+     * @return bool
+     * @throws Exception\InvalidArgumentException
+     */
+    protected function addWhereFromFilter($column, $filter, $value)
+    {
+        $isValid = true;
+
+        switch ($filter['operator']) {
+            case AbstractPlatform::OPERATOR_EQUAL:
+                if ($value != $filter['value']) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_NOT_EQUAL:
+                if ($value == $filter['value']) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_LESS:
+                if ($value >= $filter['value']) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_LESS_OR_EQUAL:
+                if ($value > $filter['value']) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_GREATER:
+                if ($value <= $filter['value']) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_GREATER_OR_EQUAL:
+                if ($value < $filter['value']) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_BEGINS_WITH:
+                $count = preg_match('/^' . $filter['value'] . '/i', $value, $matches);
+                if ($count == 0) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
+                $count = preg_match('/^' . $filter['value'] . '/i', $value, $matches);
+                if ($count > 0) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_IN:
+                break;
+            case AbstractPlatform::OPERATOR_NOT_IN:
+                break;
+            case AbstractPlatform::OPERATOR_ENDS_WITH:
+                $count = preg_match('/' . $filter['value'] . '$/i', $value, $matches);
+                if ($count == 0) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_NOT_ENDS_WITH:
+                $count = preg_match('/' . $filter['value'] . '$/i', $value, $matches);
+                if ($count > 0) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_CONTAINS:
+                $count = preg_match('/' . $filter['value'] . '/i', $value, $matches);
+                if ($count == 0) {
+                    $isValid = false;
+                }
+                break;
+            case AbstractPlatform::OPERATOR_NOT_CONTAINS:
+                $count = preg_match('/' . $filter['value'] . '/i', $value, $matches);
+                if ($count > 0) {
+                    $isValid = false;
+                }
+                break;
+            default:
+                throw new Exception\InvalidArgumentException('Invalid filter operator');
+        }
+
+        return $isValid;
     }
 
     /**

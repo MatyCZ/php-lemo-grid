@@ -39,7 +39,7 @@ class Button extends AbstractColumn
      *
      * @param  array|\Traversable|ButtonOptions $options
      * @throws Exception\InvalidArgumentException
-     * @return Route
+     * @return Button
      */
     public function setOptions($options)
     {

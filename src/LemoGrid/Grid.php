@@ -7,6 +7,7 @@ use ArrayIterator;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Column\ColumnPrepareAwareInterface;
 use LemoGrid\Platform\PlatformInterface;
 use Traversable;
 use Zend\Json;
@@ -80,13 +81,6 @@ class Grid implements GridInterface
     protected $namespace;
 
     /**
-     * Container parameters from query or session container
-     *
-     * @var array
-     */
-    protected $params = array();
-
-    /**
      * Platform
      *
      * @var PlatformInterface
@@ -96,7 +90,7 @@ class Grid implements GridInterface
     /**
      * @var SessionManager
      */
-    protected $session;
+    protected $sessionManager;
 
     /**
      * Constructor
@@ -300,8 +294,7 @@ class Grid implements GridInterface
         $this->container = null;
         $this->iterator  = new PriorityQueue();
         $this->namespace  = self::NAMESPACE_DEFAULT;
-        $this->params  = array();
-        $this->session = null;
+        $this->sessionManager = null;
 
         foreach ($items as $item) {
             $column = clone $item['data'];
@@ -534,6 +527,72 @@ class Grid implements GridInterface
     }
 
     /**
+     * Set param
+     *
+     * @param  string $key
+     * @param  mixed  $value
+     * @return Grid
+     */
+    public function setParam($key, $value)
+    {
+        $container = $this->getContainer();
+        $namespace = $this->getNamespace();
+
+        if (!isset($container[$namespace]) || !($container[$namespace] instanceof Traversable)) {
+            $container[$namespace] = new ArrayIterator();
+        }
+
+        // Modifi param in Platform
+        $value = $this->getPlatform()->modifiParam($key, $value);
+
+        if (false !== $value) {
+            $container[$namespace]->offsetSet($key, $value);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get param
+     *
+     * @param  string $key
+     * @return mixed
+     */
+    public function getParam($key)
+    {
+        $container = $this->getContainer();
+        $namespace = $this->getNamespace();
+
+        if (isset($container[$namespace]) && isset($container[$namespace][$key])) {
+            return $container[$namespace]->offsetGet($key);
+        }
+
+        if ('filters' == $key) {
+            return array();
+        }
+
+        return null;
+    }
+
+    /**
+     * Exist param with given name?
+     *
+     * @param  string $name
+     * @return bool
+     */
+    public function hasParam($name)
+    {
+        $container = $this->getContainer();
+        $namespace = $this->getNamespace();
+
+        if (isset($container[$namespace])) {
+            return $container[$namespace]->offsetExists($name);
+        }
+
+        return false;
+    }
+
+    /**
      * Set params
      *
      * @param  array|ArrayAccess|Traversable $params
@@ -550,8 +609,12 @@ class Grid implements GridInterface
             ));
         }
 
-        foreach ($params as $name => $value) {
-            $this->setParam($name, $value);
+        if (isset($params['sidx']) && empty($params['sidx'])) {
+            unset($params['sidx'], $params['sord']);
+        }
+
+        foreach ($params as $key => $value) {
+            $this->setParam($key, $value);
         }
 
         return $this;
@@ -564,10 +627,11 @@ class Grid implements GridInterface
      */
     public function getParams()
     {
-        $this->getParamsFromContainer();
+        $container = $this->getContainer();
+        $namespace = $this->getNamespace();
 
         if ($this->hasParams()) {
-            return $this->params[$this->getNamespace()];
+            return $container[$namespace];
         }
 
         return array();
@@ -580,99 +644,10 @@ class Grid implements GridInterface
      */
     public function hasParams()
     {
-        $this->getParamsFromContainer();
-
-        return isset($this->params[$this->getNamespace()]);
-    }
-
-    /**
-     * Set param
-     *
-     * @param  string $name
-     * @param  mixed  $value
-     * @return Grid
-     */
-    public function setParam($name, $value)
-    {
         $container = $this->getContainer();
         $namespace = $this->getNamespace();
 
-        if (!isset($container->{$namespace}) || !($container->{$namespace} instanceof Traversable)) {
-            $container->{$namespace} = new ArrayIterator();
-        }
-        if (!isset($this->params[$namespace]) || !($this->params[$namespace] instanceof Traversable)) {
-            $this->params[$namespace] = new ArrayIterator();
-        }
-
-        // Modify params
-        if ('filters' == $name) {
-            if (is_array($value)) {
-                $rules = $value;
-            } else {
-                $rules = Json\Decoder::decode(stripslashes($value), Json\Json::TYPE_ARRAY);
-            }
-
-            $value = array();
-            foreach ($rules['rules'] as $rule) {
-                $value[$rule['field']] = array(
-                    'condition' => $rule['op'],
-                    'value' => $rule['data'],
-                );
-            }
-        }
-
-        // Dont save grid name to Session
-        if ('_name' != $name) {
-            $container->{$namespace}->offsetSet($name, $value);
-        }
-
-        $this->params[$namespace]->offsetSet($name, $value);
-
-        return $this;
-    }
-
-    /**
-     * Get param
-     *
-     * @param  string $name
-     * @return mixed
-     */
-    public function getParam($name)
-    {
-        $this->getParamsFromContainer();
-
-        if (isset($this->params[$this->getNamespace()]) && $this->hasParam($name)) {
-            return $this->params[$this->getNamespace()]->offsetGet($name);
-        }
-
-        if ('filters' == $name) {
-            $container = $this->getContainer();
-
-            if (isset($container[$this->getNamespace()]) && isset($container[$this->getNamespace()][$name])) {
-                return $container[$this->getNamespace()]->offsetGet($name);
-            }
-
-            return array();
-        }
-
-        return null;
-    }
-
-    /**
-     * Exist param with given name?
-     *
-     * @param  string $name
-     * @return bool
-     */
-    public function hasParam($name)
-    {
-        $this->getParamsFromContainer();
-
-        if (isset($this->params[$this->getNamespace()])) {
-            return $this->params[$this->getNamespace()]->offsetExists($name);
-        }
-
-        return false;
+        return isset($container[$namespace]);
     }
 
     /**
@@ -709,7 +684,7 @@ class Grid implements GridInterface
      */
     public function setSessionManager(SessionManager $manager)
     {
-        $this->session = $manager;
+        $this->sessionManager = $manager;
         return $this;
     }
 
@@ -722,26 +697,10 @@ class Grid implements GridInterface
      */
     public function getSessionManager()
     {
-        if (!$this->session instanceof SessionManager) {
+        if (!$this->sessionManager instanceof SessionManager) {
             $this->setSessionManager(SessionContainer::getDefaultManager());
         }
 
-        return $this->session;
-    }
-
-    /**
-     * Pull params from the session container
-     *
-     * @return void
-     */
-    protected function getParamsFromContainer()
-    {
-        if (!empty($this->params)) {
-            return;
-        }
-
-        foreach ($this->getContainer() as $namespace => $params) {
-            $this->params[$namespace] = $params;
-        }
+        return $this->sessionManager;
     }
 }
