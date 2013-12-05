@@ -254,6 +254,7 @@ class PhpArray extends AbstractAdapter
     protected function findValue($identifier, array $item)
     {
         // Determinate column name and alias name
+        $identifier = str_replace('_', '.', $identifier);
         $identifier = substr($identifier, strpos($identifier, '.') +1);
         $parts = explode('.', $identifier);
 
