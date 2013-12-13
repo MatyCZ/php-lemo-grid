@@ -156,7 +156,9 @@ class QueryBuilder extends AbstractAdapter
     {
         $grid = $this->getGrid();
         $filters = $grid->getParam('filters');
-        $resultCount = $this->getQueryBuilder()->getQuery()->getScalarResult();
+        $resultCount = $this->getQueryBuilder()->getQuery()->getArrayResult();
+        $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
+        $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
         $sort = $grid->getPlatform()->getSort();
 
         // WHERE
@@ -208,16 +210,17 @@ class QueryBuilder extends AbstractAdapter
             }
         }
 
-        $offset = $this->getNumberOfVisibleRows() * $this->getNumberOfCurrentPage() - $this->getNumberOfVisibleRows();
-
+        // Calculate offset
+        $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;
         if($offset < 0) {
             $offset = 0;
         }
 
-        $this->getQueryBuilder()->setMaxResults($this->getNumberOfVisibleRows());
+        $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
         $this->getQueryBuilder()->setFirstResult($offset);
 
         $result = $this->getQueryBuilder()->getQuery()->getArrayResult();
+
         $this->countItems = count($result);
         $this->countItemsTotal = count($resultCount);
 

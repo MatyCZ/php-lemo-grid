@@ -220,6 +220,51 @@ class JqGrid extends AbstractPlatform
         return $operator;
     }
 
+    /**
+     * Get number of current page
+     *
+     * @return int
+     */
+    public function getNumberOfCurrentPage()
+    {
+        $page = $this->getOptions()->getPage();
+
+        if ($this->getGrid()->hasParam('page')) {
+            $param = $this->getGrid()->getParam('page');
+            if (!empty($param)) {
+                $page = $param;
+            }
+        }
+
+        return $page;
+    }
+
+    /**
+     * Get number of visible rows
+     *
+     * @return int
+     */
+    public function getNumberOfVisibleRows()
+    {
+        $number = $this->getOptions()->getRecordsPerPage();
+
+        if ($this->getGrid()->hasParam('rows')) {
+            $param = $this->getGrid()->getParam('rows');
+
+            if (!empty($param)) {
+                $number = $param;
+            }
+        }
+
+        return $number;
+    }
+
+    /**
+     * Return sort by column name => direct
+     *
+     * @return array
+     * @throws Exception\UnexpectedValueException
+     */
     public function getSort()
     {
         $sort = array();

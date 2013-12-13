@@ -278,6 +278,14 @@ class JqGridOptions extends AbstractOptions
     protected $multiSort = true;
 
     /**
+     * The initial page number when we make the request.This parameter is passed to the url for use by the server
+     * routine retrieving the data.
+     *
+     * @var int
+     */
+    protected $page = 1;
+
+    /**
      * Defines that we want to use a pager bar to navigate through the records. This must be a valid html element;
      * in our example we gave the div the id of “pager”, but any name is acceptable. Note that the Navigation layer
      * (the “pager” div) can be positioned anywhere you want, determined by your html; in our example we specified that
@@ -1183,6 +1191,25 @@ class JqGridOptions extends AbstractOptions
     public function getMultiSort()
     {
         return $this->multiSort;
+    }
+
+    /**
+     * @param  int $page
+     * @return JqGridOptions
+     */
+    public function setPage($page)
+    {
+        $this->page = $page;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPage()
+    {
+        return $this->page;
     }
 
     /**

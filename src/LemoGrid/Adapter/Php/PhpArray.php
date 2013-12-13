@@ -44,6 +44,8 @@ class PhpArray extends AbstractAdapter
     {
         $grid = $this->getGrid();
         $collection = array();
+        $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
+        $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
 
         foreach($this->getRawData() as $indexRow => $item)
         {
@@ -153,7 +155,7 @@ class PhpArray extends AbstractAdapter
         $this->countItems = count($collection);
 
         $collection = $this->_sortCollection($collection);
-        $collection = array_slice($collection, $this->getNumberOfVisibleRows() * $this->getNumberOfCurrentPage() - $this->getNumberOfVisibleRows(), $this->getNumberOfVisibleRows());
+        $collection = array_slice($collection, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
 
         $this->setData(new Data($collection));
 
@@ -254,6 +256,7 @@ class PhpArray extends AbstractAdapter
     protected function findValue($identifier, array $item)
     {
         // Determinate column name and alias name
+        $identifier = str_replace('_', '.', $identifier);
         $identifier = substr($identifier, strpos($identifier, '.') +1);
         $parts = explode('.', $identifier);
 

@@ -80,6 +80,7 @@ class JqGrid extends AbstractHelper
         'multi_select_key'                   => 'multikey',
         'multi_select_width'                 => 'multiselectWidth',
         'multi_sort'                         => 'multiSort',
+        'page'                               => 'page',
         'pager_element_id'                   => 'pager',
         'pager_position'                     => 'pagerpos',
         'pager_show_buttions'                => 'pgbuttons',
@@ -424,6 +425,15 @@ class JqGrid extends AbstractHelper
             $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
         }
 
+        // Number of visible pages
+        $numberOfVisibleRows = $this->getGrid()->getPlatform()->getNumberOfVisibleRows();
+        $attributes->setRecordsPerPage($numberOfVisibleRows);
+
+        // Number of current page
+        $numberOfCurrentPage = $this->getGrid()->getPlatform()->getNumberOfCurrentPage();
+        $attributes->setPage($numberOfCurrentPage);
+
+        // Sorting
         $sort = $this->getGrid()->getPlatform()->getSort();
 
         $sidx = '';

@@ -40,6 +40,20 @@ interface PlatformInterface
     public function getFilterOperator($operator);
 
     /**
+     * Get number of current page
+     *
+     * @return int
+     */
+    public function getNumberOfCurrentPage();
+
+    /**
+     * Get number of visible rows
+     *
+     * @return int
+     */
+    public function getNumberOfVisibleRows();
+
+    /**
      * Return sort by column name => direct
      *
      * @return array
