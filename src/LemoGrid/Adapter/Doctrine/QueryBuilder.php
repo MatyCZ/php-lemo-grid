@@ -170,11 +170,9 @@ class QueryBuilder extends AbstractAdapter
 
                 if(array_key_exists($col->getName(), $filters)) {
                     if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-                        $or = $this->getQueryBuilder()->expr()->orx();
-                        foreach($col->getOptions()->getIdentifiers() as $identifier){
-                            $or->add($identifier . " LIKE '%" . $filters[$col->getName()]['value'] . "%'");
-                        }
-                        $this->getQueryBuilder()->andWhere($or);
+//                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+//                        }
+//                        $this->addWhereFromFilter($col, $filters[$col->getName()]);
                     } else {
                         $this->addWhereFromFilter($col, $filters[$col->getName()]);
                     }
