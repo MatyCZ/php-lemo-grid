@@ -30,6 +30,7 @@ class GridColumnManager extends AbstractPluginManager
         'concat'       => 'LemoGrid\Column\Concat',
         'concatgroup'  => 'LemoGrid\Column\ConcatGroup',
         'concat_group' => 'LemoGrid\Column\ConcatGroup',
+        'number'       => 'LemoGrid\Column\Number',
         'route'        => 'LemoGrid\Column\Route',
         'text'         => 'LemoGrid\Column\Text',
     );
