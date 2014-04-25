@@ -25,12 +25,15 @@ class GridColumnManagerFactory extends AbstractPluginManagerFactory
     {
         $plugins = parent::createService($serviceLocator);
 
-        // Configure URL view helper with router
+        // Configure Route column with router
         $plugins->setFactory('route', function ($sm) use($serviceLocator) {
             $router = Console::isConsole() ? 'HttpRouter' : 'Router';
 
             $column = new Column\Route;
             $column->setRouter($serviceLocator->get($router));
+
+            \Zend\Debug\Debug::dump(get_class($serviceLocator->get($router)));
+            exit;
 
             $match = $serviceLocator->get('application')
                 ->getMvcEvent()

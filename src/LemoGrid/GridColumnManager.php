@@ -10,6 +10,7 @@ use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
+use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\Stdlib\InitializableInterface;
 
 /**
@@ -43,7 +44,7 @@ class GridColumnManager extends AbstractPluginManager
     /**
      * @param ConfigInterface $configuration
      */
-    public function __construct(ConfigInterface $configuration = null)
+    public function __construct(ConfigInterface $configuration = null, $serviceLocator = null)
     {
         parent::__construct($configuration);
 
@@ -59,11 +60,11 @@ class GridColumnManager extends AbstractPluginManager
      */
     public function injectRouter($column)
     {
-        if ($column instanceof Column\Route || $column instanceof Column\Buttons) {
+        if ($column instanceof Column\Route || $column instanceof Column\Button || $column instanceof Column\Buttons) {
             $locator = $this->getServiceLocator();
             $router = Console::isConsole() ? 'HttpRouter' : 'Router';
 
-            if ($locator && $locator->has($router)) {
+            if ($locator instanceof ServiceLocatorInterface && $locator->has($router)) {
                 $column->setRouter($locator->get($router));
 
                 $match = $locator->get('application')

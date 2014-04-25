@@ -152,7 +152,11 @@ class JqGrid extends AbstractHelper
         $grid->prepare();
 
         if(isset($_GET['_name'])) {
-            $grid->renderData();
+            if ($_GET['_name'] == $grid->getName()) {
+                $grid->renderData();
+            } else {
+                return '';
+            }
         } else {
             $grid->getPlatform()->setOptions($this->gridModifyAttributes($grid->getPlatform()->getOptions()));
         }

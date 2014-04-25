@@ -4,6 +4,7 @@ namespace LemoGrid\Column;
 
 use LemoGrid\Exception;
 use Traversable;
+use Zend\Mvc\Router\RouteInterface;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\Mvc\Router\RouteStackInterface;
 
@@ -96,7 +97,7 @@ class Buttons extends AbstractColumn
     {
         $parts = array();
         foreach ($this->getOptions()->getButtons() as $button) {
-            if ($button instanceof Route) {
+            if ($button instanceof Route && $this->router instanceof RouteInterface) {
                 $button->setRouter($this->router);
                 $button->setRouteMatch($this->routeMatch);
             }

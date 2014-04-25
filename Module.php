@@ -98,11 +98,9 @@ class Module implements
             'abstract_factories' => array(
                 'LemoGrid\GridAbstractServiceFactory',
             ),
-            'aliases' => array(
-                'GridColumnManager'   => 'LemoGrid\Mvc\Service\GridColumnManagerFactory',
-            ),
             'factories' => array(
                 'GridAdapterManager'  => 'LemoGrid\Mvc\Service\GridAdapterManagerFactory',
+                'GridColumnManager'   => 'LemoGrid\Mvc\Service\GridColumnManagerFactory',
                 'GridPlatformManager' => 'LemoGrid\Mvc\Service\GridPlatformManagerFactory',
                 'LemoGrid\Mvc\Service\GridColumnManagerFactory' => function ($sm) {
                     $instance = new GridColumnManager();

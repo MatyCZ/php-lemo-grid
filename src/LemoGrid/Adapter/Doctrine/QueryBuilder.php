@@ -68,8 +68,9 @@ class QueryBuilder extends AbstractAdapter
                 if($column instanceof ColumnConcat) {
                     $value = null;
                     $values = array();
+                    $hasValue = false;
 
-                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
+                    foreach($column->getOptions()->getIdentifiers() as $index => $identifier) {
                         $val = $this->findValue($identifier, $item);
 
                         if(!empty($val)) {
@@ -77,13 +78,19 @@ class QueryBuilder extends AbstractAdapter
                                 $val = $value->format('Y-m-d H:i:s');
                             }
 
-                            $values[] = $val;
+                            $values[$index] = $val;
+
+                            if ('' !== $val) {
+                                $hasValue = true;
+                            }
+                        } else {
+                            $values[$index] = '';
                         }
                     }
 
                     $patternCount = count($values);
                     $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
-                    if ($patternCount > 0 && $patternCount == $patternCountParts) {
+                    if (true === $hasValue && $patternCount > 0 && $patternCount == $patternCountParts) {
                         $value = vsprintf($column->getOptions()->getPattern(), $values);
                     }
 
@@ -166,11 +173,11 @@ class QueryBuilder extends AbstractAdapter
 
                 if(array_key_exists($col->getName(), $filters)) {
                     if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-//                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-//                        }
-//                        $this->addWhereFromFilter($col, $filters[$col->getName()]);
+                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                            $this->addWhereFromFilter($identifier, $filters[$col->getName()], 'orWhere');
+                        }
                     } else {
-                        $this->addWhereFromFilter($col, $filters[$col->getName()]);
+                        $this->addWhereFromFilter($col->getIdentifier(), $filters[$col->getName()]);
                     }
                 }
             }
@@ -250,35 +257,32 @@ class QueryBuilder extends AbstractAdapter
      *
      * @param  string $identifier
      * @param  array  $item
+     * @param  int    $depth
      * @return null|string
      */
-    protected function findValue($identifier, array $item)
+    protected function findValue($identifier, array $item, $depth = 0)
     {
-        $identifier = str_replace('_', '.', $identifier);
-
-        // Determinate column name and alias name
-        $identifierFirst = substr($identifier, 0, strpos($identifier, '.'));
-
-        if (isset($this->aliases[$identifierFirst])) {
-            $identifier = str_replace($identifierFirst, $this->aliases[$identifierFirst], $identifier);
+        if (0 == $depth) {
+            $identifier = $this->buildIdententifier($identifier);
         }
 
-        $identifier = substr($identifier, strpos($identifier, '.') +1);
-        $parts = explode('.', $identifier);
+        $identifierNext = substr($identifier, strpos($identifier, '.') + 1);
+
+        $parts = explode('.', $identifierNext);
 
         if (isset($item[$parts[0]]) && count($parts) > 1) {
-            return $this->findValue($identifier, $item[$parts[0]]);
+            return $this->findValue($identifierNext, $item[$parts[0]], $depth+1);
         }
 
-        if (isset($item[$identifier])) {
-            return $item[$identifier];
+        if (isset($item[$identifierNext])) {
+            return $item[$identifierNext];
         } else {
             if (isset($item[0])) {
 
                 $return = array();
                 foreach ($item as $it) {
-                    if (isset($it[$identifier])) {
-                        $return[] = $it[$identifier];
+                    if (isset($it[$identifierNext])) {
+                        $return[] = $it[$identifierNext];
                     }
                 }
 
@@ -289,16 +293,31 @@ class QueryBuilder extends AbstractAdapter
         return null;
     }
 
+    protected function buildIdententifier($identifier)
+    {
+        $identifier = str_replace('_', '.', $identifier);
+
+        // Determinate column name and alias name
+        $identifierFirst = substr($identifier, 0, strpos($identifier, '.'));
+
+        if (isset($this->aliases[$identifierFirst])) {
+            $identifier = str_replace($identifierFirst . '.', $this->aliases[$identifierFirst] . '.', $identifier);
+
+            return $this->buildIdententifier($identifier);
+        }
+
+        return $identifier;
+    }
+
     /**
-     * @param  AbstractColumn $column
-     * @param  array $filter
+     * @param  string $identifier
+     * @param  array  $filter
      * @return Expr\Comparison
      * @throws Exception\InvalidArgumentException
      */
-    protected function addWhereFromFilter($column, $filter)
+    protected function addWhereFromFilter($identifier, $filter, $function = 'andWhere')
     {
         $expr = new Expr();
-        $identifier = $column->getIdentifier();
         $value = $filter['value'];
 
         switch ($filter['operator']) {
@@ -348,7 +367,7 @@ class QueryBuilder extends AbstractAdapter
                 throw new Exception\InvalidArgumentException('Invalid filter operator');
         }
 
-        $this->getQueryBuilder()->andWhere($where);
+        $this->getQueryBuilder()->$function($where);
 
         return $where;
     }
