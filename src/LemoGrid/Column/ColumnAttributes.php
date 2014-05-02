@@ -218,6 +218,30 @@ class ColumnAttributes extends AbstractOptions
     protected $sortType;
 
     /**
+     * This option acts as template which can be used in the summary footer row.
+     *
+     * By default its value is defined as {0} - which means that this will print the summary value. The parameter can
+     * contain any valid HTML code.
+     *
+     * @var string
+     */
+    protected $summaryTpl;
+
+    /**
+     * The option determines what type of calculation we should do with the current group value applied to column.
+     *
+     * Currently we support the following build in functions:
+     *   sum - apply the sum function to the current group value and return the result
+     *   count - apply the count function to the current group value and return the result
+     *   avg - apply the average function to the current group value and return the result
+     *   min - apply the min function to the current group value and return the result
+     *   max - apply the max function to the current group value and return the result
+     *
+     * @var string
+     */
+    protected $summaryType;
+
+    /**
      * Set the initial width of the column, in pixels. This value currently can not be set as percentage.
      *
      * @var int
@@ -761,6 +785,42 @@ class ColumnAttributes extends AbstractOptions
     public function getSortType()
     {
         return $this->sortType;
+    }
+
+    /**
+     * @param  string $summaryTpl
+     * @return ColumnAttributes
+     */
+    public function setSummaryTpl($summaryTpl)
+    {
+        $this->summaryTpl = $summaryTpl;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSummaryTpl()
+    {
+        return $this->summaryTpl;
+    }
+
+    /**
+     * @param  string $summaryType
+     * @return ColumnAttributes
+     */
+    public function setSummaryType($summaryType)
+    {
+        $this->summaryType = $summaryType;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSummaryType()
+    {
+        return $this->summaryType;
     }
 
     /**
