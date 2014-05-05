@@ -43,8 +43,8 @@ class JqGrid extends AbstractHelper
         'search_url'           => 'surl',
         'sort_type'            => 'sortType',
         'show_title'           => 'title',
-        'summaryTpl'           => 'summaryTpl',
-        'summaryType'          => 'summaryType',
+        'summary_tpl'           => 'summaryTpl',
+        'summary_type'          => 'summaryType',
         'width'                => 'width',
     );
 
@@ -73,6 +73,7 @@ class JqGrid extends AbstractHelper
         'grid_state'                         => 'gridstate',
         'grid_view'                          => 'gridview',
         'grouping'                           => 'grouping',
+        'grouping_view'                      => 'groupingView',
         'header_titles'                      => 'headertitles',
         'height'                             => 'height',
         'hover_rows'                         => 'hoverrows',
@@ -336,11 +337,13 @@ class JqGrid extends AbstractHelper
 
             if (in_array($key, array('filterToolbar'))) {
                 $r = '\'' . $key . '\', {' . implode(', ', array_values($values)) . '}';
-            } elseif (in_array($key, array('editoptions', 'formatoptions', 'searchoptions', 'treeicons'))) {
+            } elseif (in_array($key, array('editoptions', 'formatoptions', 'groupingView', 'searchoptions', 'treeicons'))) {
                 $r = $key . ': {' . implode(', ', $values) . '}';
             } else {
                 $r = $key . ': [' . implode(', ', $values) . ']';
             }
+        } elseif (in_array($key, array('groupSummary'), true)) {
+            $r = $key . ': [' . $value . ']';
         } elseif (is_numeric($key)) {
             if(is_bool($value)) {
                 if($value == true) {

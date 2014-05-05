@@ -137,6 +137,11 @@ class JqGridOptions extends AbstractOptions
     protected $grouping;
 
     /**
+     * @var array
+     */
+    protected $groupingView;
+
+    /**
      * Indicates which column should be used to expand the tree grid. If not set the first one
      * is used. Valid only when treeGrid option is set to true.
      *
@@ -986,17 +991,6 @@ class JqGridOptions extends AbstractOptions
     }
 
     /**
-     * @param boolean $grouping
-     * @return JqGridOptions
-     */
-    public function setGrouping($grouping)
-    {
-        $this->grouping = $grouping;
-
-        return $this;
-    }
-
-    /**
      * @param  boolean $gridView
      * @return JqGridOptions
      */
@@ -1015,11 +1009,40 @@ class JqGridOptions extends AbstractOptions
     }
 
     /**
+     * @param boolean $grouping
+     * @return JqGridOptions
+     */
+    public function setGrouping($grouping)
+    {
+        $this->grouping = $grouping;
+
+        return $this;
+    }
+
+    /**
      * @return boolean
      */
     public function getGrouping()
     {
         return $this->grouping;
+    }
+
+    /**
+     * @param  mixed $groupingView
+     * @return JqGridOptions
+     */
+    public function setGroupingView($groupingView)
+    {
+        $this->groupingView = $groupingView;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getGroupingView()
+    {
+        return $this->groupingView;
     }
 
     /**
