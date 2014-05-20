@@ -194,7 +194,7 @@ class PhpArray extends AbstractAdapter
                                 unset($collection[$index]);
                             }
                         } else {
-                            if(false === $this->addWhereFromFilter($col, $filters[$col->getName()], $item[$col->getName()])) {
+                            if(false === $this->addWhereFromFilter($col, $col->getAttributes()->getFormat(), $filters[$col->getName()], $item[$col->getName()])) {
                                 unset($collection[$index]);
                             }
                         }
@@ -281,54 +281,61 @@ class PhpArray extends AbstractAdapter
 
     /**
      * @param  AbstractColumn $column
+     * @param  string         $format
      * @param  array          $filter
      * @param  string         $value
      * @return bool
      * @throws Exception\InvalidArgumentException
      */
-    protected function addWhereFromFilter($column, $filter, $value)
+    protected function addWhereFromFilter($column, $format, $filter, $value)
     {
         $isValid = true;
+        $valueFilter = $filter['value'];
+
+        // Pravedeme neuplny string na DbDate
+        if ('date' == $format) {
+            $valueFilter = $this->convertLocaleDateToDbDate($valueFilter);
+        }
 
         switch ($filter['operator']) {
             case AbstractPlatform::OPERATOR_EQUAL:
-                if ($value != $filter['value']) {
+                if ($value != $valueFilter) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_NOT_EQUAL:
-                if ($value == $filter['value']) {
+                if ($value == $valueFilter) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_LESS:
-                if ($value >= $filter['value']) {
+                if ($value >= $valueFilter) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_LESS_OR_EQUAL:
-                if ($value > $filter['value']) {
+                if ($value > $valueFilter) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_GREATER:
-                if ($value <= $filter['value']) {
+                if ($value <= $valueFilter) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_GREATER_OR_EQUAL:
-                if ($value < $filter['value']) {
+                if ($value < $valueFilter) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_BEGINS_WITH:
-                $count = preg_match('/^' . $filter['value'] . '/i', $value, $matches);
+                $count = preg_match('/^' . $valueFilter . '/i', $value, $matches);
                 if ($count == 0) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
-                $count = preg_match('/^' . $filter['value'] . '/i', $value, $matches);
+                $count = preg_match('/^' . $valueFilter . '/i', $value, $matches);
                 if ($count > 0) {
                     $isValid = false;
                 }
@@ -338,25 +345,25 @@ class PhpArray extends AbstractAdapter
             case AbstractPlatform::OPERATOR_NOT_IN:
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
-                $count = preg_match('/' . $filter['value'] . '$/i', $value, $matches);
+                $count = preg_match('/' . $valueFilter . '$/i', $value, $matches);
                 if ($count == 0) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_NOT_ENDS_WITH:
-                $count = preg_match('/' . $filter['value'] . '$/i', $value, $matches);
+                $count = preg_match('/' . $valueFilter . '$/i', $value, $matches);
                 if ($count > 0) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_CONTAINS:
-                $count = preg_match('/' . $filter['value'] . '/i', $value, $matches);
+                $count = preg_match('/' . $valueFilter . '/i', $value, $matches);
                 if ($count == 0) {
                     $isValid = false;
                 }
                 break;
             case AbstractPlatform::OPERATOR_NOT_CONTAINS:
-                $count = preg_match('/' . $filter['value'] . '/i', $value, $matches);
+                $count = preg_match('/' . $valueFilter . '/i', $value, $matches);
                 if ($count > 0) {
                     $isValid = false;
                 }

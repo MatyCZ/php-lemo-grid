@@ -2,8 +2,10 @@
 
 namespace LemoGrid\Adapter;
 
+use IntlDateFormatter;
 use LemoGrid\GridInterface;
 use LemoGrid\ResultSet\Data;
+use Locale;
 
 abstract class AbstractAdapter implements AdapterInterface
 {
@@ -30,6 +32,103 @@ abstract class AbstractAdapter implements AdapterInterface
      * @var GridInterface
      */
     protected $grid;
+
+    /**
+     * Konvertuje zadane casti datumu na DB date format pro vyhledavani pomoci LIKE
+     *
+     * @param string $value
+     * @return string
+     */
+    protected function convertLocaleDateToDbDate($value)
+    {
+        // Zjistime aktualni strukturu podle Locale
+        $formatter = new IntlDateFormatter(Locale::getDefault(), IntlDateFormatter::SHORT, IntlDateFormatter::NONE, date_default_timezone_get(), IntlDateFormatter::GREGORIAN);
+        $pattern = $formatter->getPattern();
+
+        // Zjistime zvoleny separator a poradi dne a mesice
+        $patternSeparators = array('.', '/', '-', ' ');
+        $separator = null;
+        foreach ($patternSeparators as $patternSeparator) {
+            if(strpos($pattern, $patternSeparator)){
+                $splitPattern = str_split($pattern);
+                $first = 'month';
+                $second = 'day';
+                $firstPatternChar = strtolower($splitPattern[0]);
+                if ('d' == $firstPatternChar || 'j' == $firstPatternChar ) {
+                    $first = 'day';
+                    $second = 'month';
+                }
+                $separator = $patternSeparator;
+                break;
+            }
+        }
+
+        if($separator){
+            $dateDb = array();
+
+            // Pokud je datumem
+            if (false !== $formatter->parse($value)) {
+                $timestamp = $formatter->parse($value);
+
+                $dateDb['day'] = date('d', $timestamp);
+                $dateDb['month'] = date('m', $timestamp);
+                $dateDb['year'] = date('Y', $timestamp);
+
+                // je ve formatu napr. ".12.2014" nebo "12.2014"
+            } elseif(preg_match('/^\\' . $separator . '\d{1,2}\\' . $separator . '\d{4}$/',$value, $matches)
+                || preg_match('/^\d{1,2}\\' . $separator . '\d{4}$/', $value, $matches)) {
+                list($dateDb[$second], $dateDb['year']) = explode($separator, trim($matches[0], $separator));
+
+                // je ve formatu napr. "24.12." nebo "24.12"
+            } elseif(preg_match('/^\d{1,2}\\' . $separator . '\d{1,2}\\' . $separator . '$/',$value, $matches)
+                || preg_match('/^\d{1,2}\\' . $separator . '\d{1,2}$/', $value, $matches)) {
+                list($dateDb[$first], $dateDb[$second]) = explode($separator, trim($matches[0], $separator));
+
+                // je ve formatu napr. "2014"
+            } elseif(preg_match('/^\d{4}$/',$value,$matches)) {
+                $dateDb['year'] = $matches[0];
+
+                // je ve formatu napr. ".12." nebo ".12"
+            } elseif (preg_match('/^\\' . $separator . '\d{1,2}\\' . $separator . '$/', $value, $matches)
+                || preg_match('/^\\' . $separator . '\d{1,2}$/', $value, $matches)) {
+                if ('y' == $firstPatternChar) {
+                    $dateDb[$first] = trim($matches[0], $separator);
+                } else {
+                    $dateDb[$second] = trim($matches[0], $separator);
+                }
+
+                // je ve formatu napr. "24."
+            } elseif (preg_match('/^\d{1,2}\\' . $separator . '$/', $value,$matches)) {
+                if ('y' == $firstPatternChar) {
+                    $dateDb[$second] = trim($matches[0], $separator);
+                } else {
+                    $dateDb[$first] = trim($matches[0], $separator);
+                }
+            } else {
+                $dateDb[$second] = trim($value);
+            }
+
+            // Pripravime date DB fragmenty z casti data
+            $string = '';
+            if (isset($dateDb['year'])) {
+                $string .= $dateDb['year'] . '-';
+            }
+            if (isset($dateDb['month'])) {
+                if (!isset($dateDb['year'])) {
+                    $string .= '-';
+                }
+                $string .= str_pad($dateDb['month'], 2, '0', STR_PAD_LEFT ) . '-';
+            }
+            if (isset($dateDb['day'])) {
+                if (!isset($dateDb['year']) && !isset($dateDb['month'])) {
+                    $string .= '-';
+                }
+                $string .= str_pad($dateDb['day'], 2, '0', STR_PAD_LEFT );
+            }
+
+            return $string;
+        }
+    }
 
     /**
      * Get number of current page

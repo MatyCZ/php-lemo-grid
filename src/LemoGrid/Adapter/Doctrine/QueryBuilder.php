@@ -174,10 +174,10 @@ class QueryBuilder extends AbstractAdapter
                 if(array_key_exists($col->getName(), $filters)) {
                     if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
                         foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                            $this->addWhereFromFilter($identifier, $filters[$col->getName()], 'orWhere');
+                            $this->addWhereFromFilter($identifier, $col->getAttributes()->getFormat(), $filters[$col->getName()], 'orWhere');
                         }
                     } else {
-                        $this->addWhereFromFilter($col->getIdentifier(), $filters[$col->getName()]);
+                        $this->addWhereFromFilter($col->getIdentifier(), $col->getAttributes()->getFormat(), $filters[$col->getName()]);
                     }
                 }
             }
@@ -311,57 +311,63 @@ class QueryBuilder extends AbstractAdapter
 
     /**
      * @param  string $identifier
+     * @param  string $format
      * @param  array  $filter
      * @return Expr\Comparison
      * @throws Exception\InvalidArgumentException
      */
-    protected function addWhereFromFilter($identifier, $filter, $function = 'andWhere')
+    protected function addWhereFromFilter($identifier, $format, $filter, $function = 'andWhere')
     {
         $expr = new Expr();
-        $value = $filter['value'];
+        $valueFilter = $filter['value'];
+
+        // Pravedeme neuplny string na DbDate
+        if ('date' == $format) {
+            $valueFilter = $this->convertLocaleDateToDbDate($valueFilter);
+        }
 
         switch ($filter['operator']) {
             case AbstractPlatform::OPERATOR_EQUAL:
-                $where = $expr->eq($identifier, "'" . $value . "'");
+                $where = $expr->eq($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_EQUAL:
-                $where = $expr->neq($identifier, "'" . $value . "'");
+                $where = $expr->neq($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_LESS:
-                $where = $expr->lt($identifier, "'" . $value . "'");
+                $where = $expr->lt($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_LESS_OR_EQUAL:
-                $where = $expr->lte($identifier, "'" . $value . "'");
+                $where = $expr->lte($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_GREATER:
-                $where = $expr->gt($identifier, "'" . $value . "'");
+                $where = $expr->gt($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_GREATER_OR_EQUAL:
-                $where = $expr->gte($identifier, "'" . $value . "'");
+                $where = $expr->gte($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_BEGINS_WITH:
-                $where = $expr->like($identifier, "'" . $value . "%'");
+                $where = $expr->like($identifier, "'" . $valueFilter . "%'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
-                $where = $expr->notLike($identifier, "'" . $value . "%'");
+                $where = $expr->notLike($identifier, "'" . $valueFilter . "%'");
                 break;
             case AbstractPlatform::OPERATOR_IN:
-                $where = $expr->in($identifier, "'" . $value . "'");
+                $where = $expr->in($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_IN:
-                $where = $expr->notIn($identifier, "'" . $value . "'");
+                $where = $expr->notIn($identifier, "'" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
-                $where = $expr->like($identifier, "'%" . $value . "'");
+                $where = $expr->like($identifier, "'%" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_ENDS_WITH:
-                $where = $expr->notLike($identifier, "'%" . $value . "'");
+                $where = $expr->notLike($identifier, "'%" . $valueFilter . "'");
                 break;
             case AbstractPlatform::OPERATOR_CONTAINS:
-                $where = $expr->like($identifier, "'%" . $value . "%'");
+                $where = $expr->like($identifier, "'%" . $valueFilter . "%'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_CONTAINS:
-                $where = $expr->notLike($identifier, "'%" . $value . "%'");
+                $where = $expr->notLike($identifier, "'%" . $valueFilter . "%'");
                 break;
             default:
                 throw new Exception\InvalidArgumentException('Invalid filter operator');
