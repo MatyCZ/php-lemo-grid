@@ -45,13 +45,14 @@ class QueryBuilder extends AbstractAdapter
 
         $this->findAliases();
 
+        $summaryData = array();
         foreach ($this->executeQuery() as $indexRow => $item)
         {
             $data = array();
             foreach($this->getGrid()->getColumns() as $column) {
                 $colIdentifier = $column->getIdentifier();
-                $colname = $column->getName();
-                $data[$colname] = null;
+                $colName = $column->getName();
+                $data[$colName] = null;
 
                 // Nacteme si data radku
                 $value = $this->findValue($colIdentifier, $item);
@@ -142,11 +143,43 @@ class QueryBuilder extends AbstractAdapter
                     }
                 }
 
-                $data[$colname] = $value;
+                if (null !== $column->getAttributes()->getSummaryType()) {
+                    $dataSum[$colName][] = $value;
+                }
+
+                $data[$colName] = $value;
                 $column->setValue($value);
             }
 
-            $this->getData()->append($data);
+            $this->getResultSet()->append($data);
+            unset($data);
+        }
+
+        // Calculate user data (SummaryRow)
+        if (isset($dataSum)) {
+            foreach ($this->getGrid()->getColumns() as $column) {
+                if (null !== $column->getAttributes()->getSummaryType()) {
+                    $colName = $column->getName();
+                    $summaryType = $column->getAttributes()->getSummaryType();
+
+                    if ('sum' == $summaryType) {
+                        $summaryData[$colName] = array_sum($dataSum[$colName]);
+                    }
+                    if ('min' == $summaryType) {
+                        $summaryData[$colName] = min($dataSum[$colName]);
+                    }
+                    if ('max' == $summaryType) {
+                        $summaryData[$colName] = max($dataSum[$colName]);
+                    }
+                    if ('count' == $summaryType) {
+                        $summaryData[$colName] = array_sum($dataSum[$colName]) / count($dataSum[$colName]);
+                    }
+                }
+            }
+
+            $this->getResultSet()->setUserData($summaryData);
+
+            unset($dataSum);
         }
 
         return $this;

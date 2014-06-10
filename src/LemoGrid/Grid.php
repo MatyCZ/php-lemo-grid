@@ -357,7 +357,7 @@ class Grid implements GridInterface
         }
 
         $items = array();
-        $data = $adapter->setGrid($this)->getData();
+        $data = $adapter->setGrid($this)->getResultSet();
 
         foreach ($data->getArrayCopy() as $index => $item) {
             $rowData = $item;
@@ -380,13 +380,20 @@ class Grid implements GridInterface
             );
         }
 
-        ob_clean();
-        echo Json\Encoder::encode(array(
+        $json = array(
             'page'    => $this->getPlatform()->getNumberOfCurrentPage(),
             'total'   => $adapter->getNumberOfPages(),
             'records' => $adapter->getCountOfItemsTotal(),
             'rows'    => $items,
-        ));
+        );
+
+        $userData = $data->getUserData();
+        if (!empty($userData)) {
+            $json['userdata'] = $userData;
+        }
+
+        ob_clean();
+        echo Json\Encoder::encode($json);
         exit;
     }
 

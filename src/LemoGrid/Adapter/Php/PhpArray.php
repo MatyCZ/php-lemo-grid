@@ -9,7 +9,7 @@ use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Exception;
 use LemoGrid\Platform\AbstractPlatform;
-use LemoGrid\ResultSet\Data;
+use LemoGrid\ResultSet\JqGrid;
 
 class PhpArray extends AbstractAdapter
 {
@@ -139,6 +139,10 @@ class PhpArray extends AbstractAdapter
                     }
                 }
 
+                if (null !== $column->getAttributes()->getSummaryType()) {
+                    $dataSum[$colName][] = $value;
+                }
+
                 $data[$colName] = $value;
                 $column->setValue($value);
             }
@@ -153,7 +157,35 @@ class PhpArray extends AbstractAdapter
         $collection = $this->_sortCollection($collection);
         $collection = array_slice($collection, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
 
-        $this->setData(new Data($collection));
+        $this->setResultSet(new JqGrid($collection));
+        unset($collection);
+
+        // Calculate user data (SummaryRow)
+        if (isset($dataSum)) {
+            foreach ($this->getGrid()->getColumns() as $column) {
+                if (null !== $column->getAttributes()->getSummaryType()) {
+                    $colName = $column->getName();
+                    $summaryType = $column->getAttributes()->getSummaryType();
+
+                    if ('sum' == $summaryType) {
+                        $summaryData[$colName] = array_sum($dataSum[$colName]);
+                    }
+                    if ('min' == $summaryType) {
+                        $summaryData[$colName] = min($dataSum[$colName]);
+                    }
+                    if ('max' == $summaryType) {
+                        $summaryData[$colName] = max($dataSum[$colName]);
+                    }
+                    if ('count' == $summaryType) {
+                        $summaryData[$colName] = array_sum($dataSum[$colName]) / count($dataSum[$colName]);
+                    }
+                }
+            }
+
+            $this->getResultSet()->setUserData($summaryData);
+
+            unset($dataSum);
+        }
 
         return $this;
     }

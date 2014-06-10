@@ -2,18 +2,11 @@
 
 namespace LemoGrid\Adapter;
 
-use LemoGrid\ResultSet\Data;
 use LemoGrid\GridInterface;
+use LemoGrid\ResultSet\ResultSetInterface;
 
 interface AdapterInterface
 {
-    /**
-     * Return data from adapter
-     *
-     * @return Data
-     */
-    public function getData();
-
     /**
      * Set grid instance
      *
@@ -28,4 +21,11 @@ interface AdapterInterface
      * @return GridInterface
      */
     public function getGrid();
+
+    /**
+     * Return data from adapter
+     *
+     * @return ResultSetInterface
+     */
+    public function getResultSet();
 }

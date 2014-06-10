@@ -43,8 +43,8 @@ class JqGrid extends AbstractHelper
         'search_url'           => 'surl',
         'sort_type'            => 'sortType',
         'show_title'           => 'title',
-        'summary_tpl'           => 'summaryTpl',
-        'summary_type'          => 'summaryType',
+        'summary_tpl'          => 'summaryTpl',
+        'summary_type'         => 'summaryType',
         'width'                => 'width',
     );
 

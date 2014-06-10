@@ -4,7 +4,8 @@ namespace LemoGrid\Adapter;
 
 use IntlDateFormatter;
 use LemoGrid\GridInterface;
-use LemoGrid\ResultSet\Data;
+use LemoGrid\ResultSet\JqGrid;
+use LemoGrid\ResultSet\ResultSetInterface;
 use Locale;
 
 abstract class AbstractAdapter implements AdapterInterface
@@ -24,9 +25,9 @@ abstract class AbstractAdapter implements AdapterInterface
     protected $countItemsTotal = 0;
 
     /**
-     * @var Data
+     * @var ResultSetInterface
      */
-    protected $data;
+    protected $resultSet;
 
     /**
      * @var GridInterface
@@ -108,7 +109,7 @@ abstract class AbstractAdapter implements AdapterInterface
                 $dateDb[$second] = trim($value);
             }
 
-            // Pripravime date DB fragmenty z casti data
+            // Pripravime date DB fragmenty z casti resultSet
             $string = '';
             if (isset($dateDb['year'])) {
                 $string .= $dateDb['year'] . '-';
@@ -161,31 +162,6 @@ abstract class AbstractAdapter implements AdapterInterface
     }
 
     /**
-     * @param  Data $data
-     * @return AbstractAdapter
-     */
-    public function setData(Data $data)
-    {
-        $this->data = $data;
-
-        return $this;
-    }
-
-    /**
-     * @return Data
-     */
-    public function getData()
-    {
-        if(null === $this->data) {
-            $this->data = new Data();
-
-            $this->populateData();
-        }
-
-        return $this->data;
-    }
-
-    /**
      * Set grid instance
      *
      * @param  GridInterface $grid
@@ -206,5 +182,30 @@ abstract class AbstractAdapter implements AdapterInterface
     public function getGrid()
     {
         return $this->grid;
+    }
+
+    /**
+     * @param  ResultSetInterface $resultSet
+     * @return AbstractAdapter
+     */
+    public function setResultSet(ResultSetInterface $resultSet)
+    {
+        $this->resultSet = $resultSet;
+
+        return $this;
+    }
+
+    /**
+     * @return ResultSetInterface
+     */
+    public function getResultSet()
+    {
+        if(null === $this->resultSet) {
+            $this->resultSet = new JqGrid();
+
+            $this->populateData();
+        }
+
+        return $this->resultSet;
     }
 }
