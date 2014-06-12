@@ -192,7 +192,6 @@ class QueryBuilder extends AbstractAdapter
     {
         $grid = $this->getGrid();
         $filters = $grid->getParam('filters');
-        $resultCount = $this->getQueryBuilder()->getQuery()->getArrayResult();
         $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
         $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
         $sort = $grid->getPlatform()->getSort();
@@ -243,6 +242,8 @@ class QueryBuilder extends AbstractAdapter
                 }
             }
         }
+
+        $resultCount = $this->getQueryBuilder()->getQuery()->getArrayResult();
 
         // Calculate offset
         $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;

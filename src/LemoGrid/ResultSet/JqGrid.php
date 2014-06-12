@@ -4,7 +4,7 @@ namespace LemoGrid\ResultSet;
 
 use Zend\Stdlib\ArrayObject;
 
-class JqGrid extends ArrayObject
+class JqGrid extends ArrayObject implements ResultSetInterface
 {
     /**
      * @var array

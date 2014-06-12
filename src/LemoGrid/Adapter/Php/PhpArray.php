@@ -150,8 +150,8 @@ class PhpArray extends AbstractAdapter
             $collection[] = $data;
         }
 
-        $this->countItemsTotal = count($collection);
         $collection = $this->_filterCollection($collection);
+        $this->countItemsTotal = count($collection);
         $this->countItems = count($collection);
 
         $collection = $this->_sortCollection($collection);
