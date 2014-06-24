@@ -5,6 +5,7 @@ namespace LemoGrid\Adapter\Php;
 use DateTime;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\AbstractColumn;
+use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Exception;
@@ -199,9 +200,9 @@ class PhpArray extends AbstractAdapter
     private function _filterCollection(array $collection)
     {
         $grid = $this->getGrid();
-        $filters = $grid->getParam('filters');
+        $filter = $grid->getParam('filters');
 
-        if(empty($collection) || empty($filters)) {
+        if(empty($collection) || empty($filter['rules'])) {
             return $collection;
         }
 
@@ -210,24 +211,20 @@ class PhpArray extends AbstractAdapter
             foreach($grid->getColumns() as $col)
             {
                 if($col->getAttributes()->getIsSearchable()) {
-                    $prepend = null;
-                    $append = null;
 
-                    if(array_key_exists($col->getName(), $filters)) {
+                    // Jsou definovane filtry pro sloupec
+                    if(!empty($filter['rules'][$col->getName()])) {
+                        foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
+                            if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
+                                preg_match('/' . $filterDefinition['value'] . '/i', $item[$col->getName()], $matches);
 
-                        if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-                            $isValid = true;
-                            foreach($col->getOptions()->getIdentifiers() as $identifier){
-                                if(!preg_match('/' . $filters[$col->getName()]['value'] . '/i', $item[$identifier])) {
-                                    $isValid == false;
+                                if (count($matches) == 0) {
+                                    unset($collection[$index]);
                                 }
-                            }
-                            if (false === $isValid) {
-                                unset($collection[$index]);
-                            }
-                        } else {
-                            if(false === $this->addWhereFromFilter($col, $col->getAttributes()->getFormat(), $filters[$col->getName()], $item[$col->getName()])) {
-                                unset($collection[$index]);
+                            } else {
+                                if(false === $this->buildWhereFromFilter($col, $filterDefinition, $item[$col->getName()])) {
+                                    unset($collection[$index]);
+                                }
                             }
                         }
                     }
@@ -312,24 +309,24 @@ class PhpArray extends AbstractAdapter
     }
 
     /**
-     * @param  AbstractColumn $column
-     * @param  string         $format
-     * @param  array          $filter
-     * @param  string         $value
+     * @param  ColumnInterface $column
+     * @param  array           $filterDefinition
+     * @param  string          $value
      * @return bool
      * @throws Exception\InvalidArgumentException
      */
-    protected function addWhereFromFilter($column, $format, $filter, $value)
+    protected function buildWhereFromFilter(ColumnInterface $column, $filterDefinition, $value)
     {
         $isValid = true;
-        $valueFilter = $filter['value'];
+        $operator = $filterDefinition['operator'];
+        $valueFilter = $filterDefinition['value'];
 
         // Pravedeme neuplny string na DbDate
-        if ('date' == $format) {
+        if ('date' == $column->getAttributes()->getFormat()) {
             $valueFilter = $this->convertLocaleDateToDbDate($valueFilter);
         }
 
-        switch ($filter['operator']) {
+        switch ($operator) {
             case AbstractPlatform::OPERATOR_EQUAL:
                 if ($value != $valueFilter) {
                     $isValid = false;

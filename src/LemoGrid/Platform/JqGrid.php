@@ -85,8 +85,9 @@ class JqGrid extends AbstractPlatform
             }
 
             $value = array();
+            $value['operator'] = strtolower($rules['groupOp']);
             foreach ($rules['rules'] as $rule) {
-                $value[$rule['field']] = array(
+                $value['rules'][$rule['field']][] = array(
                     'operator' => $this->getFilterOperator($rule['op']),
                     'value' => $rule['data'],
                 );

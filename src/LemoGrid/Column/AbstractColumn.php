@@ -27,17 +27,19 @@ abstract class AbstractColumn implements
     public function prepareColumn(GridInterface $grid)
     {
         $filters = $grid->getParam('filters');
+        $name = $this->getName();
 
-        if (isset($filters[$this->getName()])) {
-            $name = $this->getName();
-            $operator = $filters[$this->getName()]['operator'];
-            $operatorOutput = $grid->getPlatform()->getFilterOperatorOutput($operator);
-            $value = $filters[$this->getName()]['value'];
+        if (!empty($filters['rules'][$name])) {
+            foreach ($filters['rules'][$name] as $filterDefinition) {
+                $operator = $filterDefinition['operator'];
+                $operatorOutput = $grid->getPlatform()->getFilterOperatorOutput($operator);
+                $value = $filterDefinition['value'];
 
-            $this->getAttributes()->setSearchDataInit("function(elem) {
-                $(elem).val('{$value}');
-                $(elem).parents('tr').find(\"[colname='{$name}']\").attr('soper', '{$operatorOutput}').text('{$operator}');
-            }");
+                $this->getAttributes()->setSearchDataInit("function(elem) {
+                    $(elem).val('{$value}');
+                    $(elem).parents('tr').find(\"[colname='{$name}']\").attr('soper', '{$operatorOutput}').text('{$operator}');
+                }");
+            }
         }
     }
 
