@@ -233,11 +233,38 @@ class JqGrid extends AbstractHelper
 
         $script[] = '        ]';
         $script[] = '    });';
-//        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false,add:false,edit:false,search:false,clear:true});";
-
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, clear:true});";
         // Can render toolbar?
         if($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
             $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getPlatform()->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
+        }
+
+        // Column chooser
+        if (true === $grid->getPlatform()->getOptions()->getColumnChooser()) {
+            $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
+                caption: '" . $grid->getPlatform()->getOptions()->getColumnChooserButtonCaption() . "',
+                buttonicon: '" . $grid->getPlatform()->getOptions()->getColumnChooserButtonIcon() . "',
+                title: '" . $grid->getPlatform()->getOptions()->getColumnChooserButtonTitle() . "',
+                onClickButton : function () {
+                    $(this).jqGrid('columnChooser', {
+                        width: " . $grid->getPlatform()->getOptions()->getColumnChooserModalWidth() . ",
+                        classname: '" . $grid->getPlatform()->getOptions()->getColumnChooserModalClassName() . "',
+                        done: function (perm) {
+                            if (perm) {
+                                this.jqGrid('remapColumns', perm, true);
+                                gridId = $(this).attr('id');
+                                gridParentWidth = $('#gbox_' + gridId).parent().width();
+                                $('#' + gridId).setGridWidth(gridParentWidth);";
+
+            if ('' != $grid->getPlatform()->getOptions()->getColumnChooserCallback()) {
+                $script[] = "                " . $grid->getPlatform()->getOptions()->getColumnChooserCallback() . "(this, '" . $grid->getName() . "', $('#colchooser_" . $grid->getName() . "').find('.ui-jqgrid-columns').val());";
+            }
+                $script[] = "    }
+                        }
+                    });
+
+                }
+            });" . PHP_EOL;
         }
 
         return implode(PHP_EOL, $script);
@@ -313,6 +340,14 @@ class JqGrid extends AbstractHelper
      */
     protected function buildScriptAttributes($key, $value)
     {
+        if ('hidedlg' == $key) {
+            if ($value == true) {
+                $value = false;
+            } else {
+                $value = true;
+            }
+        }
+
         if(is_array($value)) {
             if(empty($value)) {
                 return null;

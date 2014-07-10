@@ -107,6 +107,55 @@ class JqGridOptions extends AbstractOptions
     protected $cellSaveUrl;
 
     /**
+     * Is column chooser enabled?
+     *
+     * @var bool
+     */
+    protected $columnChooser = false;
+
+    /**
+     * Caption of column chooser button.
+     *
+     * @var string
+     */
+    protected $columnChooserButtonCaption;
+
+    /**
+     * Icon class of column chooser button.
+     *
+     * @var string
+     */
+    protected $columnChooserButtonIcon = 'ui-icon-wrench';
+
+    /**
+     * Title of column chooser button.
+     *
+     * @var string
+     */
+    protected $columnChooserButtonTitle;
+
+    /**
+     * Class name of modal window.
+     *
+     * @var string
+     */
+    protected $columnChooserCallback;
+
+    /**
+     * Class name of modal window.
+     *
+     * @var string
+     */
+    protected $columnChooserModalClassName = 'ui-jqgrid-columns';
+
+    /**
+     * Width of modal windows in px.
+     *
+     * @var int
+     */
+    protected $columnChooserModalWidth = 550;
+
+    /**
      * A array that store the local data passed to the grid. You can directly point to this variable in case you want
      * to load a array data. It can replace addRowData method which is slow on relative big data.
      *
@@ -757,6 +806,139 @@ class JqGridOptions extends AbstractOptions
     public function getCellSaveUrl()
     {
         return $this->cellSaveUrl;
+    }
+
+    /**
+     * @param  boolean $columnChooser
+     * @return JqGridOptions
+     */
+    public function setColumnChooser($columnChooser)
+    {
+        $this->columnChooser = $columnChooser;
+
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getColumnChooser()
+    {
+        return $this->columnChooser;
+    }
+
+    /**
+     * @param  string $columnChooserButtonCaption
+     * @return JqGridOptions
+     */
+    public function setColumnChooserButtonCaption($columnChooserButtonCaption)
+    {
+        $this->columnChooserButtonCaption = $columnChooserButtonCaption;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColumnChooserButtonCaption()
+    {
+        return $this->columnChooserButtonCaption;
+    }
+
+    /**
+     * @param  string $columnChooserButtonIcon
+     * @return JqGridOptions
+     */
+    public function setColumnChooserButtonIcon($columnChooserButtonIcon)
+    {
+        $this->columnChooserButtonIcon = $columnChooserButtonIcon;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColumnChooserButtonIcon()
+    {
+        return $this->columnChooserButtonIcon;
+    }
+
+    /**
+     * @param  string $columnChooserButtonTitle
+     * @return JqGridOptions
+     */
+    public function setColumnChooserButtonTitle($columnChooserButtonTitle)
+    {
+        $this->columnChooserButtonTitle = $columnChooserButtonTitle;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColumnChooserButtonTitle()
+    {
+        return $this->columnChooserButtonTitle;
+    }
+
+    /**
+     * @param  string $columnChooserCallback
+     * @return JqGridOptions
+     */
+    public function setColumnChooserCallback($columnChooserCallback)
+    {
+        $this->columnChooserCallback = $columnChooserCallback;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColumnChooserCallback()
+    {
+        return $this->columnChooserCallback;
+    }
+
+    /**
+     * @param  string $columnChooserModalClassName
+     * @return JqGridOptions
+     */
+    public function setColumnChooserModalClassName($columnChooserModalClassName)
+    {
+        $this->columnChooserModalClassName = $columnChooserModalClassName;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getColumnChooserModalClassName()
+    {
+        return $this->columnChooserModalClassName;
+    }
+
+    /**
+     * @param  int $columnChooserModalWidth
+     * @return JqGridOptions
+     */
+    public function setColumnChooserModalWidth($columnChooserModalWidth)
+    {
+        $this->columnChooserModalWidth = $columnChooserModalWidth;
+
+        return $this;
+    }
+
+    /**
+     * @return int
+     */
+    public function getColumnChooserModalWidth()
+    {
+        return $this->columnChooserModalWidth;
     }
 
     /**
