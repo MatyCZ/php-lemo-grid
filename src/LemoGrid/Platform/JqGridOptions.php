@@ -230,7 +230,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $forceFit = true;
+    protected $forceFit;
 
     /**
      * Determines the current state of the grid (i.e. when used with hiddengrid, hidegrid and caption options). Can
@@ -432,6 +432,13 @@ class JqGridOptions extends AbstractOptions
      * @var string
      */
     protected $resizeClass;
+
+    /**
+     * Callback name called after resize stop.
+     *
+     * @var string
+     */
+    protected $resizeCallback;
 
     /**
      * Sets how many records we want to view in the grid. This parameter is passed to the url for use by the server
@@ -1662,6 +1669,25 @@ class JqGridOptions extends AbstractOptions
     public function getResizeClass()
     {
         return $this->resizeClass;
+    }
+
+    /**
+     * @param  string $resizeCallback
+     * @return JqGridOptions
+     */
+    public function setResizeCallback($resizeCallback)
+    {
+        $this->resizeCallback = $resizeCallback;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getResizeCallback()
+    {
+        return $this->resizeCallback;
     }
 
     /**

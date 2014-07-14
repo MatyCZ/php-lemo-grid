@@ -30,7 +30,7 @@ class JqGrid extends AbstractHelper
         'format_options'       => 'formatoptions',
         'name'                 => 'name',
         'is_editable'          => 'isEditable',
-        'is_fixed'             => 'page',
+        'is_fixed'             => 'fixed',
         'is_frozen'            => 'frozen',
         'is_hidden'            => 'hidden',
         'is_hideable'          => 'hidedlg',
@@ -217,6 +217,7 @@ class JqGrid extends AbstractHelper
 
         $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid({';
         $script[] = '        ' . $this->buildScript('grid', $grid->getPlatform()->getOptions()) . ', ' . PHP_EOL;
+        $script[] = "        resizeStop: function(newWidth, columnIndex) { " . $grid->getPlatform()->getOptions()->getResizeCallback() . "('" . $grid->getName() . "', columnIndex, newWidth); }, " . PHP_EOL;
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
         $script[] = '        colModel: [';
 
@@ -233,11 +234,13 @@ class JqGrid extends AbstractHelper
 
         $script[] = '        ]';
         $script[] = '    });';
-        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, clear:true});";
+
         // Can render toolbar?
         if($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
             $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getPlatform()->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
         }
+
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false});";
 
         // Column chooser
         if (true === $grid->getPlatform()->getOptions()->getColumnChooser()) {
@@ -257,7 +260,7 @@ class JqGrid extends AbstractHelper
                                 $('#' + gridId).setGridWidth(gridParentWidth);";
 
             if ('' != $grid->getPlatform()->getOptions()->getColumnChooserCallback()) {
-                $script[] = "                " . $grid->getPlatform()->getOptions()->getColumnChooserCallback() . "(this, '" . $grid->getName() . "', $('#colchooser_" . $grid->getName() . "').find('.ui-jqgrid-columns').val());";
+                $script[] = "                " . $grid->getPlatform()->getOptions()->getColumnChooserCallback() . "('" . $grid->getName() . "', $('#colchooser_" . $grid->getName() . "').find('.ui-jqgrid-columns').val());";
             }
                 $script[] = "    }
                         }
