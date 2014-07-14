@@ -240,7 +240,7 @@ class JqGrid extends AbstractHelper
             $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getPlatform()->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
         }
 
-        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false});";
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, refresh:false});";
 
         // Column chooser
         if (true === $grid->getPlatform()->getOptions()->getColumnChooser()) {
@@ -357,6 +357,7 @@ class JqGrid extends AbstractHelper
             }
 
             if ($key == 'value') {
+                $values = array();
                 foreach($value as $k => $val) {
                     $values[] = $k . ':' . $val;
                 }
@@ -366,10 +367,18 @@ class JqGrid extends AbstractHelper
 
             $values = array();
             foreach($value as $k => $val) {
-                $da = $this->buildScriptAttributes($k, $val);
+                if ('defaultValue' === $k && 'searchoptions' == $key) {
+                    continue;
+                }
 
-                if (!empty($da)) {
-                    $values[] = $this->buildScriptAttributes($k, $val);
+                if (is_int($k)) {
+                    $values[] = "'" . $val . "'";
+                } else {
+                    $da = $this->buildScriptAttributes($k, $val);
+
+                    if (!empty($da)) {
+                        $values[] = $this->buildScriptAttributes($k, $val);
+                    }
                 }
             }
 
