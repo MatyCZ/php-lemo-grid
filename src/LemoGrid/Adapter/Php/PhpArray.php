@@ -48,11 +48,19 @@ class PhpArray extends AbstractAdapter
         $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
         $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
 
-        foreach($this->getRawData() as $indexRow => $item)
-        {
+        $rows = $this->getRawData();
+        $rowsCount = count($rows);
+        $columns = $this->getGrid()->getIterator()->toArray();
+        $columnsCount = $this->getGrid()->getIterator()->count();
+
+        $summaryData = array();
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
+            $item = $rows[$indexRow];
+
             $data = array();
 
-            foreach($grid->getColumns() as $column) {
+            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+                $column = $columns[$indexCol];
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
                 $data[$colName] = null;
@@ -163,7 +171,9 @@ class PhpArray extends AbstractAdapter
 
         // Calculate user data (SummaryRow)
         if (isset($dataSum)) {
-            foreach ($this->getGrid()->getColumns() as $column) {
+            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+                $column = $columns[$indexCol];
+
                 if (null !== $column->getAttributes()->getSummaryType()) {
                     $colName = $column->getName();
                     $summaryType = $column->getAttributes()->getSummaryType();
@@ -194,36 +204,43 @@ class PhpArray extends AbstractAdapter
     /**
      * Filtr collection
      *
-     * @param  array $collection
+     * @param  array $rows
      * @return array
      */
-    private function _filterCollection(array $collection)
+    private function _filterCollection(array $rows)
     {
         $grid = $this->getGrid();
         $filter = $grid->getParam('filters');
 
-        if(empty($collection) || empty($filter['rules'])) {
-            return $collection;
+        if(empty($rows) || empty($filter['rules'])) {
+            return $rows;
         }
 
-        foreach($collection as $index => $item)
-        {
-            foreach($grid->getColumns() as $col)
-            {
-                if($col->getAttributes()->getIsSearchable()) {
+        $rowsCount = count($rows);
+        $columns = $this->getGrid()->getIterator()->toArray();
+        $columnsCount = $this->getGrid()->getIterator()->count();
+
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
+            $item = $rows[$indexRow];
+
+            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+                $column = $columns[$indexCol];
+
+                // Ma sloupec povolene vyhledavani?
+                if($column->getAttributes()->getIsSearchable()) {
 
                     // Jsou definovane filtry pro sloupec
-                    if(!empty($filter['rules'][$col->getName()])) {
-                        foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
-                            if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-                                preg_match('/' . $filterDefinition['value'] . '/i', $item[$col->getName()], $matches);
+                    if(!empty($filter['rules'][$column->getName()])) {
+                        foreach ($filter['rules'][$column->getName()] as $filterDefinition) {
+                            if($column instanceof ColumnConcat || $column instanceof ColumnConcatGroup) {
+                                preg_match('/' . $filterDefinition['value'] . '/i', $item[$column->getName()], $matches);
 
                                 if (count($matches) == 0) {
-                                    unset($collection[$index]);
+                                    unset($rows[$indexRow]);
                                 }
                             } else {
-                                if(false === $this->buildWhereFromFilter($col, $filterDefinition, $item[$col->getName()])) {
-                                    unset($collection[$index]);
+                                if(false === $this->buildWhereFromFilter($column, $filterDefinition, $item[$column->getName()])) {
+                                    unset($rows[$indexRow]);
                                 }
                             }
                         }
@@ -232,29 +249,33 @@ class PhpArray extends AbstractAdapter
             }
         }
 
-        return $collection;
+        return $rows;
     }
 
     /**
      * Sort collection
      *
-     * @param  array $collection
+     * @param  array $rows
      * @return array
      */
-    private function _sortCollection($collection)
+    private function _sortCollection($rows)
     {
         $sort = $this->getGrid()->getPlatform()->getSort();
 
-        if(empty($collection) || empty($sort)) {
-            return $collection;
+        if(empty($rows) || empty($sort)) {
+            return $rows;
         }
 
+        $rowsCount = count($rows);
+
         // Obtain a list of columns
-        foreach ($collection as $index => $column) {
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
+            $column = $rows[$indexRow];
+
             $keys = array_keys($column);
 
             foreach ($keys as $key) {
-                $parts[$key][$index] = $column[$key];
+                $parts[$key][$indexRow] = $column[$key];
             }
         }
 
@@ -264,11 +285,11 @@ class PhpArray extends AbstractAdapter
             $arguments[] = ('asc' == $sortDirect) ? SORT_ASC : SORT_DESC;
             $arguments[] = SORT_REGULAR;
         }
-        $arguments[] = &$collection;
+        $arguments[] = & $rows;
 
         call_user_func_array('array_multisort', $arguments);
 
-        return $collection;
+        return $rows;
     }
 
     /**

@@ -358,10 +358,10 @@ class Grid implements GridInterface
 
         $items = array();
         $data = $adapter->setGrid($this)->getResultSet();
+        $rows = $data->getArrayCopy();
+        $rowsCount = count($rows);
 
-        foreach ($data->getArrayCopy() as $index => $item) {
-            $rowData = $item;
-
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
 //            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == JqGridOptions::TREE_MODEL_NESTED) {
 //                $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
 //                $item['expanded'] = 'true';
@@ -375,8 +375,8 @@ class Grid implements GridInterface
 
             // Pridame radek
             $items[] = array(
-                'id'   => $index +1,
-                'cell' => array_values($rowData)
+                'id'   => $indexRow +1,
+                'cell' => array_values($rows[$indexRow])
             );
         }
 

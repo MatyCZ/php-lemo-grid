@@ -46,15 +46,23 @@ class QueryBuilder extends AbstractAdapter
 
         $this->findAliases();
 
+        $rows = $this->executeQuery();
+        $rowsCount = count($rows);
+        $columns = $this->getGrid()->getIterator()->toArray();
+        $columnsCount = $this->getGrid()->getIterator()->count();
+
         $summaryData = array();
-        foreach ($this->executeQuery() as $indexRow => $item)
-        {
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
+            $item = $rows[$indexRow];
+
             if (isset($item[0])) {
                 $item = $this->mergeSubqueryItem($item);
             }
 
             $data = array();
-            foreach($this->getGrid()->getColumns() as $column) {
+            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+                $column = $columns[$indexCol];
+
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
                 $data[$colName] = null;
@@ -162,7 +170,9 @@ class QueryBuilder extends AbstractAdapter
 
         // Calculate user data (SummaryRow)
         if (isset($dataSum)) {
-            foreach ($this->getGrid()->getColumns() as $column) {
+            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+                $column = $columns[$indexCol];
+
                 if (null !== $column->getAttributes()->getSummaryType()) {
                     $colName = $column->getName();
                     $summaryType = $column->getAttributes()->getSummaryType();
@@ -201,11 +211,16 @@ class QueryBuilder extends AbstractAdapter
         $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
         $sort = $grid->getPlatform()->getSort();
 
+        $columns = $this->getGrid()->getIterator()->toArray();
+        $columnsCount = $this->getGrid()->getIterator()->count();
+
         // WHERE
         if (!empty($filter['rules'])) {
 
             $whereCol = array();
-            foreach($grid->getColumns() as $col) {
+            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+                $col = $columns[$indexCol];
+
                 if($col->getAttributes()->getIsSearchable()) {
 
                     // Jsou definovane filtry pro sloupec
