@@ -372,7 +372,11 @@ class JqGrid extends AbstractHelper
                 }
 
                 if (is_int($k)) {
-                    $values[] = "'" . $val . "'";
+                    if ('rowList' == $key) {
+                        $values[] = $val;
+                    } else {
+                        $values[] = "'" . $val . "'";
+                    }
                 } else {
                     $da = $this->buildScriptAttributes($k, $val);
 
