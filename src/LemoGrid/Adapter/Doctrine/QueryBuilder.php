@@ -4,6 +4,7 @@ namespace LemoGrid\Adapter\Doctrine;
 
 use DateTime;
 use Doctrine\ORM\Query\Expr;
+use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\AbstractColumn;
@@ -50,6 +51,8 @@ class QueryBuilder extends AbstractAdapter
         $rowsCount = count($rows);
         $columns = $this->getGrid()->getIterator()->toArray();
         $columnsCount = $this->getGrid()->getIterator()->count();
+
+        $this->countItems = $rowsCount;
 
         $summaryData = array();
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
@@ -301,8 +304,6 @@ class QueryBuilder extends AbstractAdapter
             }
         }
 
-        $resultCount = $this->getQueryBuilder()->getQuery()->getArrayResult();
-
         // Calculate offset
         $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;
         if($offset < 0) {
@@ -314,8 +315,23 @@ class QueryBuilder extends AbstractAdapter
 
         $result = $this->getQueryBuilder()->getQuery()->getArrayResult();
 
-        $this->countItems = count($result);
-        $this->countItemsTotal = count($resultCount);
+        // Nacteme si aliasy z FROM a nazby entit z FROM
+        $rootAliases = $this->getQueryBuilder()->getRootAliases();
+        $rootEntities = $this->getQueryBuilder()->getRootEntities();
+        if (count($rootAliases) > 1) {
+            throw new \Exception('Many root aliases are not supported');
+        }
+
+        // Najdeme si sloupec, ktery slouzi jako primarni klic
+        $identifiers = $this->getQueryBuilder()->getEntityManager()->getClassMetadata($rootEntities[0])->getIdentifierFieldNames();
+
+        // Spocteme si pocet zaznamu
+        $this->getQueryBuilder()->resetDQLPart('select');
+        $this->getQueryBuilder()->select('count(' . $rootAliases[0] . '.' . $identifiers[0] . ')');
+        $this->getQueryBuilder()->setMaxResults(null);
+        $this->getQueryBuilder()->setFirstResult(null);
+
+        $this->countItemsTotal = $this->getQueryBuilder()->getQuery()->getSingleScalarResult();
 
         return $result;
     }
