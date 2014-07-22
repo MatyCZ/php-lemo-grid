@@ -170,14 +170,15 @@ class PhpArray extends AbstractAdapter
         unset($collection);
 
         // Calculate user data (SummaryRow)
-        if (isset($dataSum)) {
-            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-                $column = $columns[$indexCol];
+        for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
+            $column = $columns[$indexCol];
 
-                if (null !== $column->getAttributes()->getSummaryType()) {
-                    $colName = $column->getName();
-                    $summaryType = $column->getAttributes()->getSummaryType();
+            if (null !== $column->getAttributes()->getSummaryType()) {
+                $colName = $column->getName();
+                $summaryData[$colName] = '';
+                $summaryType = $column->getAttributes()->getSummaryType();
 
+                if (isset($dataSum[$colName])) {
                     if ('sum' == $summaryType) {
                         $summaryData[$colName] = array_sum($dataSum[$colName]);
                     }
@@ -192,11 +193,9 @@ class PhpArray extends AbstractAdapter
                     }
                 }
             }
-
-            $this->getResultSet()->setUserData($summaryData);
-
-            unset($dataSum);
         }
+
+        $this->getResultSet()->setUserData($summaryData);
 
         return $this;
     }
