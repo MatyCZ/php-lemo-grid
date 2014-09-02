@@ -2,6 +2,8 @@
 
 namespace LemoGrid\Column;
 
+use DateTime;
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
 
@@ -13,26 +15,6 @@ class Concat extends AbstractColumn
      * @var ConcatOptions
      */
     protected $options;
-
-    /**
-     * @param null|string                        $name
-     * @param array|Traversable|ConcatOptions    $options
-     * @param array|Traversable|ColumnAttributes $attributes
-     */
-    public function __construct($name = null, $options = null, $attributes = null)
-    {
-        if (null !== $name) {
-            $this->setName($name);
-        }
-
-        if (null !== $options) {
-            $this->setOptions($options);
-        }
-
-        if (null !== $attributes) {
-            $this->setAttributes($attributes);
-        }
-    }
 
     /**
      * Set column options
@@ -71,5 +53,45 @@ class Concat extends AbstractColumn
         }
 
         return $this->options;
+    }
+
+    /**
+     * @param  AdapterInterface $adapter
+     * @param  array            $item
+     * @return string
+     */
+    public function renderValue(AdapterInterface $adapter, array $item)
+    {
+        $value = null;
+        $values = array();
+        $hasValue = false;
+
+        foreach($this->getOptions()->getIdentifiers() as $index => $identifier) {
+            $val = $adapter->findValue($identifier, $item);
+
+            if(!empty($val)) {
+                if($val instanceof DateTime) {
+                    $val = $value->format('Y-m-d H:i:s');
+                }
+
+                $values[$index] = $val;
+
+                if ('' !== $val) {
+                    $hasValue = true;
+                }
+            } else {
+                $values[$index] = '';
+            }
+        }
+
+        $patternCount = count($values);
+        $patternCountParts = substr_count($this->getOptions()->getPattern(), '%s');
+        if (true === $hasValue && $patternCount > 0 && $patternCount == $patternCountParts) {
+            $value = vsprintf($this->getOptions()->getPattern(), $values);
+        }
+
+        unset($values, $identifier);
+
+        return $value;
     }
 }

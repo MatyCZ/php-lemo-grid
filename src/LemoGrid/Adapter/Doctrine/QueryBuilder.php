@@ -8,6 +8,7 @@ use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\AbstractColumn;
+use LemoGrid\Column\Buttons;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
@@ -70,101 +71,38 @@ class QueryBuilder extends AbstractAdapter
                 $colName = $column->getName();
                 $data[$colName] = null;
 
-                // Nacteme si data radku
-                $value = $this->findValue($colIdentifier, $item);
-                $column->setValue($value);
+                // Can we render value?
+                if (true === $column->isValid($this, $item)) {
 
-                $value = $column->renderValue();
+                    // Nacteme si data radku
+                    $value = $this->findValue($colIdentifier, $item);
 
-                // COLUMN - DateTime
-                if($value instanceof DateTime) {
-                    $value = $value->format('Y-m-d H:i:s');
-                }
-
-                // COLUMN - Concat
-                if($column instanceof ColumnConcat) {
-                    $value = null;
-                    $values = array();
-                    $hasValue = false;
-
-                    foreach($column->getOptions()->getIdentifiers() as $index => $identifier) {
-                        $val = $this->findValue($identifier, $item);
-
-                        if(!empty($val)) {
-                            if($val instanceof DateTime) {
-                                $val = $value->format('Y-m-d H:i:s');
-                            }
-
-                            $values[$index] = $val;
-
-                            if ('' !== $val) {
-                                $hasValue = true;
-                            }
-                        } else {
-                            $values[$index] = '';
-                        }
+                    // COLUMN - DateTime
+                    if($value instanceof DateTime) {
+                        $value = $value->format('Y-m-d H:i:s');
                     }
 
-                    $patternCount = count($values);
-                    $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
-                    if (true === $hasValue && $patternCount > 0 && $patternCount == $patternCountParts) {
-                        $value = vsprintf($column->getOptions()->getPattern(), $values);
-                    }
+                    $column->setValue($value);
+                    $value = $column->renderValue($this, $item);
 
-                    unset($values, $identifier);
-                }
-
-                // COLUMN - Concat group
-                if($column instanceof ColumnConcatGroup) {
-                    $value = null;
-                    $values = array();
-
-                    $valuesLine = array();
-                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
-                        $val = $this->findValue($identifier, $item);
-
-                        if (null !== $val) {
-                            foreach ($val as $index => $v) {
-                                if($v instanceof DateTime) {
-                                    $v = $v->format('Y-m-d H:i:s');
-                                }
-
-                                $valuesLine[$index][] = $v;
+                    // Projdeme data a nahradime data ve formatu %xxx%
+                    if(null !== $value && preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
+                        foreach($matches[0] as $key => $match) {
+                            if ('%_index%' == $matches[0][$key]) {
+                                $value = str_replace($matches[0][$key], $indexRow, $value);
+                            } else {
+                                $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                             }
                         }
                     }
 
-                    // Slozime jednotlive casti na radak
-                    foreach ($valuesLine as $line) {
-                        if (!empty($line)) {
-                            $values[] = vsprintf($column->getOptions()->getPattern(), $line);
-                        } else {
-                            $values[] = null;
-                        }
+                    if (null !== $column->getAttributes()->getSummaryType()) {
+                        $dataSum[$colName][] = $value;
                     }
 
-                    $value = implode($column->getOptions()->getSeparator(), $values);
-
-                    unset($values, $valuesLine, $identifier);
+                    $data[$colName] = $value;
+                    $column->setValue($value);
                 }
-
-                // Projdeme data a nahradime data ve formatu %xxx%
-                if(null !== $value && preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
-                    foreach($matches[0] as $key => $match) {
-                        if ('%_index%' == $matches[0][$key]) {
-                            $value = str_replace($matches[0][$key], $indexRow, $value);
-                        } else {
-                            $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
-                        }
-                    }
-                }
-
-                if (null !== $column->getAttributes()->getSummaryType()) {
-                    $dataSum[$colName][] = $value;
-                }
-
-                $data[$colName] = $value;
-                $column->setValue($value);
             }
 
             $this->getResultSet()->append($data);
@@ -203,6 +141,7 @@ class QueryBuilder extends AbstractAdapter
     }
 
     /**
+     * @throws \Exception
      * @return array
      */
     protected function executeQuery()
@@ -367,13 +306,16 @@ class QueryBuilder extends AbstractAdapter
      * @param  int    $depth
      * @return null|string
      */
-    protected function findValue($identifier, array $item, $depth = 0)
+    public function findValue($identifier, array $item, $depth = 0)
     {
         if (0 == $depth) {
             $identifier = $this->buildIdententifier($identifier);
         }
 
-        $identifierNext = substr($identifier, strpos($identifier, '.') + 1);
+        $identifierNext = $identifier;
+        if (false !== strpos($identifier, '.')) {
+            $identifierNext = substr($identifier, strpos($identifier, '.') + 1);
+        }
 
         $parts = explode('.', $identifierNext);
 
@@ -485,7 +427,11 @@ class QueryBuilder extends AbstractAdapter
         return $where;
     }
 
-    protected function mergeSubqueryItem($item)
+    /**
+     * @param  array $item
+     * @return array
+     */
+    protected function mergeSubqueryItem(array $item)
     {
         // Nacteme si samostatne data entity a seznam poli
         $fields = $item;
@@ -494,15 +440,15 @@ class QueryBuilder extends AbstractAdapter
 
         // Projdeme vsechna pole, ktera mame odebrat
         foreach ($fields as $name => $value) {
-            if (is_null($value)) {
-
-                // Jedna se o Pole
-                if (is_array($item)) {
-                    if (isset($item[$name])) {
+//            if (is_null($value)) {
+//
+//                // Jedna se o Pole
+//                if (is_array($item)) {
+//                    if (isset($item[$name])) {
                         $item[$name] = $value;
-                    }
-                }
-            }
+//                    }
+//                }
+//            }
         }
 
         return $item;

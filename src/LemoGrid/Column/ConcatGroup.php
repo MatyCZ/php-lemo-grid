@@ -2,6 +2,8 @@
 
 namespace LemoGrid\Column;
 
+use DateTime;
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
 
@@ -13,26 +15,6 @@ class ConcatGroup extends AbstractColumn
      * @var ConcatGroupOptions
      */
     protected $options;
-
-    /**
-     * @param null|string                        $name
-     * @param array|Traversable|ConcatGroupOptions    $options
-     * @param array|Traversable|ColumnAttributes $attributes
-     */
-    public function __construct($name = null, $options = null, $attributes = null)
-    {
-        if (null !== $name) {
-            $this->setName($name);
-        }
-
-        if (null !== $options) {
-            $this->setOptions($options);
-        }
-
-        if (null !== $attributes) {
-            $this->setAttributes($attributes);
-        }
-    }
 
     /**
      * Set column options
@@ -71,5 +53,46 @@ class ConcatGroup extends AbstractColumn
         }
 
         return $this->options;
+    }
+
+    /**
+     * @param  AdapterInterface $adapter
+     * @param  array            $item
+     * @return string
+     */
+    public function renderValue(AdapterInterface $adapter, array $item)
+    {
+        $value = null;
+        $values = array();
+
+        $valuesLine = array();
+        foreach($this->getOptions()->getIdentifiers() as $identifier) {
+            $val = $adapter->findValue($identifier, $item);
+
+            if (null !== $val) {
+                foreach ($val as $index => $v) {
+                    if($v instanceof DateTime) {
+                        $v = $v->format('Y-m-d H:i:s');
+                    }
+
+                    $valuesLine[$index][] = $v;
+                }
+            }
+        }
+
+        // Slozime jednotlive casti na radak
+        foreach ($valuesLine as $line) {
+            if (!empty($line)) {
+                $values[] = vsprintf($this->getOptions()->getPattern(), $line);
+            } else {
+                $values[] = null;
+            }
+        }
+
+        $value = implode($this->getOptions()->getSeparator(), $values);
+
+        unset($values, $valuesLine, $identifier);
+
+        return$value;
     }
 }

@@ -271,6 +271,7 @@ class Factory
         $identifier = isset($spec['identifier']) ? $spec['identifier'] : null;
         $options    = isset($spec['options'])    ? $spec['options']    : null;
         $attributes = isset($spec['attributes']) ? $spec['attributes'] : null;
+        $conditions = isset($spec['conditions']) ? $spec['conditions'] : null;
 
         if ($name !== null && $name !== '') {
             $column->setName($name);
@@ -286,6 +287,10 @@ class Factory
 
         if (is_array($attributes) || $attributes instanceof Traversable || $attributes instanceof ArrayAccess) {
             $column->setAttributes($attributes);
+        }
+
+        if (is_array($conditions) || $conditions instanceof Traversable || $conditions instanceof ArrayAccess) {
+            $column->setConditions($conditions);
         }
 
         return $column;

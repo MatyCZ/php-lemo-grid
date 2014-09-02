@@ -2,6 +2,7 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
 use Zend\Mvc\Router\RouteInterface;
@@ -30,26 +31,6 @@ class Buttons extends AbstractColumn
      * @var RouteMatch.
      */
     protected $routeMatch;
-
-    /**
-     * @param null|string                        $name
-     * @param array|Traversable|ButtonsOptions   $options
-     * @param array|Traversable|ColumnAttributes $attributes
-     */
-    public function __construct($name = null, $options = null, $attributes = null)
-    {
-        if (null !== $name) {
-            $this->setName($name);
-        }
-
-        if (null !== $options) {
-            $this->setOptions($options);
-        }
-
-        if (null !== $attributes) {
-            $this->setAttributes($attributes);
-        }
-    }
 
     /**
      * Set column options
@@ -91,18 +72,22 @@ class Buttons extends AbstractColumn
     }
 
     /**
+     * @param  AdapterInterface $adapter
+     * @param  array            $item
      * @return string
      */
-    public function renderValue()
+    public function renderValue(AdapterInterface $adapter, array $item)
     {
         $parts = array();
         foreach ($this->getOptions()->getButtons() as $button) {
-            if ($button instanceof Route && $this->router instanceof RouteInterface) {
-                $button->setRouter($this->router);
-                $button->setRouteMatch($this->routeMatch);
-            }
+            if ($button->isValid($adapter, $item)) {
+                if ($button instanceof Route && $this->router instanceof RouteInterface) {
+                    $button->setRouter($this->router);
+                    $button->setRouteMatch($this->routeMatch);
+                }
 
-            $parts[] = $button->renderValue();
+                $parts[] = $button->renderValue($adapter, $item);
+            }
         }
 
         return implode($this->getOptions()->getSeparator(), $parts);
@@ -121,6 +106,14 @@ class Buttons extends AbstractColumn
     }
 
     /**
+     * @return RouteStackInterface
+     */
+    public function getRouter()
+    {
+        return $this->router;
+    }
+
+    /**
      * Set route match returned by the router.
      *
      * @param  RouteMatch $routeMatch
@@ -130,5 +123,13 @@ class Buttons extends AbstractColumn
     {
         $this->routeMatch = $routeMatch;
         return $this;
+    }
+
+    /**
+     * @return RouteMatch
+     */
+    public function getRouteMatch()
+    {
+        return $this->routeMatch;
     }
 }

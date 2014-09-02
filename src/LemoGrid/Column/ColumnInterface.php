@@ -2,6 +2,7 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\Adapter\AdapterInterface;
 use Zend\Stdlib\AbstractOptions;
 use Traversable;
 
@@ -68,6 +69,21 @@ interface ColumnInterface
     public function getAttributes();
 
     /**
+     * Get conditions for a column
+     *
+     * @param  array|Traversable|AbstractOptions $conditions
+     * @return ColumnInterface
+     */
+    public function setConditions(array $conditions);
+
+    /**
+     * Retrieve conditions for a column
+     *
+     * @return AbstractOptions
+     */
+    public function getConditions();
+
+    /**
      * Set the value of the column
      *
      * @param  string $value
@@ -83,9 +99,9 @@ interface ColumnInterface
     public function getValue();
 
     /**
-     * Compose the column value
-     *
-     * @return string
+     * @param  AdapterInterface $adapter
+     * @param  array            $item
+     * @return string|int
      */
-    public function renderValue();
+    public function renderValue(AdapterInterface $adapter, array $item);
 }

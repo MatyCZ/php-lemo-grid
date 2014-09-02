@@ -65,95 +65,39 @@ class PhpArray extends AbstractAdapter
                 $colName = $column->getName();
                 $data[$colName] = null;
 
-                // Nacteme si data radku
-                $value = $this->findValue($colIdentifier, $item);
-                $column->setValue($value);
+                // Can we render value?
+                if (true === $column->isValid($this, $item)) {
 
-                $value = $column->renderValue();
+                    // Nacteme si data radku
+                    $value = $this->findValue($colIdentifier, $item);
 
-                // COLUMN - DateTime
-                if($value instanceof DateTime) {
-                    $value = $value->format('Y-m-d H:i:s');
-                }
-
-                // COLUMN - Concat
-                if($column instanceof ColumnConcat) {
-                    $value = null;
-                    $values = array();
-                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
-                        $val = $this->findValue($identifier, $item);
-
-                        if(!empty($val)) {
-                            if($val instanceof DateTime) {
-                                $val = $value->format('Y-m-d H:i:s');
-                            }
-
-                            $values[] = $val;
-                        }
+                    // COLUMN - DateTime
+                    if($value instanceof DateTime) {
+                        $value = $value->format('Y-m-d H:i:s');
                     }
 
-                    $patternCount = count($values);
-                    $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
-                    if ($patternCount > 0 && $patternCount == $patternCountParts) {
-                        $value = vsprintf($column->getOptions()->getPattern(), $values);
-                    }
+                    $column->setValue($value);
 
-                    unset($values, $identifier);
-                }
+                    $value = $column->renderValue($this, $item);
 
-                // COLUMN - Concat group
-                if($column instanceof ColumnConcatGroup) {
-                    $value = null;
-                    $values = array();
-
-                    $valuesLine = array();
-                    foreach($column->getOptions()->getIdentifiers() as $identifier) {
-                        $val = $this->findValue($identifier, $item);
-
-                        if (null !== $val) {
-                            foreach ($val as $index => $v) {
-                                if($v instanceof DateTime) {
-                                    $v = $v->format('Y-m-d H:i:s');
-                                }
-
-                                $valuesLine[$index][] = $v;
+                    // Projdeme data a nahradime data ve formatu %xxx%
+                    if(null !== preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
+                        foreach($matches[0] as $key => $match) {
+                            if ('%_index%' == $matches[0][$key]) {
+                                $value = str_replace($matches[0][$key], $indexRow, $value);
+                            } else {
+                                $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
                             }
                         }
                     }
 
-                    // Slozime jednotlive casti na radak
-                    foreach ($valuesLine as $line) {
-                        $patternCount = count($line);
-                        $patternCountParts = substr_count($column->getOptions()->getPattern(), '%s');
-                        if ($patternCount > 0 && $patternCount == $patternCountParts) {
-                            $values[] = vsprintf($column->getOptions()->getPattern(), $line);
-                        } else {
-                            $values[] = null;
-                        }
+                    if (null !== $column->getAttributes()->getSummaryType()) {
+                        $dataSum[$colName][] = $value;
                     }
 
-                    $value = implode($column->getOptions()->getSeparator(), $values);
-
-                    unset($values, $valuesLine, $identifier);
+                    $data[$colName] = $value;
+                    $column->setValue($value);
                 }
-
-                // Projdeme data a nahradime data ve formatu %xxx%
-                if(null !== preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
-                    foreach($matches[0] as $key => $match) {
-                        if ('%_index%' == $matches[0][$key]) {
-                            $value = str_replace($matches[0][$key], $indexRow, $value);
-                        } else {
-                            $value = str_replace($matches[0][$key], $this->findValue($matches[1][$key], $item), $value);
-                        }
-                    }
-                }
-
-                if (null !== $column->getAttributes()->getSummaryType()) {
-                    $dataSum[$colName][] = $value;
-                }
-
-                $data[$colName] = $value;
-                $column->setValue($value);
             }
 
             $collection[] = $data;
@@ -296,9 +240,10 @@ class PhpArray extends AbstractAdapter
      *
      * @param  string $identifier
      * @param  array  $item
+     * @param  int    $depth
      * @return null|string
      */
-    protected function findValue($identifier, array $item)
+    public function findValue($identifier, array $item, $depth = 0)
     {
         // Determinate column name and alias name
         $identifier = str_replace('_', '.', $identifier);
@@ -306,7 +251,7 @@ class PhpArray extends AbstractAdapter
         $parts = explode('.', $identifier);
 
         if (isset($item[$parts[0]]) && count($parts) > 1) {
-            return $this->findValue($identifier, $item[$parts[0]]);
+            return $this->findValue($identifier, $item[$parts[0]], $depth+1);
         }
 
         if (isset($item[$identifier])) {

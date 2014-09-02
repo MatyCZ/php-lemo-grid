@@ -2,6 +2,8 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\Adapter\AbstractAdapter;
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\GridInterface;
 use Zend\Stdlib\ArrayUtils;
 use LemoGrid\Exception;
@@ -19,31 +21,6 @@ abstract class AbstractColumn implements
     protected $attributes;
 
     /**
-     * Prepare the grid column (mostly used for rendering purposes)
-     *
-     * @param  GridInterface $grid
-     * @return mixed
-     */
-    public function prepareColumn(GridInterface $grid)
-    {
-        $filters = $grid->getParam('filters');
-        $name = $this->getName();
-
-        if (!empty($filters['rules'][$name])) {
-            foreach ($filters['rules'][$name] as $filterDefinition) {
-                $operator = $filterDefinition['operator'];
-                $operatorOutput = $grid->getPlatform()->getFilterOperatorOutput($operator);
-                $value = $filterDefinition['value'];
-
-                $this->getAttributes()->setSearchDataInit("function(elem) {
-                    $(elem).val('{$value}');
-                    $(elem).parents('tr').find(\"[colname='{$name}']\").attr('soper', '{$operatorOutput}').text('{$operator}');
-                }");
-            }
-        }
-    }
-
-    /**
      * Standard boolean attributes, with expected values for enabling/disabling
      *
      * @var array
@@ -58,6 +35,11 @@ abstract class AbstractColumn implements
         'required'     => array('on' => 'required',  'off' => ''),
         'selected'     => array('on' => 'selected',  'off' => ''),
     );
+
+    /**
+     * @var ColumnCondition[]
+     */
+    protected $conditions = array();
 
     /**
      * @var string
@@ -168,18 +150,28 @@ abstract class AbstractColumn implements
     protected $value;
 
     /**
-     * @param  null|int|string $name    Optional name for the column
-     * @param  array $options Optional options for the column
+     * @param  null|int|string                     $name
+     * @param  array|Traversable|ButtonsOptions    $options
+     * @param  array|Traversable|ColumnAttributes  $attributes
+     * @param  array|Traversable|ColumnCondition[] $conditions
      * @return AbstractColumn
      */
-    public function __construct($name = null, $options = array())
+    public function __construct($name = null, $options = null, $attributes = null, $conditions = null)
     {
         if (null !== $name) {
             $this->setName($name);
         }
 
-        if (!empty($options)) {
+        if (null !== $options) {
             $this->setOptions($options);
+        }
+
+        if (null !== $attributes) {
+            $this->setAttributes($attributes);
+        }
+
+        if (null !== $conditions) {
+            $this->setConditions($conditions);
         }
     }
 
@@ -191,6 +183,31 @@ abstract class AbstractColumn implements
      */
     public function init()
     {
+    }
+
+    /**
+     * Prepare the grid column (mostly used for rendering purposes)
+     *
+     * @param  GridInterface $grid
+     * @return mixed
+     */
+    public function prepareColumn(GridInterface $grid)
+    {
+        $filters = $grid->getParam('filters');
+        $name = $this->getName();
+
+        if (!empty($filters['rules'][$name])) {
+            foreach ($filters['rules'][$name] as $filterDefinition) {
+                $operator = $filterDefinition['operator'];
+                $operatorOutput = $grid->getPlatform()->getFilterOperatorOutput($operator);
+                $value = $filterDefinition['value'];
+
+                $this->getAttributes()->setSearchDataInit("function(elem) {
+                    $(elem).val('{$value}');
+                    $(elem).parents('tr').find(\"[colname='{$name}']\").attr('soper', '{$operatorOutput}').text('{$operator}');
+                }");
+            }
+        }
     }
 
     /**
@@ -299,6 +316,78 @@ abstract class AbstractColumn implements
     }
 
     /**
+     * @param  int|string            $key
+     * @param  array|ColumnCondition $condition
+     * @return $this
+     */
+    public function addCondition($key, $condition)
+    {
+        if ($condition instanceof ColumnCondition) {
+            $this->conditions[$key] = $condition;
+        } elseif (is_array($condition)) {
+            $this->conditions[$key] = new ColumnCondition($condition);
+        } else {
+            throw new Exception\InvalidArgumentException(
+                'The conditions parameter must be an array or array of ColumnCondition'
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set conditions for an column.
+     *
+     * @param  array|Traversable $conditions
+     * @return AbstractColumn|ColumnInterface
+     * @throws Exception\InvalidArgumentException
+     */
+    public function setConditions(array $conditions)
+    {
+        foreach ($conditions as $key => $condition) {
+            $this->addCondition($key, $condition);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Return the specified condition
+     *
+     * @param string $condition
+     * @return null|ColumnCondition
+     */
+    public function getCondition($condition)
+    {
+        if (!isset($this->conditions[$condition])) {
+            return null;
+        }
+
+        return $this->conditions[$condition];
+    }
+
+    /**
+     * Get defined conditions
+     *
+     * @return ColumnCondition[]
+     */
+    public function getConditions()
+    {
+        return $this->conditions;
+    }
+
+    /**
+     * Clear conditions
+     *
+     * @return AbstractColumn|ColumnInterface
+     */
+    public function clearConditions()
+    {
+        $this->conditions = array();
+        return $this;
+    }
+
+    /**
      * Set the column identifier
      *
      * @param  string $identifier
@@ -368,9 +457,62 @@ abstract class AbstractColumn implements
         return $this->value;
     }
 
-    public function renderValue()
+    /**
+     * @param  array           $item
+     * @param  AbstractAdapter $adapter
+     * @throws Exception\InvalidArgumentException
+     * @return bool
+     */
+    public function isValid(AbstractAdapter $adapter, array $item)
     {
-        return $this->getValue();
+        $conditions = $this->getConditions();
+        $isValid = true;
+
+        if(!empty($conditions)) {
+            foreach ($conditions as $condition) {
+                $value = $adapter->findValue($condition->getColumn(), $item);
+
+                switch (strtolower($condition->getExpression())) {
+                    case '|':
+                        if (!is_array($condition->getValue()) || !in_array($value, $condition->getValue())) {
+                            $isValid = false;
+                        }
+                        break;
+                    case '=':
+                        if ($value != $condition->getValue()) {
+                            $isValid = false;
+                        }
+                        break;
+                    case '!=':
+                        if ($value == $condition->getValue()) {
+                            $isValid = false;
+                        }
+                        break;
+                    case '>':
+                        if ($value <= $condition->getValue()) {
+                            $isValid = false;
+                        }
+                        break;
+                    case '>=':
+                        if ($value < $condition->getValue()) {
+                            $isValid = false;
+                        }
+                        break;
+                    case '<':
+                        if ($value >= $condition->getValue()) {
+                            $isValid = false;
+                        }
+                        break;
+                    case '<=':
+                        if ($value > $condition->getValue()) {
+                            $isValid = false;
+                        }
+                        break;
+                }
+            }
+        }
+
+        return $isValid;
     }
 
     /**

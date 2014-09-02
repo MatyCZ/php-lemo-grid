@@ -2,6 +2,7 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
 use Zend\Mvc\ModuleRouteListener;
@@ -30,26 +31,6 @@ class Route extends AbstractColumn
      * @var RouteMatch.
      */
     protected $routeMatch;
-
-    /**
-     * @param null|string                        $name
-     * @param array|Traversable|RouteOptions       $options
-     * @param array|Traversable|ColumnAttributes $attributes
-     */
-    public function __construct($name = null, $options = null, $attributes = null)
-    {
-        if (null !== $name) {
-            $this->setName($name);
-        }
-
-        if (null !== $options) {
-            $this->setOptions($options);
-        }
-
-        if (null !== $attributes) {
-            $this->setAttributes($attributes);
-        }
-    }
 
     /**
      * Set column options
@@ -90,7 +71,12 @@ class Route extends AbstractColumn
         return $this->options;
     }
 
-    public function renderValue()
+    /**
+     * @param  AdapterInterface $adapter
+     * @param  array            $item
+     * @return string
+     */
+    public function renderValue(AdapterInterface $adapter, array $item)
     {
         if (null === $this->router) {
             throw new Exception\RuntimeException('No RouteStackInterface instance provided');

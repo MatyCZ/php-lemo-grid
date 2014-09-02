@@ -28,4 +28,14 @@ interface AdapterInterface
      * @return ResultSetInterface
      */
     public function getResultSet();
+
+    /**
+     * Find value for column
+     *
+     * @param  string $identifier
+     * @param  array  $item
+     * @param  int    $depth
+     * @return null|string|int|array
+     */
+    public function findValue($identifier, array $item, $depth = 0);
 }

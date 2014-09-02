@@ -2,6 +2,7 @@
 
 namespace LemoGrid\Column;
 
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
 
@@ -13,26 +14,6 @@ class Number extends AbstractColumn
      * @var NumberOptions
      */
     protected $options;
-
-    /**
-     * @param null|string                        $name
-     * @param array|Traversable|NumberOptions      $options
-     * @param array|Traversable|ColumnAttributes $attributes
-     */
-    public function __construct($name = null, $options = null, $attributes = null)
-    {
-        if (null !== $name) {
-            $this->setName($name);
-        }
-
-        if (null !== $options) {
-            $this->setOptions($options);
-        }
-
-        if (null !== $attributes) {
-            $this->setAttributes($attributes);
-        }
-    }
 
     /**
      * Set column options
@@ -73,7 +54,12 @@ class Number extends AbstractColumn
         return $this->options;
     }
 
-    public function renderValue()
+    /**
+     * @param  AdapterInterface $adapter
+     * @param  array            $item
+     * @return string
+     */
+    public function renderValue(AdapterInterface $adapter, array $item)
     {
         $value = $this->getValue();
 
