@@ -89,7 +89,7 @@ class JqGrid extends AbstractPlatform
             foreach ($rules['rules'] as $rule) {
                 $value['rules'][$rule['field']][] = array(
                     'operator' => $this->getFilterOperator($rule['op']),
-                    'value' => $rule['data'],
+                    'value' => addcslashes($rule['data'], "'_%\\\""),
                 );
             }
         }
