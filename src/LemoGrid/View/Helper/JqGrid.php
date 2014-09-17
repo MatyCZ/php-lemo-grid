@@ -155,7 +155,9 @@ class JqGrid extends AbstractHelper
         $grid->prepare();
 
         if(isset($_GET['_name'])) {
-            if ($_GET['_name'] == $grid->getName()) {
+            if ($_GET['_name'] == $grid->getName() && isset($_GET['_export'])) {
+                $grid->exportData($_GET['_export']);
+            } elseif ($_GET['_name'] == $grid->getName()) {
                 $grid->renderData();
             } else {
                 return '';
@@ -241,6 +243,15 @@ class JqGrid extends AbstractHelper
         }
 
         $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, refresh:false});";
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
+                caption: 'Export do CSV',
+                buttonicon: 'ui-icon-disk',
+                title: 'Export do CSV',
+                position: 'last',
+                onClickButton : function () {
+                    window.location = '" . $this->buildUrl($grid->getPlatform()->getOptions()) . "&_export=csv';
+                }
+                })";
 
         // Column chooser
         if (true === $grid->getPlatform()->getOptions()->getColumnChooser()) {
@@ -521,6 +532,13 @@ class JqGrid extends AbstractHelper
             $attributes->setSortOrder($sord);
         }
 
+        $attributes->setUrl($this->buildUrl($attributes));
+
+        return $attributes;
+    }
+
+    protected function buildUrl(JqGridOptions $attributes)
+    {
         // URL
         $url = $attributes->getUrl();
         if(empty($url)) {
@@ -535,8 +553,6 @@ class JqGrid extends AbstractHelper
 
         $queryParams['_name'] = $this->getGrid()->getName();
 
-        $attributes->setUrl($this->getView()->serverUrl() . $url['path'] . '?' . http_build_query($queryParams));
-
-        return $attributes;
+        return $this->getView()->serverUrl() . $url['path'] . '?' . http_build_query($queryParams);
     }
 }

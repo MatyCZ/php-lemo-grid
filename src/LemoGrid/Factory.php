@@ -5,6 +5,7 @@ namespace LemoGrid;
 use ArrayAccess;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Export\ExportInterface;
 use LemoGrid\Platform\PlatformInterface;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
@@ -23,6 +24,11 @@ class Factory
     protected $gridColumnManager;
 
     /**
+     * @var GridExportManager
+     */
+    protected $gridExportManager;
+
+    /**
      * @var GridPlatformManager
      */
     protected $gridPlatformManager;
@@ -31,8 +37,9 @@ class Factory
      * @param GridPlatformManager $gridPlatformManager
      * @param GridAdapterManager $gridAdapterManager
      * @param GridColumnManager $gridColumnManager
+     * @param GridExportManager $gridExportManager
      */
-    public function __construct(GridPlatformManager $gridPlatformManager = null, GridAdapterManager $gridAdapterManager = null, GridColumnManager $gridColumnManager = null)
+    public function __construct(GridPlatformManager $gridPlatformManager = null, GridAdapterManager $gridAdapterManager = null, GridColumnManager $gridColumnManager = null, GridExportManager $gridExportManager = null)
     {
         if (null !== $gridPlatformManager) {
             $this->setGridPlatformManager($gridPlatformManager);
@@ -44,6 +51,10 @@ class Factory
 
         if (null !== $gridColumnManager) {
             $this->setGridColumnManager($gridColumnManager);
+        }
+
+        if (null !== $gridExportManager) {
+            $this->setGridExportManager($gridExportManager);
         }
     }
 
@@ -102,6 +113,33 @@ class Factory
     }
 
     /**
+     * Set the grid export manager
+     *
+     * @param  GridExportManager $gridExportManager
+     * @return Factory
+     */
+    public function setGridExportManager(GridExportManager $gridExportManager)
+    {
+        $this->gridExportManager = $gridExportManager;
+
+        return $this;
+    }
+
+    /**
+     * Get grid export manager
+     *
+     * @return GridExportManager
+     */
+    public function getGridExportManager()
+    {
+        if (null === $this->gridExportManager) {
+            $this->setGridExportManager(new GridExportManager());
+        }
+
+        return $this->gridExportManager;
+    }
+
+    /**
      * Set the grid platform manager
      *
      * @param  GridPlatformManager $gridPlatformManager
@@ -151,7 +189,7 @@ class Factory
         throw new Exception\DomainException(sprintf(
             '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
             __METHOD__,
-            'LemoGrid\AdapterInterface',
+            'LemoGrid\Adapter\AdapterInterface',
             $spec['type']
         ));
     }
@@ -177,7 +215,7 @@ class Factory
         throw new Exception\DomainException(sprintf(
             '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
             __METHOD__,
-            'LemoGrid\ColumnInterface',
+            'LemoGrid\Column\ColumnInterface',
             $spec['type']
         ));
     }
@@ -194,6 +232,34 @@ class Factory
         $spec = $this->validateSpecification($spec, __METHOD__);
 
         return $this->configureGrid(new Grid(), $spec);
+    }
+
+    /**
+     * Create a export
+     *
+     * @param  array $spec
+     * @throws Exception\DomainException
+     * @return ExportInterface
+     */
+    public function createExport($spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+        if (!isset($spec['type'])) {
+            $spec['type'] = 'LemoGrid\Export';
+        }
+
+        $export = $this->getGridExportManager()->get($spec['type']);
+
+        if ($export instanceof ExportInterface) {
+            return $this->configureExport($export, $spec);
+        }
+
+        throw new Exception\DomainException(sprintf(
+            '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
+            __METHOD__,
+            'LemoGrid\Export\ExportInterface',
+            $spec['type']
+        ));
     }
 
     /**
@@ -219,7 +285,7 @@ class Factory
         throw new Exception\DomainException(sprintf(
             '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
             __METHOD__,
-            'LemoGrid\PlatformInterface',
+            'LemoGrid\Platform\PlatformInterface',
             $spec['type']
         ));
     }
@@ -337,6 +403,30 @@ class Factory
         }
 
         return $grid;
+    }
+
+    /**
+     * Configure an export based on the provided specification
+     *
+     * Specification can contain any of the following:
+     * - options: an array, Traversable, or ArrayAccess object of export options
+     *
+     * @param  ExportInterface              $export
+     * @param  array|Traversable|ArrayAccess $spec
+     * @throws Exception\DomainException
+     * @return ExportInterface
+     */
+    public function configureExport(ExportInterface $export, $spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+
+        $options = isset($spec['options'])? $spec['options'] : null;
+
+        if (is_array($options) || $options instanceof Traversable || $options instanceof ArrayAccess) {
+            $export->setOptions($options);
+        }
+
+        return $export;
     }
 
     /**
@@ -544,6 +634,32 @@ class Factory
 
         $adapter = new $adapterName;
         return $adapter;
+    }
+
+    /**
+     * Try to pull export from service manager, or instantiates it from its name
+     *
+     * @param  string $exportName
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    protected function getExportFromName($exportName)
+    {
+        $serviceLocator = $this->getGridExportManager()->getServiceLocator();
+
+        if ($serviceLocator && $serviceLocator->has($exportName)) {
+            return $serviceLocator->get($exportName);
+        }
+
+        if (!class_exists($exportName)) {
+            throw new Exception\DomainException(sprintf(
+                'Expects string export name to be a valid class name; received "%s"',
+                $exportName
+            ));
+        }
+
+        $export = new $exportName;
+        return $export;
     }
 
     /**

@@ -2,29 +2,30 @@
 
 namespace LemoGrid;
 
+use LemoGrid\Export\ExportInterface;
 use LemoGrid\Platform\PlatformInterface;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 use Zend\Stdlib\InitializableInterface;
 
 /**
- * Plugin manager implementation for grid platforms.
+ * Plugin manager implementation for grid exports.
  *
- * Enforces that platforms retrieved are instances of PlatformInterface.
+ * Enforces that exports retrieved are instances of ExportInterface.
  */
-class GridPlatformManager extends AbstractPluginManager
+class GridExportManager extends AbstractPluginManager
 {
     /**
-     * Default set of platforms
+     * Default set of exports
      *
      * @var array
      */
     protected $invokableClasses = array(
-        'jqgrid' => 'LemoGrid\Platform\JqGrid',
+        'csv' => 'LemoGrid\Export\Csv',
     );
 
     /**
-     * Don't share grid platforms by default
+     * Don't share grid exports by default
      *
      * @var bool
      */
@@ -41,7 +42,7 @@ class GridPlatformManager extends AbstractPluginManager
     /**
      * Validate the plugin
      *
-     * Checks that the platform is an instance of PlatformInterface
+     * Checks that the export is an instance of PlatformInterface
      *
      * @param  mixed $plugin
      * @throws Exception\InvalidPlatformException
@@ -49,17 +50,17 @@ class GridPlatformManager extends AbstractPluginManager
      */
     public function validatePlugin($plugin)
     {
-        // Hook to perform various initialization, when the platform is not created through the factory
+        // Hook to perform various initialization, when the export is not created through the factory
         if ($plugin instanceof InitializableInterface) {
             $plugin->init();
         }
 
-        if ($plugin instanceof PlatformInterface) {
+        if ($plugin instanceof ExportInterface) {
             return; // we're okay
         }
 
         throw new Exception\InvalidPlatformException(sprintf(
-            'Plugin of type %s is invalid; must implement LemoGrid\Platform\PlatformInterface',
+            'Plugin of type %s is invalid; must implement LemoGrid\Export\ExportInterface',
             (is_object($plugin) ? get_class($plugin) : gettype($plugin))
         ));
     }
