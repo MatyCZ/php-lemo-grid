@@ -59,8 +59,8 @@ class PhpArray extends AbstractAdapter
 
             $data = array();
 
-            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-                $column = $columns[$indexCol];
+            foreach($columns as $indexCol => $column) {
+
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
                 $data[$colName] = null;
@@ -114,9 +114,7 @@ class PhpArray extends AbstractAdapter
         unset($collection);
 
         // Calculate user data (SummaryRow)
-        for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-            $column = $columns[$indexCol];
-
+        foreach($columns as $indexCol => $column) {
             if (null !== $column->getAttributes()->getSummaryType()) {
                 $colName = $column->getName();
                 $summaryData[$colName] = '';
@@ -166,8 +164,7 @@ class PhpArray extends AbstractAdapter
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
 
-            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-                $column = $columns[$indexCol];
+            foreach($colums as $indexCol => $column) {
 
                 // Ma sloupec povolene vyhledavani?
                 if($column->getAttributes()->getIsSearchable()) {

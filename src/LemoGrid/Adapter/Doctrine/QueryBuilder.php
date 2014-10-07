@@ -52,7 +52,6 @@ class QueryBuilder extends AbstractAdapter
         $rowsCount = count($rows);
         $columns = $this->getGrid()->getIterator()->toArray();
         $columnsCount = $this->getGrid()->getIterator()->count();
-
         $this->countItems = $rowsCount;
 
         $summaryData = array();
@@ -64,8 +63,7 @@ class QueryBuilder extends AbstractAdapter
             }
 
             $data = array();
-            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-                $column = $columns[$indexCol];
+            foreach($columns as $indexCol => $column) {
 
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
@@ -110,9 +108,7 @@ class QueryBuilder extends AbstractAdapter
         }
 
         // Calculate user data (SummaryRow)
-        for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-            $column = $columns[$indexCol];
-
+        foreach($columns as $indexCol => $column) {
             if (null !== $column->getAttributes()->getSummaryType()) {
                 $colName = $column->getName();
                 $summaryData[$colName] = '';
@@ -159,9 +155,7 @@ class QueryBuilder extends AbstractAdapter
         if (!empty($filter['rules'])) {
 
             $whereCol = array();
-            for ($indexCol = 0; $indexCol < $columnsCount; $indexCol++) {
-                $col = $columns[$indexCol];
-
+            foreach($columns as $indexCol => $col) {
                 if($col->getAttributes()->getIsSearchable()) {
 
                     // Jsou definovane filtry pro sloupec

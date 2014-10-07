@@ -220,16 +220,14 @@ class Grid implements GridInterface
      */
     public function remove($column)
     {
-        if (!$this->has($column)) {
-            return $this;
+        if(is_array($this->byName) && array_key_exists($column, $this->byName)) {
+            $this->iterator->remove($this->byName[$column]);
+            unset($this->byName[$column]);
         }
 
-        $entry = $this->byName[$column];
-        unset($this->byName[$column]);
-
-        $this->iterator->remove($entry);
-
-        unset($this->columns[$column]);
+        if(is_array($this->columns) && array_key_exists($column, $this->columns)) {
+            unset($this->columns[$column]);
+        }
 
         return $this;
     }
