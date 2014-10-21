@@ -3,9 +3,11 @@
 namespace LemoGrid\Adapter\Doctrine;
 
 use DateTime;
+use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\AbstractColumn;
 use LemoGrid\Column\Buttons;
@@ -242,30 +244,17 @@ class QueryBuilder extends AbstractAdapter
             $offset = 0;
         }
 
-        $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
         $this->getQueryBuilder()->setFirstResult($offset);
+        $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
 
-        $result = $this->getQueryBuilder()->getQuery()->getArrayResult();
+        $query = $this->getQueryBuilder()->getQuery();
+        $query->setHydrationMode(Query::HYDRATE_ARRAY);
 
-        // Nacteme si aliasy z FROM a nazby entit z FROM
-        $rootAliases = $this->getQueryBuilder()->getRootAliases();
-        $rootEntities = $this->getQueryBuilder()->getRootEntities();
-        if (count($rootAliases) > 1) {
-            throw new \Exception('Many root aliases are not supported');
-        }
+        $paginator = new Paginator($query, true);
 
-        // Najdeme si sloupec, ktery slouzi jako primarni klic
-        $identifiers = $this->getQueryBuilder()->getEntityManager()->getClassMetadata($rootEntities[0])->getIdentifierFieldNames();
+        $this->countItemsTotal = $paginator->count();
 
-        // Spocteme si pocet zaznamu
-        $this->getQueryBuilder()->resetDQLPart('select');
-        $this->getQueryBuilder()->select('count(' . $rootAliases[0] . '.' . $identifiers[0] . ')');
-        $this->getQueryBuilder()->setMaxResults(null);
-        $this->getQueryBuilder()->setFirstResult(null);
-
-        $this->countItemsTotal = $this->getQueryBuilder()->getQuery()->getSingleScalarResult();
-
-        return $result;
+        return $paginator->getIterator();
     }
 
     /**
