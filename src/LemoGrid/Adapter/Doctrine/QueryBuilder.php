@@ -165,22 +165,80 @@ class QueryBuilder extends AbstractAdapter
 
                         $whereColSub = array();
                         foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
+                            if ('~' == $filterDefinition['operator']) {
 
-                            // Sestavime filtr pro jednu podminku sloupce
-                            $exprFilterColSub = array();
-                            if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-                                foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                                    $exprFilterColSub[] = $this->buildWhereFromFilter($col, $identifier, $filterDefinition);
+                                // Sestavime WHERE
+                                $termParts = explode(' ', $filterDefinition['value']);
+                                $wheres = array();
+                                if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
+
+                                    if (count($termParts) > 1) {
+                                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                                            $whereColTerm = array();
+                                            foreach ($termParts as $termPart) {
+                                                $whereColTerm[] = $this->buildWhereFromFilter($col, $identifier, array(
+                                                    'operator' => '~',
+                                                    'value'    => $termPart,
+                                                ));
+                                            }
+
+                                            // Sloucime podminky sloupce pomoci OR (z duvodu Concat sloupce)
+                                            $exprColTerm = new Expr\Orx();
+                                            $exprColTerm->addMultiple($whereColTerm);
+
+                                            $wheres[] = $exprColTerm;
+                                        }
+
+                                        // Pridame WHERE do QueryBuilderu
+                                        $exp = new Expr\Andx();
+                                        $exp->addMultiple($wheres);
+
+                                        $whereColSub[] = $exp;
+                                    } elseif (isset($termParts[0])) {
+                                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                                            $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
+                                                'operator' => '~',
+                                                'value'    => $termParts[0],
+                                            ));
+                                        }
+
+                                        // Pridame WHERE do QueryBuilderu
+                                        $exp = new Expr\Orx();
+                                        $exp->addMultiple($wheres);
+
+                                        $whereColSub[] = $exp;
+                                    }
+                                } else {
+                                    foreach ($termParts as $termPart) {
+                                        $wheres[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), array(
+                                            'operator' => '~',
+                                            'value'    => $termPart,
+                                        ));
+                                    }
+
+                                    // Pridame WHERE do QueryBuilderu
+                                    $exp = new Expr\Andx();
+                                    $exp->addMultiple($wheres);
+
+                                    $whereColSub[] = $exp;
                                 }
                             } else {
-                                $exprFilterColSub[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), $filterDefinition);
+                                // Sestavime filtr pro jednu podminku sloupce
+                                $exprFilterColSub = array();
+                                if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
+                                    foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                                        $exprFilterColSub[] = $this->buildWhereFromFilter($col, $identifier, $filterDefinition);
+                                    }
+                                } else {
+                                    $exprFilterColSub[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), $filterDefinition);
+                                }
+
+                                // Sloucime podminky sloupce pomoci OR (z duvodu Concat sloupce)
+                                $exprColSub = new Expr\Orx();
+                                $exprColSub->addMultiple($exprFilterColSub);
+
+                                $whereColSub[] = $exprColSub;
                             }
-
-                            // Sloucime podminky sloupce pomoci OR (z duvodu Concat sloupce)
-                            $exprColSub = new Expr\Orx();
-                            $exprColSub->addMultiple($exprFilterColSub);
-
-                            $whereColSub[] = $exprColSub;
                         }
 
                         //

@@ -158,29 +158,31 @@ class PhpArray extends AbstractAdapter
         }
 
         $rowsCount = count($rows);
-        $columns = $this->getGrid()->getIterator()->toArray();
-        $columnsCount = $this->getGrid()->getIterator()->count();
+        $columns = $this->getGrid()->getColumns();
+        $columnsCount = count($columns);
 
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
 
-            foreach($colums as $indexCol => $column) {
+            if (!empty($columns)) {
+                foreach($columns as $indexCol => $column) {
 
-                // Ma sloupec povolene vyhledavani?
-                if($column->getAttributes()->getIsSearchable()) {
+                    // Ma sloupec povolene vyhledavani?
+                    if($column->getAttributes()->getIsSearchable()) {
 
-                    // Jsou definovane filtry pro sloupec
-                    if(!empty($filter['rules'][$column->getName()])) {
-                        foreach ($filter['rules'][$column->getName()] as $filterDefinition) {
-                            if($column instanceof ColumnConcat || $column instanceof ColumnConcatGroup) {
-                                preg_match('/' . $filterDefinition['value'] . '/i', $item[$column->getName()], $matches);
+                        // Jsou definovane filtry pro sloupec
+                        if(!empty($filter['rules'][$column->getName()])) {
+                            foreach ($filter['rules'][$column->getName()] as $filterDefinition) {
+                                if($column instanceof ColumnConcat || $column instanceof ColumnConcatGroup) {
+                                    preg_match('/' . $filterDefinition['value'] . '/i', $item[$column->getName()], $matches);
 
-                                if (count($matches) == 0) {
-                                    unset($rows[$indexRow]);
-                                }
-                            } else {
-                                if(false === $this->buildWhereFromFilter($column, $filterDefinition, $item[$column->getName()])) {
-                                    unset($rows[$indexRow]);
+                                    if (count($matches) == 0) {
+                                        unset($rows[$indexRow]);
+                                    }
+                                } else {
+                                    if(false === $this->buildWhereFromFilter($column, $filterDefinition, $item[$column->getName()])) {
+                                        unset($rows[$indexRow]);
+                                    }
                                 }
                             }
                         }
@@ -244,9 +246,12 @@ class PhpArray extends AbstractAdapter
     {
         // Determinate column name and alias name
         $identifier = str_replace('_', '.', $identifier);
-        $identifier = substr($identifier, strpos($identifier, '.') +1);
-        $parts = explode('.', $identifier);
 
+        if (false !== strpos($identifier, '.')) {
+            $identifier = substr($identifier, strpos($identifier, '.') +1);
+        }
+
+        $parts = explode('.', $identifier);
         if (isset($item[$parts[0]]) && count($parts) > 1) {
             return $this->findValue($identifier, $item[$parts[0]], $depth+1);
         }
