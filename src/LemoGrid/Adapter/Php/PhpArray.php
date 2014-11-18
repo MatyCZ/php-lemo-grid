@@ -108,7 +108,10 @@ class PhpArray extends AbstractAdapter
         $this->countItems = count($collection);
 
         $collection = $this->_sortCollection($collection);
-        $collection = array_slice($collection, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
+
+        if ($numberVisibleRows > 0) {
+            $collection = array_slice($collection, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
+        }
 
         $this->setResultSet(new JqGrid($collection));
         unset($collection);

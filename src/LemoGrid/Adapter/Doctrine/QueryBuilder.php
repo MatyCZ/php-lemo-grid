@@ -297,13 +297,15 @@ class QueryBuilder extends AbstractAdapter
         }
 
         // Calculate offset
-        $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;
-        if($offset < 0) {
-            $offset = 0;
-        }
+        if ($numberVisibleRows > 0) {
+            $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;
+            if($offset < 0) {
+                $offset = 0;
+            }
 
-        $this->getQueryBuilder()->setFirstResult($offset);
-        $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
+            $this->getQueryBuilder()->setFirstResult($offset);
+            $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
+        }
 
         $query = $this->getQueryBuilder()->getQuery();
         $query->setHydrationMode(Query::HYDRATE_ARRAY);

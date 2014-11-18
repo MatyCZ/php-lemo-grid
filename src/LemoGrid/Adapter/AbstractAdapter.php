@@ -138,7 +138,13 @@ abstract class AbstractAdapter implements AdapterInterface
      */
     public function getNumberOfPages()
     {
-        return ceil($this->getCountOfItemsTotal() / $this->getGrid()->getPlatform()->getNumberOfVisibleRows());
+        $numberOfPages = ceil($this->getCountOfItemsTotal() / $this->getGrid()->getPlatform()->getNumberOfVisibleRows());
+
+        if ($numberOfPages < 1) {
+            $numberOfPages = 1;
+        }
+
+        return $numberOfPages;
     }
 
     /**

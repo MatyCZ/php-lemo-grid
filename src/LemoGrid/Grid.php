@@ -245,6 +245,20 @@ class Grid implements GridInterface
     }
 
     /**
+     * Clear all attached columns
+     *
+     * @return Grid
+     */
+    public function clear()
+    {
+        $this->byName = array();
+        $this->columns = array();
+        $this->iterator = new PriorityQueue();
+
+        return $this;
+    }
+
+    /**
      * Countable: return count of attached columns
      *
      * @return int

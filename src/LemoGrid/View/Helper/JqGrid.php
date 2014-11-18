@@ -219,7 +219,6 @@ class JqGrid extends AbstractHelper
 
         $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid({';
         $script[] = '        ' . $this->buildScript('grid', $grid->getPlatform()->getOptions()) . ', ' . PHP_EOL;
-        $script[] = "        resizeStop: function(newWidth, columnIndex) { " . $grid->getPlatform()->getOptions()->getResizeCallback() . "('" . $grid->getName() . "', columnIndex, newWidth); }, " . PHP_EOL;
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
         $script[] = '        colModel: [';
 
@@ -236,6 +235,7 @@ class JqGrid extends AbstractHelper
 
         $script[] = '        ]';
         $script[] = '    });';
+        $script[] = '    $(\'#' . $grid->getName() . '_pager option[value=-1]\').text(\'' . $this->getView()->translate('All') . '\');' . PHP_EOL;
 
         // Can render toolbar?
         if($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
@@ -243,15 +243,6 @@ class JqGrid extends AbstractHelper
         }
 
         $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, refresh:false});";
-        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
-                caption: 'Export do CSV',
-                buttonicon: 'ui-icon-disk',
-                title: 'Export do CSV',
-                position: 'last',
-                onClickButton : function () {
-                    window.location = '" . $this->buildUrl($grid->getPlatform()->getOptions()) . "&_export=csv';
-                }
-                })";
 
         // Column chooser
         if (true === $grid->getPlatform()->getOptions()->getColumnChooser()) {
@@ -269,17 +260,30 @@ class JqGrid extends AbstractHelper
                                 gridId = $(this).attr('id');
                                 gridParentWidth = $('#gbox_' + gridId).parent().width();
                                 $('#' + gridId).setGridWidth(gridParentWidth);";
-
-            if ('' != $grid->getPlatform()->getOptions()->getColumnChooserCallback()) {
-                $script[] = "                " . $grid->getPlatform()->getOptions()->getColumnChooserCallback() . "('" . $grid->getName() . "', $('#colchooser_" . $grid->getName() . "').find('.ui-jqgrid-columns').val());";
-            }
                 $script[] = "    }
                         }
                     });
-
                 }
             });" . PHP_EOL;
         }
+
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
+            caption: 'Uložit nastavení',
+            buttonicon: 'ui-icon-disk',
+            title: 'Uložit nastavení',
+            onClickButton : function () {
+                DynaCore_Grid.saveSettings('" . $grid->getName() . "', $('#colchooser_" . $grid->getName() . "').find('.ui-jqgrid-columns').val());
+            }
+        })";
+
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
+            caption: 'Export do CSV',
+            buttonicon: 'ui-icon-arrowthickstop-1-s',
+            title: 'Export do CSV',
+            onClickButton : function () {
+                window.location = '" . $this->buildUrl($grid->getPlatform()->getOptions()) . "&_export=csv';
+            }
+        })";
 
         return implode(PHP_EOL, $script);
     }
