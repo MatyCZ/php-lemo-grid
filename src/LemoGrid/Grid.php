@@ -233,6 +233,22 @@ class Grid implements GridInterface
     }
 
     /**
+     * Set columns
+     *
+     * @return Grid
+     */
+    public function setColumns(array $columns)
+    {
+        $this->clear();
+
+        foreach ($columns as $column) {
+            $this->add($column);
+        }
+
+        return $this;
+    }
+
+    /**
      * Retrieve all attached columns
      *
      * Storage is an implementation detail of the concrete class.
@@ -360,32 +376,6 @@ class Grid implements GridInterface
         $this->isPrepared = true;
 
         return $this;
-    }
-
-    public function exportData()
-    {
-        $adapter = $this->getAdapter();
-
-        if (!$adapter instanceof AbstractAdapter) {
-            throw new Exception\InvalidArgumentException('No Adapter instance given');
-        }
-
-        // Prepare columns
-        $columns = array();
-        foreach ($this->getColumns() as $column) {
-            if (!$column instanceof Button && !$column instanceof Buttons) {
-                $columns[$column->getName()] = $column;
-            }
-        }
-
-        $data = $adapter->setGrid($this)->getResultSet();
-        $items = $data->getArrayCopy();
-
-        ob_clean();
-        $export = $this->getGridFactory()->createExport(array('type' => $this->getParam('_export')));
-        $export->export($columns, $items);
-
-        exit;
     }
 
     public function renderData()

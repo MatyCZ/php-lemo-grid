@@ -154,10 +154,8 @@ class JqGrid extends AbstractHelper
 
         $grid->prepare();
 
-        if(isset($_GET['_name'])) {
-            if ($_GET['_name'] == $grid->getName() && isset($_GET['_export'])) {
-                $grid->exportData($_GET['_export']);
-            } elseif ($_GET['_name'] == $grid->getName()) {
+        if (isset($_GET['_name'])) {
+            if ($_GET['_name'] == $grid->getName()) {
                 $grid->renderData();
             } else {
                 return '';
@@ -233,7 +231,7 @@ class JqGrid extends AbstractHelper
             $i++;
         }
 
-        $script[] = '        ]';
+        $script[] = '        ],';
         $script[] = '    });';
         $script[] = '    $(\'#' . $grid->getName() . '_pager option[value=-1]\').text(\'' . $this->getView()->translate('All') . '\');' . PHP_EOL;
 
@@ -244,46 +242,18 @@ class JqGrid extends AbstractHelper
 
         $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, refresh:false});";
 
-        // Column chooser
-        if (true === $grid->getPlatform()->getOptions()->getColumnChooser()) {
-            $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
-                caption: '" . $grid->getPlatform()->getOptions()->getColumnChooserButtonCaption() . "',
-                buttonicon: '" . $grid->getPlatform()->getOptions()->getColumnChooserButtonIcon() . "',
-                title: '" . $grid->getPlatform()->getOptions()->getColumnChooserButtonTitle() . "',
-                onClickButton : function () {
-                    $(this).jqGrid('columnChooser', {
-                        width: " . $grid->getPlatform()->getOptions()->getColumnChooserModalWidth() . ",
-                        classname: '" . $grid->getPlatform()->getOptions()->getColumnChooserModalClassName() . "',
-                        done: function (perm) {
-                            if (perm) {
-                                this.jqGrid('remapColumns', perm, true);
-                                gridId = $(this).attr('id');
-                                gridParentWidth = $('#gbox_' + gridId).parent().width();
-                                $('#' + gridId).setGridWidth(gridParentWidth);";
-                $script[] = "    }
-                        }
-                    });
-                }
-            });" . PHP_EOL;
+        $buttons = $grid->getPlatform()->getButtons();
+        if (!empty($buttons)) {
+            foreach ($buttons as $button) {
+                $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
+                    caption: '" . $button['label'] . "',
+                    buttonicon: '" . $button['icon'] . "',
+                    onClickButton : function () {
+                        " . $button['callback'] . "(this, '" . $grid->getName() . "');
+                    }
+                })";
+            }
         }
-
-        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
-            caption: 'Uložit nastavení',
-            buttonicon: 'ui-icon-disk',
-            title: 'Uložit nastavení',
-            onClickButton : function () {
-                DynaCore_Grid.saveSettings('" . $grid->getName() . "', $('#colchooser_" . $grid->getName() . "').find('.ui-jqgrid-columns').val());
-            }
-        })";
-
-        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navButtonAdd', '#" . $grid->getName()  . "_pager', {
-            caption: 'Export do CSV',
-            buttonicon: 'ui-icon-arrowthickstop-1-s',
-            title: 'Export do CSV',
-            onClickButton : function () {
-                window.location = '" . $this->buildUrl($grid->getPlatform()->getOptions()) . "&_export=csv';
-            }
-        })";
 
         return implode(PHP_EOL, $script);
     }

@@ -9,6 +9,11 @@ use Zend\Json;
 class JqGrid extends AbstractPlatform
 {
     /**
+     * @var array
+     */
+    protected $buttons;
+
+    /**
      * @var JqGridOptions
      */
     protected $options;
@@ -19,6 +24,46 @@ class JqGrid extends AbstractPlatform
      * @var bool
      */
     protected $isRendered = false;
+
+    /**
+     * @param  string      $name
+     * @param  string|null $label
+     * @param  string|null $icon
+     * @param  string      $callback
+     * @return LemoGrid\Platform\JqGrid
+     */
+    public function addButton($name, $label = null, $icon = null, $callback)
+    {
+        $this->buttons[$name] = array(
+            'name' => $name,
+            'label' => $label,
+            'icon' => $icon,
+            'callback' => $callback,
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param  string $name
+     * @return array|null
+     */
+    public function getButton($name)
+    {
+        if (isset($this->buttons[$name])) {
+            return $this->buttons[$name];
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array
+     */
+    public function getButtons()
+    {
+        return $this->buttons;
+    }
 
     /**
      * Set grid options

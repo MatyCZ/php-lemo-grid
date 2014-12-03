@@ -56,6 +56,16 @@ class ButtonsOptions extends AbstractOptions
     }
 
     /**
+     * @return ButtonsOptions
+     */
+    public function clearButtons()
+    {
+        $this->buttons = array();
+
+        return $this;
+    }
+
+    /**
      * @param  string $separator
      * @return ButtonsOptions
      */
