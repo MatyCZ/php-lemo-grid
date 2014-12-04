@@ -392,6 +392,11 @@ class JqGridOptions extends AbstractOptions
     protected $resizeClass;
 
     /**
+     * @var string
+     */
+    protected $resizeCallback;
+
+    /**
      * Sets how many records we want to view in the grid. This parameter is passed to the url for use by the server
      * routine retrieving the data. Note that if you set this parameter to 10 (i.e. retrieve 10 records) and your server
      * return 15 then only 10 records will be loaded.
@@ -1506,6 +1511,25 @@ class JqGridOptions extends AbstractOptions
     public function getResizeClass()
     {
         return $this->resizeClass;
+    }
+
+    /**
+     * @param  string $resizeCallback
+     * @return JqGridOptions
+     */
+    public function setResizeCallback($resizeCallback)
+    {
+        $this->resizeCallback = $resizeCallback;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getResizeCallback()
+    {
+        return $this->resizeCallback;
     }
 
     /**

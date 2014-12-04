@@ -232,6 +232,12 @@ class JqGrid extends AbstractHelper
         }
 
         $script[] = '        ],';
+
+        if (null !== $grid->getPlatform()->getOptions()->getResizeCallback()) {
+        $script[] = '        resizeStop: function(width, index) {
+                                ' . $grid->getPlatform()->getOptions()->getResizeCallback() . '(this, width, index);
+                            }';
+        }
         $script[] = '    });';
         $script[] = '    $(\'#' . $grid->getName() . '_pager option[value=-1]\').text(\'' . $this->getView()->translate('All') . '\');' . PHP_EOL;
 
