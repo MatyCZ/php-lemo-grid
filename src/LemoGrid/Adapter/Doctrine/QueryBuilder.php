@@ -168,37 +168,30 @@ class QueryBuilder extends AbstractAdapter
                             if ('~' == $filterDefinition['operator']) {
 
                                 // Sestavime WHERE
-                                $termParts = explode(' ', $filterDefinition['value']);
+                                $filterWords = explode(' ', $filterDefinition['value']);
+
                                 $wheres = array();
                                 if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-
-                                    if (count($termParts) > 1) {
-                                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                                            $whereColTerm = array();
-                                            foreach ($termParts as $termPart) {
-                                                $whereColTerm[] = $this->buildWhereFromFilter($col, $identifier, array(
-                                                    'operator' => '~',
-                                                    'value'    => $termPart,
-                                                ));
-                                            }
-
-                                            // Sloucime podminky sloupce pomoci OR (z duvodu Concat sloupce)
-                                            $exprColTerm = new Expr\Orx();
-                                            $exprColTerm->addMultiple($whereColTerm);
-
-                                            $wheres[] = $exprColTerm;
+                                    if (count($filterWords) > 1) {
+                                        $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
+                                        $filterWordsCombination = $this->createWordsCombination($filterWords);
+                                        foreach ($filterWordsCombination as $wordsCombination) {
+                                            $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
+                                                'operator' => '~',
+                                                'value'    => implode('%', $wordsCombination),
+                                            ));
                                         }
 
                                         // Pridame WHERE do QueryBuilderu
-                                        $exp = new Expr\Andx();
+                                        $exp = new Expr\Orx();
                                         $exp->addMultiple($wheres);
 
                                         $whereColSub[] = $exp;
-                                    } elseif (isset($termParts[0])) {
+                                    } elseif (isset($filterWords[0])) {
                                         foreach ($col->getOptions()->getIdentifiers() as $identifier) {
                                             $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
                                                 'operator' => '~',
-                                                'value'    => $termParts[0],
+                                                'value'    => $filterWords[0],
                                             ));
                                         }
 
@@ -209,10 +202,10 @@ class QueryBuilder extends AbstractAdapter
                                         $whereColSub[] = $exp;
                                     }
                                 } else {
-                                    foreach ($termParts as $termPart) {
+                                    foreach ($filterWords as $filterWord) {
                                         $wheres[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), array(
                                             'operator' => '~',
-                                            'value'    => $termPart,
+                                            'value'    => $filterWord,
                                         ));
                                     }
 
@@ -402,6 +395,37 @@ class QueryBuilder extends AbstractAdapter
     }
 
     /**
+     * Sestavi CONCAT z predanych casti
+     *
+     * @param  array  $identifiers
+     * @return Expr\Func
+     */
+    public function buildConcat(array $identifiers)
+    {
+        $expr = new Expr();
+
+        $firstPart = null;
+        foreach ($identifiers as $index => $identifier) {
+            $firstPart = "CASE WHEN  (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
+            unset($identifiers[$index]);
+            break;
+        }
+
+        if (count($identifiers) > 1) {
+            $secondPart = $this->buildConcat($identifiers);
+        } elseif (count($identifiers) == 1) {
+            $secondPart = current($identifiers);
+            $secondPart = "CASE WHEN  (" . $secondPart . " IS NULL) THEN '' ELSE " . $secondPart . " END";
+        } else {
+            return $firstPart;
+        }
+
+        $concat = $expr->concat($firstPart, $secondPart);
+
+        return $concat;
+    }
+
+    /**
      * @param  ColumnInterface $column
      * @param  string          $identifier
      * @param  array           $filterDefinition
@@ -468,6 +492,30 @@ class QueryBuilder extends AbstractAdapter
         }
 
         return $where;
+    }
+
+    /**
+     * @param  array $items
+     * @param  array $perms
+     * @param  array $permsBuilded
+     * @return array
+     */
+    protected function createWordsCombination($items, $perms = array(), $permsBuilded = array())
+    {
+        if (empty($items)) {
+            $permsBuilded[] = $perms;
+        } else {
+            for ($i = count($items) - 1; $i >= 0; --$i) {
+                $newitems = $items;
+                $newperms = $perms;
+                list($foo) = array_splice($newitems, $i, 1);
+                array_unshift($newperms, $foo);
+
+                $permsBuilded = $this->createWordsCombination($newitems, $newperms, $permsBuilded);
+            }
+        }
+
+        return $permsBuilded;
     }
 
     /**
