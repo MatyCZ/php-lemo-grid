@@ -171,7 +171,7 @@ class PhpArray extends AbstractAdapter
                 foreach($columns as $indexCol => $column) {
 
                     // Ma sloupec povolene vyhledavani?
-                    if($column->getAttributes()->getIsSearchable()) {
+                    if($column->getAttributes()->getIsSearchable() && true !== $column->getAttributes()->getIsHidden()) {
 
                         // Jsou definovane filtry pro sloupec
                         if(!empty($filter['rules'][$column->getName()])) {
@@ -205,6 +205,7 @@ class PhpArray extends AbstractAdapter
      */
     private function _sortCollection($rows)
     {
+        $grid = $this->getGrid();
         $sort = $this->getGrid()->getPlatform()->getSort();
 
         if(empty($rows) || empty($sort)) {
@@ -226,9 +227,13 @@ class PhpArray extends AbstractAdapter
 
         $arguments = array();
         foreach ($sort as $sortColumn => $sortDirect) {
-            $arguments[] = $parts[$sortColumn];
-            $arguments[] = ('asc' == $sortDirect) ? SORT_ASC : SORT_DESC;
-            $arguments[] = SORT_REGULAR;
+            if ($grid->has($sortColumn)) {
+                if (false !== $grid->get($sortColumn)->getAttributes()->getIsSortable() && true !== $grid->get($sortColumn)->getAttributes()->getIsHidden()) {
+                    $arguments[] = $parts[$sortColumn];
+                    $arguments[] = ('asc' == $sortDirect) ? SORT_ASC : SORT_DESC;
+                    $arguments[] = SORT_REGULAR;
+                }
+            }
         }
         $arguments[] = & $rows;
 

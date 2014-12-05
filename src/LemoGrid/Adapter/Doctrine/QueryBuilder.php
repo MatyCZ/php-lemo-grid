@@ -158,7 +158,7 @@ class QueryBuilder extends AbstractAdapter
 
             $whereCol = array();
             foreach($columns as $indexCol => $col) {
-                if($col->getAttributes()->getIsSearchable()) {
+                if($col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
 
                     // Jsou definovane filtry pro sloupec
                     if(!empty($filter['rules'][$col->getName()])) {
@@ -264,26 +264,28 @@ class QueryBuilder extends AbstractAdapter
         // ORDER
         if (!empty($sort)) {
             foreach ($sort as $sortColumn => $sortDirect) {
-                if($grid->has($sortColumn)) {
-                    if($grid->get($sortColumn) instanceof ColumnConcat || $grid->get($sortColumn) instanceof ColumnConcatGroup) {
-                        foreach($grid->get($sortColumn)->getOptions()->getIdentifiers() as $identifier){
-                            if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
+                if ($grid->has($sortColumn)) {
+                    if (false !== $grid->get($sortColumn)->getAttributes()->getIsSortable() && true !== $grid->get($sortColumn)->getAttributes()->getIsHidden()) {
+                        if ($grid->get($sortColumn) instanceof ColumnConcat || $grid->get($sortColumn) instanceof ColumnConcatGroup) {
+                            foreach($grid->get($sortColumn)->getOptions()->getIdentifiers() as $identifier){
+                                if (count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
+                                    $method = 'orderBy';
+                                } else {
+                                    $method = 'addOrderBy';
+                                    $sortDirect = 'asc';
+                                }
+
+                                $this->getQueryBuilder()->{$method}($identifier, $sortDirect);
+                            }
+                        } else {
+                            if (count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
                                 $method = 'orderBy';
                             } else {
                                 $method = 'addOrderBy';
-                                $sortDirect = 'asc';
                             }
 
-                            $this->getQueryBuilder()->{$method}($identifier, $sortDirect);
+                            $this->getQueryBuilder()->{$method}($grid->get($sortColumn)->getIdentifier(), $sortDirect);
                         }
-                    } else {
-                        if(count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
-                            $method = 'orderBy';
-                        } else {
-                            $method = 'addOrderBy';
-                        }
-
-                        $this->getQueryBuilder()->{$method}($grid->get($sortColumn)->getIdentifier(), $sortDirect);
                     }
                 }
             }
@@ -400,7 +402,7 @@ class QueryBuilder extends AbstractAdapter
      * @param  array  $identifiers
      * @return Expr\Func
      */
-    public function buildConcat(array $identifiers)
+    protected function buildConcat(array $identifiers)
     {
         $expr = new Expr();
 
