@@ -172,34 +172,81 @@ class QueryBuilder extends AbstractAdapter
 
                                 $wheres = array();
                                 if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
-                                    if (count($filterWords) > 1) {
-                                        $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
+
+                                    // Operator AND
+                                    if ('and' === $col->getAttributes()->getSearchGroupOperator()) {
                                         $filterWordsCombination = $this->createWordsCombination($filterWords);
-                                        foreach ($filterWordsCombination as $wordsCombination) {
-                                            $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
-                                                'operator' => '~',
-                                                'value'    => implode('%', $wordsCombination),
-                                            ));
+
+                                        if (count($col->getOptions()->getIdentifiers()) > 1) {
+                                            $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
+                                            foreach ($filterWordsCombination as $wordsCombination) {
+                                                $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
+                                                    'operator' => '~',
+                                                    'value'    => implode('%', $wordsCombination),
+                                                ));
+                                            }
+
+                                            // Pridame WHERE do QueryBuilderu
+                                            $exp = new Expr\Orx();
+                                            $exp->addMultiple($wheres);
+
+                                            $whereColSub[] = $exp;
+                                        } else {
+                                            foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                                                foreach ($filterWordsCombination as $wordsCombination) {
+                                                    $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
+                                                        'operator' => '~',
+                                                        'value'    => implode('%', $wordsCombination),
+                                                    ));
+                                                }
+                                            }
+
+                                            // Pridame WHERE do QueryBuilderu
+                                            $exp = new Expr\Orx();
+                                            $exp->addMultiple($wheres);
+
+                                            $whereColSub[] = $exp;
                                         }
+                                    }
 
-                                        // Pridame WHERE do QueryBuilderu
-                                        $exp = new Expr\Orx();
-                                        $exp->addMultiple($wheres);
+                                    // Operator OR
+                                    if ('or' === $col->getAttributes()->getSearchGroupOperator()) {
+                                        if (count($filterWords) > 1) {
+                                            foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                                                $whereColTerm = array();
+                                                foreach ($filterWords as $filterWord) {
+                                                    $whereColTerm[] = $this->buildWhereFromFilter($col, $identifier, array(
+                                                        'operator' => '~',
+                                                        'value'    => $filterWord,
+                                                    ));
+                                                }
 
-                                        $whereColSub[] = $exp;
-                                    } elseif (isset($filterWords[0])) {
-                                        foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                                            $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
-                                                'operator' => '~',
-                                                'value'    => $filterWords[0],
-                                            ));
+                                                // Sloucime podminky sloupce pomoci OR (z duvodu Concat sloupce)
+                                                $exprColTerm = new Expr\Orx();
+                                                $exprColTerm->addMultiple($whereColTerm);
+
+                                                $wheres[] = $exprColTerm;
+                                            }
+
+                                            // Pridame WHERE do QueryBuilderu
+                                            $exp = new Expr\Andx();
+                                            $exp->addMultiple($wheres);
+
+                                            $whereColSub[] = $exp;
+                                        } elseif (isset($filterWords[0])) {
+                                            foreach ($col->getOptions()->getIdentifiers() as $identifier) {
+                                                $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
+                                                    'operator' => '~',
+                                                    'value'    => $filterWords[0],
+                                                ));
+                                            }
+
+                                            // Pridame WHERE do QueryBuilderu
+                                            $exp = new Expr\Orx();
+                                            $exp->addMultiple($wheres);
+
+                                            $whereColSub[] = $exp;
                                         }
-
-                                        // Pridame WHERE do QueryBuilderu
-                                        $exp = new Expr\Orx();
-                                        $exp->addMultiple($wheres);
-
-                                        $whereColSub[] = $exp;
                                     }
                                 } else {
                                     foreach ($filterWords as $filterWord) {
@@ -209,9 +256,17 @@ class QueryBuilder extends AbstractAdapter
                                         ));
                                     }
 
-                                    // Pridame WHERE do QueryBuilderu
-                                    $exp = new Expr\Andx();
-                                    $exp->addMultiple($wheres);
+                                    // Operator AND
+                                    if ('and' === $col->getAttributes()->getSearchGroupOperator()) {
+                                        $exp = new Expr\Andx();
+                                        $exp->addMultiple($wheres);
+                                    }
+
+                                    // Operator OR
+                                    if ('or' === $col->getAttributes()->getSearchGroupOperator()) {
+                                        $exp = new Expr\Orx();
+                                        $exp->addMultiple($wheres);
+                                    }
 
                                     $whereColSub[] = $exp;
                                 }

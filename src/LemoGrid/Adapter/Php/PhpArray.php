@@ -54,9 +54,7 @@ class PhpArray extends AbstractAdapter
         $columnsCount = $this->getGrid()->getIterator()->count();
 
         $summaryData = array();
-        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
-            $item = $rows[$indexRow];
-
+        foreach($rows as  $indexRow => $item) {
             $data = array();
 
             foreach($columns as $indexCol => $column) {

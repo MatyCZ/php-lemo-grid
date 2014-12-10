@@ -179,6 +179,13 @@ class ColumnAttributes extends AbstractOptions
     protected $searchElement = 'text';
 
     /**
+     * Determines the group operator of the element when searching. Possible values: and/or.
+     *
+     * @var string
+     */
+    protected $searchGroupOperator = 'and';
+
+    /**
      * Defines the search options used searching.
      *
      * @var array
@@ -687,6 +694,34 @@ class ColumnAttributes extends AbstractOptions
     public function getSearchDefaultValue()
     {
         return $this->searchOptions['defaultValue'];
+    }
+
+    /**
+     * Set search grouping operator
+     *
+     * @param  string $operator
+     * @return ColumnAttributes
+     */
+    public function setSearchGroupOperator($operator)
+    {
+        $operator = strtolower($operator);
+
+        if (!in_array($operator, array('and', 'or'))) {
+            throw new \Exception("Allowed search group operator is 'and' and 'or'");
+        }
+
+        $this->searchGroupOperator = $operator;
+        return $this;
+    }
+
+    /**
+     * Get search grouping operator.
+     *
+     * @return string
+     */
+    public function getSearchGroupOperator()
+    {
+        return $this->searchGroupOperator;
     }
 
     /**
