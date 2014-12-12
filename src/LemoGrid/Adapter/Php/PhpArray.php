@@ -49,9 +49,7 @@ class PhpArray extends AbstractAdapter
         $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
 
         $rows = $this->getRawData();
-        $rowsCount = count($rows);
         $columns = $this->getGrid()->getIterator()->toArray();
-        $columnsCount = $this->getGrid()->getIterator()->count();
 
         $summaryData = array();
         foreach($rows as  $indexRow => $item) {
@@ -158,12 +156,9 @@ class PhpArray extends AbstractAdapter
             return $rows;
         }
 
-        $rowsCount = count($rows);
         $columns = $this->getGrid()->getColumns();
-        $columnsCount = count($columns);
 
-        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
-            $item = $rows[$indexRow];
+        foreach($rows as $indexRow => $item) {
 
             if (!empty($columns)) {
                 foreach($columns as $indexCol => $column) {
@@ -210,11 +205,8 @@ class PhpArray extends AbstractAdapter
             return $rows;
         }
 
-        $rowsCount = count($rows);
-
-        // Obtain a list of columns
-        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
-            $column = $rows[$indexRow];
+        // Obtain a list of column
+        foreach($rows as $indexRow => $column) {
 
             $keys = array_keys($column);
 
