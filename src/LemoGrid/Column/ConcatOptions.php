@@ -17,6 +17,11 @@ class ConcatOptions extends AbstractOptions
     protected $pattern;
 
     /**
+     * @var string
+     */
+    protected $separator = PHP_EOL;
+
+    /**
      * @param  array $identifiers
      * @return ConcatOptions
      */
@@ -50,5 +55,23 @@ class ConcatOptions extends AbstractOptions
     public function getPattern()
     {
         return $this->pattern;
+    }
+
+    /**
+     * @param  string $separator
+     * @return ConcatGroupOptions
+     */
+    public function setSeparator($separator)
+    {
+        $this->separator = $separator;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSeparator()
+    {
+        return $this->separator;
     }
 }

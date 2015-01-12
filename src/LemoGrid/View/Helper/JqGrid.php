@@ -152,6 +152,7 @@ class JqGrid extends AbstractHelper
             ));
         }
 
+        // Is grid prepare?
         $grid->prepare();
 
         if (isset($_GET['_name'])) {
@@ -233,11 +234,13 @@ class JqGrid extends AbstractHelper
 
         $script[] = '        ],';
 
+        // RESIZE
         if (null !== $grid->getPlatform()->getOptions()->getResizeCallback()) {
-        $script[] = '        resizeStop: function(width, index) {
-                                ' . $grid->getPlatform()->getOptions()->getResizeCallback() . '(this, width, index);
-                            }';
+            $script[] = '        resizeStop: function(width, index) {
+                ' . $grid->getPlatform()->getOptions()->getResizeCallback() . '(this, width, index);
+            }';
         }
+
         $script[] = '    });';
         $script[] = '    $(\'#' . $grid->getName() . '_pager option[value=-1]\').text(\'' . $this->getView()->translate('All') . '\');' . PHP_EOL;
 
@@ -259,6 +262,13 @@ class JqGrid extends AbstractHelper
                     }
                 })";
             }
+        }
+
+        // REMAP
+        if (null !== $grid->getPlatform()->getOptions()->getRemapCallback()) {
+            $script[] = "    $('#" . $grid->getName() . "').on('jqGridRemapColumns', function(e, indexes) {
+                " . $grid->getPlatform()->getOptions()->getRemapCallback() . "(this, indexes);
+            });";
         }
 
         return implode(PHP_EOL, $script);

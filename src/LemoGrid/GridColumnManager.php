@@ -29,8 +29,6 @@ class GridColumnManager extends AbstractPluginManager
         'button'       => 'LemoGrid\Column\Button',
         'buttons'      => 'LemoGrid\Column\Buttons',
         'concat'       => 'LemoGrid\Column\Concat',
-        'concatgroup'  => 'LemoGrid\Column\ConcatGroup',
-        'concat_group' => 'LemoGrid\Column\ConcatGroup',
         'number'       => 'LemoGrid\Column\Number',
         'route'        => 'LemoGrid\Column\Route',
         'text'         => 'LemoGrid\Column\Text',

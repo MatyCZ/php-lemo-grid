@@ -350,6 +350,11 @@ class JqGridOptions extends AbstractOptions
     protected $requestType = self::REQUEST_TYPE_GET;
 
     /**
+     * @var string
+     */
+    protected $remapCallback;
+
+    /**
      * If set to true this will place a footer table with one row below the gird records and above the pager.
      *
      * @var bool
@@ -1397,6 +1402,25 @@ class JqGridOptions extends AbstractOptions
     public function getRecordsPerPageList()
     {
         return $this->recordsPerPageList;
+    }
+
+    /**
+     * @param  string $remapCallback
+     * @return JqGridOptions
+     */
+    public function setRemapCallback($remapCallback)
+    {
+        $this->remapCallback = $remapCallback;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRemapCallback()
+    {
+        return $this->remapCallback;
     }
 
     /**

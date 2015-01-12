@@ -9,6 +9,7 @@ use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Exception;
+use LemoGrid\Event\AdapterEvent;
 use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\ResultSet\JqGrid;
 
@@ -37,6 +38,16 @@ class PhpArray extends AbstractAdapter
     }
 
     /**
+     * Return adapter name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return 'php_array';
+    }
+
+    /**
      * Load data
      *
      * @return array
@@ -51,11 +62,17 @@ class PhpArray extends AbstractAdapter
         $rows = $this->getRawData();
         $columns = $this->getGrid()->getIterator()->toArray();
 
+        $dataSum = array();
         $summaryData = array();
-        foreach($rows as  $indexRow => $item) {
+        foreach($rows as $indexRow => $item) {
             $data = array();
 
             foreach($columns as $indexCol => $column) {
+
+                // Sloupec je skryty, takze ho preskocime
+                if (true === $column->getAttributes()->getIsHidden()) {
+                    continue;
+                }
 
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
@@ -88,7 +105,7 @@ class PhpArray extends AbstractAdapter
                     }
 
                     if (null !== $column->getAttributes()->getSummaryType()) {
-                        $dataSum[$colName][] = $value;
+                        $dataSum[$colName][$indexRow] = $value;
                     }
 
                     $data[$colName] = $value;
@@ -110,10 +127,16 @@ class PhpArray extends AbstractAdapter
         }
 
         $this->setResultSet(new JqGrid($collection));
-        unset($collection);
 
         // Calculate user data (SummaryRow)
+        $summaryData = array();
         foreach($columns as $indexCol => $column) {
+
+            // Sloupec je skryty, takze ho preskocime
+            if (true === $column->getAttributes()->getIsHidden()) {
+                continue;
+            }
+
             if (null !== $column->getAttributes()->getSummaryType()) {
                 $colName = $column->getName();
                 $summaryData[$colName] = '';
@@ -137,6 +160,14 @@ class PhpArray extends AbstractAdapter
         }
 
         $this->getResultSet()->setUserData($summaryData);
+
+        $event = new AdapterEvent();
+        $event->setAdapter($this);
+        $event->setAdapterName($this->getName());
+        $event->setData($collection);
+        $event->setGridName($this->getGrid()->getName());
+
+        $grid->getEventManager()->trigger(AdapterEvent::EVENT_LOAD_DATA, $this, $event);
 
         return $this;
     }

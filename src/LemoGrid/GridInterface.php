@@ -172,4 +172,11 @@ interface GridInterface extends
      * @return PlatformInterface
      */
     public function getPlatform();
+
+    /**
+     * Check if is prepared
+     *
+     * @return bool
+     */
+    public function isPrepared();
 }

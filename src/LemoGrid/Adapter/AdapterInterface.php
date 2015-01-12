@@ -8,6 +8,13 @@ use LemoGrid\ResultSet\ResultSetInterface;
 interface AdapterInterface
 {
     /**
+     * Name of adapter
+     *
+     * @return string
+     */
+    public function getName();
+
+    /**
      * Set grid instance
      *
      * @param  GridInterface $grid

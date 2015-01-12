@@ -12,12 +12,16 @@ use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\ColumnPrepareAwareInterface;
 use LemoGrid\Platform\PlatformInterface;
 use Traversable;
+use Zend\EventManager\EventManagerAwareInterface;
+use Zend\EventManager\EventManagerInterface;
 use Zend\Json;
 use Zend\Session\SessionManager;
 use Zend\Session\Container as SessionContainer;
 use Zend\Stdlib\PriorityQueue;
 
-class Grid implements GridInterface
+class Grid implements
+    GridInterface,
+    EventManagerAwareInterface
 {
     /**
      * Default grid namespace
@@ -47,9 +51,9 @@ class Grid implements GridInterface
     protected $container;
 
     /**
-     * @var string
+     * @var EventManagerInterface
      */
-    protected $defaultPlatform = 'JqGrid';
+    protected $eventManager;
 
     /**
      * @var Factory
@@ -311,123 +315,6 @@ class Grid implements GridInterface
     }
 
     /**
-     * Make a deep clone of a grid
-     *
-     * @return void
-     */
-    public function __clone()
-    {
-        $items = $this->getIterator()->toArray(PriorityQueue::EXTR_BOTH);
-
-        $this->byName    = array();
-        $this->columns  = array();
-        $this->container = null;
-        $this->iterator  = new PriorityQueue();
-        $this->namespace  = self::NAMESPACE_DEFAULT;
-        $this->sessionManager = null;
-
-        foreach ($items as $item) {
-            $column = clone $item['data'];
-            $name = $column->getName();
-
-            $this->iterator->insert($column, $item['priority']);
-            $this->byName[$name] = $column;
-
-            if ($column instanceof ColumnInterface) {
-                $this->columns[$name] = $column;
-            }
-        }
-    }
-
-    /**
-     * Ensures state is ready for use
-     * Prepares grid and any columns that require  preparation.
-     *
-     * @throws Exception\InvalidArgumentException
-     * @return Grid
-     */
-    public function prepare()
-    {
-        if ($this->isPrepared) {
-            return $this;
-        }
-
-        $this->init();
-
-        $name = $this->getName();
-        if ((null === $name || '' === $name)) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                '%s: grid is not named',
-                __METHOD__
-            ));
-        }
-
-        // If the user wants to, elements names can be wrapped by the form's name
-        foreach ($this->getColumns() as $column) {
-            if ($column instanceof ColumnPrepareAwareInterface) {
-                $column->prepareColumn($this);
-            }
-        }
-
-        if(!$this->getPlatform()->getGrid() instanceof GridInterface) {
-            $this->getPlatform()->setGrid($this);
-        }
-
-        $this->isPrepared = true;
-
-        return $this;
-    }
-
-    public function renderData()
-    {
-        $adapter = $this->getAdapter();
-
-        if (!$adapter instanceof AbstractAdapter) {
-            throw new Exception\InvalidArgumentException('No Adapter instance given');
-        }
-
-        $items = array();
-        $data = $adapter->setGrid($this)->getResultSet();
-        $rows = $data->getArrayCopy();
-        $rowsCount = count($rows);
-
-        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
-//            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == JqGridOptions::TREE_MODEL_NESTED) {
-//                $item['leaf'] = ($item['rgt'] == $item['lft'] + 1) ? 'true' : 'false';
-//                $item['expanded'] = 'true';
-//            }
-//
-//            if($this->getOptions()->getTreeGrid() == true && $this->getOptions()->getTreeGridModel() == JqGridOptions::TREE_MODEL_ADJACENCY) {
-//                $item['parent'] = $item['level'] > 0 ? $item['parent'] : 'NULL';
-//                $item['leaf'] = $item['child_count'] > 0 ? 'false' : 'true';
-//                $item['expanded'] = 'true';
-//            }
-
-            // Pridame radek
-            $items[] = array(
-                'id'   => $indexRow +1,
-                'cell' => array_values($rows[$indexRow])
-            );
-        }
-
-        $json = array(
-            'page'    => $this->getPlatform()->getNumberOfCurrentPage(),
-            'total'   => $adapter->getNumberOfPages(),
-            'records' => $adapter->getCountOfItemsTotal(),
-            'rows'    => $items,
-        );
-
-        $userData = $data->getUserData();
-        if (!empty($userData)) {
-            $json['userdata'] = $userData;
-        }
-
-        ob_clean();
-        echo Json\Encoder::encode($json);
-        exit;
-    }
-
-    /**
      * Sets the grid adapter
      *
      * @param  AdapterInterface $adapter
@@ -466,28 +353,6 @@ class Grid implements GridInterface
     }
 
     /**
-     * Set name of default platform
-     *
-     * @param string $defaultPlatform
-     * @return Grid
-     */
-    public function setDefaultPlatform($defaultPlatform)
-    {
-        $this->defaultPlatform = $defaultPlatform;
-        return $this;
-    }
-
-    /**
-     * Retrieve name of default platform
-     *
-     * @return string
-     */
-    public function getDefaultPlatform()
-    {
-        return $this->defaultPlatform;
-    }
-
-    /**
      * Compose a grid factory to use when calling add() with a non-element
      *
      * @param  Factory $factory
@@ -513,6 +378,25 @@ class Grid implements GridInterface
         }
 
         return $this->factory;
+    }
+
+    /**
+     * @param  EventManagerInterface $eventManager
+     * @return Grid
+     */
+    public function setEventManager(EventManagerInterface $eventManager)
+    {
+        $this->eventManager = $eventManager;
+
+        return $this;
+    }
+
+    /**
+     * @return EventManagerInterface
+     */
+    public function getEventManager()
+    {
+        return $this->eventManager;
     }
 
     /**
@@ -706,10 +590,6 @@ class Grid implements GridInterface
      */
     public function getPlatform()
     {
-        if(null === $this->platform) {
-            $this->platform = $this->getGridFactory()->createPlatform(array('type' => $this->getDefaultPlatform()));
-        }
-
         return $this->platform;
     }
 
@@ -739,5 +619,120 @@ class Grid implements GridInterface
         }
 
         return $this->sessionManager;
+    }
+
+    /**
+     * Make a deep clone of a grid
+     *
+     * @return void
+     */
+    public function __clone()
+    {
+        $items = $this->getIterator()->toArray(PriorityQueue::EXTR_BOTH);
+
+        $this->byName    = array();
+        $this->columns  = array();
+        $this->container = null;
+        $this->iterator  = new PriorityQueue();
+        $this->namespace  = self::NAMESPACE_DEFAULT;
+        $this->sessionManager = null;
+
+        foreach ($items as $item) {
+            $column = clone $item['data'];
+            $name = $column->getName();
+
+            $this->iterator->insert($column, $item['priority']);
+            $this->byName[$name] = $column;
+
+            if ($column instanceof ColumnInterface) {
+                $this->columns[$name] = $column;
+            }
+        }
+    }
+
+    /**
+     * Check if is prepared
+     *
+     * @return bool
+     */
+    public function isPrepared()
+    {
+        return $this->isPrepared;
+    }
+
+    /**
+     * Ensures state is ready for use
+     * Prepares grid and any columns that require  preparation.
+     *
+     * @throws Exception\InvalidArgumentException
+     * @return Grid
+     */
+    public function prepare()
+    {
+        if ($this->isPrepared) {
+            return $this;
+        }
+
+        $this->init();
+
+        $name = $this->getName();
+        if ((null === $name || '' === $name)) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                '%s: grid is not named',
+                __METHOD__
+            ));
+        }
+
+        // If the user wants to, elements names can be wrapped by the form's name
+        foreach ($this->getColumns() as $column) {
+            if ($column instanceof ColumnPrepareAwareInterface) {
+                $column->prepareColumn($this);
+            }
+        }
+
+        if(!$this->getPlatform()->getGrid() instanceof GridInterface) {
+            $this->getPlatform()->setGrid($this);
+        }
+
+        $this->isPrepared = true;
+
+        return $this;
+    }
+
+    public function renderData()
+    {
+        $adapter = $this->getAdapter();
+
+        if (!$adapter instanceof AbstractAdapter) {
+            throw new Exception\InvalidArgumentException('No Adapter instance given');
+        }
+
+        $items = array();
+        $data = $adapter->setGrid($this)->getResultSet();
+        $rows = $data->getArrayCopy();
+        $rowsCount = count($rows);
+
+        $json = array(
+            'page'    => $this->getPlatform()->getNumberOfCurrentPage(),
+            'total'   => $adapter->getNumberOfPages(),
+            'records' => $adapter->getCountOfItemsTotal(),
+            'rows'    => array(),
+        );
+
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
+            $json['rows'][] = array(
+                'id'   => $indexRow +1,
+                'cell' => $rows[$indexRow]
+            );
+        }
+
+        $userData = $data->getUserData();
+        if (!empty($userData)) {
+            $json['userdata'] = $userData;
+        }
+
+        ob_clean();
+        echo Json\Encoder::encode($json);
+        exit;
     }
 }

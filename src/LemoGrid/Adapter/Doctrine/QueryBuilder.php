@@ -14,6 +14,7 @@ use LemoGrid\Column\Buttons;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
+use LemoGrid\Event\AdapterEvent;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
@@ -34,6 +35,16 @@ class QueryBuilder extends AbstractAdapter
      * @var DoctrineQueryBuilder
      */
     protected $queryBuilder = null;
+
+    /**
+     * Return adapter name
+     *
+     * @return string
+     */
+    public function getName()
+    {
+        return 'doctrine_queryBuilder';
+    }
 
     /**
      * @throws Exception\UnexpectedValueException
@@ -66,6 +77,11 @@ class QueryBuilder extends AbstractAdapter
 
             $data = array();
             foreach($columns as $indexCol => $column) {
+
+                // Sloupec je skryty, takze ho preskocime
+                if (true === $column->getAttributes()->getIsHidden()) {
+                    continue;
+                }
 
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
@@ -106,11 +122,21 @@ class QueryBuilder extends AbstractAdapter
             }
 
             $this->getResultSet()->append($data);
-            unset($data);
         }
 
         // Calculate user data (SummaryRow)
         foreach($columns as $indexCol => $column) {
+
+            // Sloupec je skryty, takze ho preskocime
+            if (true === $column->getAttributes()->getIsHidden()) {
+                continue;
+            }
+
+            // Sloupec je skryty, musime ho preskocit
+            if (true === $column->getAttributes()->getIsHidden()) {
+                continue;
+            }
+
             if (null !== $column->getAttributes()->getSummaryType()) {
                 $colName = $column->getName();
                 $summaryData[$colName] = '';
@@ -134,6 +160,14 @@ class QueryBuilder extends AbstractAdapter
         }
 
         $this->getResultSet()->setUserData($summaryData);
+
+        $event = new AdapterEvent();
+        $event->setAdapter($this);
+        $event->setAdapterName($this->getName());
+        $event->setData($data);
+        $event->setGridName($this->getGrid()->getName());
+
+        $this->getGrid()->getEventManager()->trigger(AdapterEvent::EVENT_LOAD_DATA, $this, $event);
 
         return $this;
     }
@@ -435,6 +469,12 @@ class QueryBuilder extends AbstractAdapter
         return null;
     }
 
+    /**
+     * Sestavi identifier
+     *
+     * @param  string $identifier
+     * @return string
+     */
     protected function buildIdententifier($identifier)
     {
         $identifier = str_replace('_', '.', $identifier);
@@ -506,7 +546,10 @@ class QueryBuilder extends AbstractAdapter
                 $where = $expr->eq($identifier, "'" . $value . "'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_EQUAL:
-                $where = $expr->neq($identifier, "'" . $value . "'");
+                $where = $expr->orX(
+                    $expr->neq($identifier, "'" . $value . "'"),
+                    $expr->isNull($column)
+                );
                 break;
             case AbstractPlatform::OPERATOR_LESS:
                 $where = $expr->lt($identifier, "'" . $value . "'");
@@ -524,25 +567,37 @@ class QueryBuilder extends AbstractAdapter
                 $where = $expr->like($identifier, "'" . $value . "%'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
-                $where = $expr->notLike($identifier, "'" . $value . "%'");
+                $where = $expr->orX(
+                    $expr->notLike($identifier, "'" . $value . "%'"),
+                    $expr->isNull($column)
+                );
                 break;
             case AbstractPlatform::OPERATOR_IN:
                 $where = $expr->in($identifier, "'" . $value . "'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_IN:
-                $where = $expr->notIn($identifier, "'" . $value . "'");
+                $where = $expr->orX(
+                    $expr->notIn($identifier, "'" . $value . "'"),
+                    $expr->isNull($column)
+                );
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
                 $where = $expr->like($identifier, "'%" . $value . "'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_ENDS_WITH:
-                $where = $expr->notLike($identifier, "'%" . $value . "'");
+                $where = $expr->orX(
+                    $expr->notLike($identifier, "'%" . $value . "'"),
+                    $expr->isNull($identifier)
+                );
                 break;
             case AbstractPlatform::OPERATOR_CONTAINS:
                 $where = $expr->like($identifier, "'%" . $value . "%'");
                 break;
             case AbstractPlatform::OPERATOR_NOT_CONTAINS:
-                $where = $expr->notLike($identifier, "'%" . $value . "%'");
+                $where = $expr->orX(
+                    $expr->notLike($identifier, "'%" . $value . "%'"),
+                    $expr->isNull($identifier)
+                );
                 break;
             default:
                 throw new Exception\InvalidArgumentException('Invalid filter operator');
