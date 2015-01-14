@@ -3,11 +3,27 @@
 namespace LemoGrid\Platform;
 
 use LemoGrid\Exception;
+use LemoGrid\GridInterface;
 use Traversable;
 use Zend\Stdlib\AbstractOptions;
 
 interface PlatformInterface
 {
+    /**
+     * Set grid instance
+     *
+     * @param  GridInterface $grid
+     * @return PlatformInterface
+     */
+    public function setGrid(GridInterface $grid);
+
+    /**
+     * Get grid instance
+     *
+     * @return GridInterface
+     */
+    public function getGrid();
+
     /**
      * Set options for a column
      *

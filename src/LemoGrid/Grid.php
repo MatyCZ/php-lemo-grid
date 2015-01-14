@@ -699,23 +699,29 @@ class Grid implements
         return $this;
     }
 
+    /**
+     * Render data form given adapter
+     *
+     * @return void
+     */
     public function renderData()
     {
-        $adapter = $this->getAdapter();
-
-        if (!$adapter instanceof AbstractAdapter) {
+        if (!$this->getAdapter() instanceof AbstractAdapter) {
             throw new Exception\InvalidArgumentException('No Adapter instance given');
         }
 
-        $items = array();
-        $data = $adapter->setGrid($this)->getResultSet();
-        $rows = $data->getArrayCopy();
+        // Set current grid instance to Adapter and Platform
+        $this->getPlatform()->setGrid($this);
+        $this->getAdapter()->setGrid($this);
+
+        $resultSet = $this->getAdapter()->getResultSet();
+        $rows = $resultSet->getArrayCopy();
         $rowsCount = count($rows);
 
         $json = array(
             'page'    => $this->getPlatform()->getNumberOfCurrentPage(),
-            'total'   => $adapter->getNumberOfPages(),
-            'records' => $adapter->getCountOfItemsTotal(),
+            'total'   => $this->getAdapter()->getNumberOfPages(),
+            'records' => $this->getAdapter()->getCountOfItemsTotal(),
             'rows'    => array(),
         );
 
@@ -726,7 +732,7 @@ class Grid implements
             );
         }
 
-        $userData = $data->getUserData();
+        $userData = $resultSet->getUserData();
         if (!empty($userData)) {
             $json['userdata'] = $userData;
         }
