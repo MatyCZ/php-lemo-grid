@@ -67,6 +67,7 @@ class QueryBuilder extends AbstractAdapter
         $columnsCount = $this->getGrid()->getIterator()->count();
         $this->countItems = $rowsCount;
 
+        $data = array();
         $summaryData = array();
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];

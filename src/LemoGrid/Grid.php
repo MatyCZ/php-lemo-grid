@@ -323,6 +323,7 @@ class Grid implements
     public function setAdapter(AdapterInterface $adapter)
     {
         $this->adapter = $adapter;
+
         return $this;
     }
 
@@ -333,6 +334,8 @@ class Grid implements
      */
     public function getAdapter()
     {
+        $this->adapter->setGrid($this);
+
         return $this->adapter;
     }
 
@@ -361,6 +364,7 @@ class Grid implements
     public function setGridFactory(Factory $factory)
     {
         $this->factory = $factory;
+
         return $this;
     }
 
@@ -580,6 +584,7 @@ class Grid implements
     public function setPlatform(PlatformInterface $platform)
     {
         $this->platform = $platform;
+
         return $this;
     }
 
@@ -590,6 +595,8 @@ class Grid implements
      */
     public function getPlatform()
     {
+        $this->platform->setGrid($this);
+
         return $this->platform;
     }
 
@@ -690,10 +697,6 @@ class Grid implements
             }
         }
 
-        if(!$this->getPlatform()->getGrid() instanceof GridInterface) {
-            $this->getPlatform()->setGrid($this);
-        }
-
         $this->isPrepared = true;
 
         return $this;
@@ -709,10 +712,6 @@ class Grid implements
         if (!$this->getAdapter() instanceof AbstractAdapter) {
             throw new Exception\InvalidArgumentException('No Adapter instance given');
         }
-
-        // Set current grid instance to Adapter and Platform
-        $this->getPlatform()->setGrid($this);
-        $this->getAdapter()->setGrid($this);
 
         $resultSet = $this->getAdapter()->getResultSet();
         $rows = $resultSet->getArrayCopy();

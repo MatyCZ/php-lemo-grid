@@ -55,13 +55,13 @@ class PhpArray extends AbstractAdapter
     public function populateData()
     {
         $grid = $this->getGrid();
-        $collection = array();
         $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
         $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
 
         $rows = $this->getRawData();
         $columns = $this->getGrid()->getIterator()->toArray();
 
+        $collection = array();
         $dataSum = array();
         $summaryData = array();
         foreach($rows as $indexRow => $item) {
