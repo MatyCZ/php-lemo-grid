@@ -119,7 +119,7 @@ class JqGrid extends AbstractPlatform
      * @param  mixed  $value
      * @return mixed|bool
      */
-    public function modifiParam($key, $value)
+    public function modifyParam($key, $value)
     {
         // Modify params
         if ('filters' == $key) {
