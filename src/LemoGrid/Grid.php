@@ -468,7 +468,7 @@ class Grid implements
         }
 
         // Modifi param in Platform
-        $value = $this->getPlatform()->modifiParam($key, $value);
+        $value = $this->getPlatform()->modifyParam($key, $value);
 
         if (false !== $value) {
             $container[$namespace]->offsetSet($key, $value);
@@ -532,6 +532,10 @@ class Grid implements
                 __METHOD__,
                 (is_object($params) ? get_class($params) : gettype($params))
             ));
+        }
+
+        if(empty($params['_name']) || $params['_name'] != $this->getNamespace()) {
+            return $this;
         }
 
         if (isset($params['sidx']) && empty($params['sidx'])) {
