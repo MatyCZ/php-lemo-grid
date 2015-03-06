@@ -78,12 +78,6 @@ class QueryBuilder extends AbstractAdapter
 
             $data = array();
             foreach($columns as $indexCol => $column) {
-
-                // Sloupec je skryty, takze ho preskocime
-                if (true === $column->getAttributes()->getIsHidden()) {
-                    continue;
-                }
-
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
                 $data[$colName] = null;

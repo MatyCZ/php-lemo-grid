@@ -16,6 +16,25 @@ class Button extends AbstractColumn
     protected $options;
 
     /**
+     * Attributes valid for the button tag
+     *
+     * @var array
+     */
+    protected $validTagAttributes = array(
+        'name'           => true,
+        'autofocus'      => true,
+        'disabled'       => true,
+        'form'           => true,
+        'formaction'     => true,
+        'formenctype'    => true,
+        'formmethod'     => true,
+        'formnovalidate' => true,
+        'formtarget'     => true,
+        'type'           => true,
+        'value'          => true,
+    );
+
+    /**
      * Set column options
      *
      * @param  array|\Traversable|ButtonOptions $options

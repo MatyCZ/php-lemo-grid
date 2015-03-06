@@ -168,6 +168,7 @@ class JqGridOptions extends AbstractOptions
      * @var array
      */
     protected $filterToolbar = array(
+        'enableClear' => true,
         'stringResult' => true,
         'searchOnEnter' => true,
         'searchOperators' => false,
@@ -919,6 +920,28 @@ class JqGridOptions extends AbstractOptions
     public function getFilterToolbar()
     {
         return $this->filterToolbar;
+    }
+
+    /**
+     * Set filter toolbar enable clear
+     *
+     * @param  bool $enableClear
+     * @return JqGridOptions
+     */
+    public function setFilterToolbarEnableClear($enableClear)
+    {
+        $this->filterToolbar['enableClear'] = (bool) $enableClear;
+        return $this;
+    }
+
+    /**
+     * Filter toolbar enable clear?
+     *
+     * @return bool
+     */
+    public function getFilterToolbarEnableClear()
+    {
+        return $this->filterToolbar['enableClear'];
     }
 
     /**
