@@ -65,10 +65,10 @@ class Concat extends AbstractColumn
         $value = null;
         $patternValues = array();
 
-        foreach($this->getOptions()->getIdentifiers() as $index => $identifier) {
+        foreach ($this->getOptions()->getIdentifiers() as $index => $identifier) {
             $valuesIdentifier = $adapter->findValue($identifier, $item);
 
-            if(!empty($valuesIdentifier)) {
+            if (!empty($valuesIdentifier)) {
 
                 if (!is_array($valuesIdentifier)) {
                     $valuesIdentifier = array($valuesIdentifier);

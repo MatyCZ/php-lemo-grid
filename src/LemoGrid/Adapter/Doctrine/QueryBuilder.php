@@ -77,7 +77,7 @@ class QueryBuilder extends AbstractAdapter
             }
 
             $data = array();
-            foreach($columns as $indexCol => $column) {
+            foreach ($columns as $indexCol => $column) {
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
                 $data[$colName] = null;
@@ -89,7 +89,7 @@ class QueryBuilder extends AbstractAdapter
                     $value = $this->findValue($colIdentifier, $item);
 
                     // COLUMN - DateTime
-                    if($value instanceof DateTime) {
+                    if ($value instanceof DateTime) {
                         $value = $value->format('Y-m-d H:i:s');
                     }
 
@@ -97,8 +97,8 @@ class QueryBuilder extends AbstractAdapter
                     $value = $column->renderValue($this, $item);
 
                     // Projdeme data a nahradime data ve formatu %xxx%
-                    if(null !== $value && preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
-                        foreach($matches[0] as $key => $match) {
+                    if (null !== $value && preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
+                        foreach ($matches[0] as $key => $match) {
                             if ('%_index%' == $matches[0][$key]) {
                                 $value = str_replace($matches[0][$key], $indexRow, $value);
                             } else {
