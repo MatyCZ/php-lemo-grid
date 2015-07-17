@@ -61,9 +61,8 @@ class PhpArray extends AbstractAdapter
         $rows = $this->getRawData();
         $columns = $this->getGrid()->getIterator()->toArray();
 
+        // Nacteme si kolekci dat
         $collection = array();
-        $dataSum = array();
-        $summaryData = array();
         foreach($rows as $indexRow => $item) {
             $data = array();
 
@@ -98,10 +97,6 @@ class PhpArray extends AbstractAdapter
                         }
                     }
 
-                    if (null !== $column->getAttributes()->getSummaryType()) {
-                        $dataSum[$colName][$indexRow] = $value;
-                    }
-
                     $data[$colName] = $value;
                     $column->setValue($value);
                 }
@@ -110,12 +105,32 @@ class PhpArray extends AbstractAdapter
             $collection[] = $data;
         }
 
-        $collection = $this->_filterCollection($collection);
-        $this->countItemsTotal = count($collection);
-        $this->countItems = count($collection);
 
+        // Zafiltrujeme kolekci
+        $collection = $this->_filterCollection($collection);
+
+        // Seradime kolekci kolekci
         $collection = $this->_sortCollection($collection);
 
+        // Spocteme si pocet polozek
+        $this->countItems = count($collection);
+        $this->countItemsTotal = count($collection);
+
+        // Najdeme si data pro souctovy radek
+        $dataSum = array();
+        if (!empty($collection)) {
+            foreach($collection as $indexRow => $item) {
+                foreach($columns as $indexCol => $column) {
+                    $colName = $column->getName();
+
+                    if (null !== $column->getAttributes()->getSummaryType()) {
+                        $dataSum[$colName][$indexRow] = $item[$colName];
+                    }
+                }
+            }
+        }
+
+        // Strankovani
         if ($numberVisibleRows > 0) {
             $collection = array_slice($collection, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
         }
