@@ -216,7 +216,7 @@ class Concat extends AbstractColumn
                 $valueWithRealData = str_replace(array_keys($patternValues), array_values($patternValues), $partPattern);
                 $value = str_replace(array_keys($patternValuesToReplace), array_values($patternValuesToReplace), $partPattern);
                 $value = trim($value);
-                $value = preg_replace('#\s+#', ' ', $value);
+                $value = preg_replace('~\s+~u', ' ', $value);
 
                 // Zjistime, zda byly nahrazene veskere hodnoty
                 preg_match_all('/%s[0-9]{1}?/', $valueWithRealData, $valueNotReplacedExpressions);
@@ -234,7 +234,7 @@ class Concat extends AbstractColumn
             $value = str_replace(array_keys($partsValues), array_values($partsValues), $pattern);
             $value = str_replace(array_keys($patternValuesToReplace), array_values($patternValuesToReplace), $value);
             $value = trim($value);
-            $value = preg_replace('#\s+#', ' ', $value);
+            $value = preg_replace('~\s+~u', ' ', $value);
         }
 
         return $value;

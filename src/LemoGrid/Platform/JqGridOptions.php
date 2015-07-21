@@ -211,7 +211,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $gridView = true;
+    protected $gridView = false;
 
     /**
      * If the option is set to true the title attribute is added to the column headers.
