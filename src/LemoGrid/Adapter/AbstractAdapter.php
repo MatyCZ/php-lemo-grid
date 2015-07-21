@@ -67,7 +67,7 @@ abstract class AbstractAdapter implements AdapterInterface
         if($separator){
             $dateDb = array();
 
-            // Pokud je datum
+            // Pokud je datumem
             // https://bugs.php.net/bug.php?id=68528
             // IntlDateFormatter::parse() throws warnings on not parsable date on windows only
             if (false !== @$formatter->parse($value)) {
