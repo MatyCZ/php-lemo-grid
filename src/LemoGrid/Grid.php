@@ -6,15 +6,16 @@ use ArrayAccess;
 use ArrayIterator;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
-use LemoGrid\Column\Button;
-use LemoGrid\Column\Buttons;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\ColumnPrepareAwareInterface;
+use LemoGrid\Platform\JqGrid;
 use LemoGrid\Platform\PlatformInterface;
+use LemoGrid\Style\ColumnStyle;
+use LemoGrid\Style\RowStyle;
 use Traversable;
+use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
-use Zend\Json;
 use Zend\Session\SessionManager;
 use Zend\Session\Container as SessionContainer;
 use Zend\Stdlib\PriorityQueue;
@@ -44,6 +45,11 @@ class Grid implements
      * @var array
      */
     protected $columns = array();
+
+    /**
+     * @var array|ColumnStyle[]
+     */
+    protected $columnStyles = array();
 
     /**
      * @var SessionContainer
@@ -92,6 +98,11 @@ class Grid implements
      * @var PlatformInterface
      */
     protected $platform;
+
+    /**
+     * @var array|RowStyle[]
+     */
+    protected $rowStyles = array();
 
     /**
      * @var SessionManager
@@ -400,6 +411,10 @@ class Grid implements
      */
     public function getEventManager()
     {
+        if (null === $this->eventManager) {
+            $this->eventManager = new EventManager(get_called_class());
+        }
+
         return $this->eventManager;
     }
 
@@ -633,6 +648,120 @@ class Grid implements
     }
 
     /**
+     * @param  array|ColumnStyle $style
+     * @return $this
+     */
+    public function addColumnStyle($style)
+    {
+        if ($style instanceof ColumnStyle) {
+            $this->columnStyles[] = $style;
+        } elseif (is_array($style)) {
+            $this->columnStyles[] = new ColumnStyle($style);
+        } else {
+            throw new Exception\InvalidArgumentException(
+                'The styles parameter must be an array or array of ColumnStyle'
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set styles for column.
+     *
+     * @param  array|Traversable $styles
+     * @return Grid
+     * @throws Exception\InvalidArgumentException
+     */
+    public function setColumnStyles(array $styles)
+    {
+        foreach ($styles as $style) {
+            $this->addColumnStyle($style);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get defined column styles
+     *
+     * @return ColumnStyle[]
+     */
+    public function getColumnStyles()
+    {
+        return $this->columnStyles;
+    }
+
+    /**
+     * Clear column styles
+     *
+     * @return Grid
+     */
+    public function clearColumnStyles()
+    {
+        $this->columnStyles = array();
+
+        return $this;
+    }
+
+    /**
+     * @param  array|RowStyle $style
+     * @return $this
+     */
+    public function addRowStyle($style)
+    {
+        if ($style instanceof RowStyle) {
+            $this->rowStyles[] = $style;
+        } elseif (is_array($style)) {
+            $this->rowStyles[] = new RowStyle($style);
+        } else {
+            throw new Exception\InvalidArgumentException(
+                'The styles parameter must be an array or array of RowStyle'
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * Set styles for an row.
+     *
+     * @param  array|Traversable $styles
+     * @return Grid
+     * @throws Exception\InvalidArgumentException
+     */
+    public function setRowStyles(array $styles)
+    {
+        foreach ($styles as $style) {
+            $this->addRowStyle($style);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Get defined styles
+     *
+     * @return RowStyle[]
+     */
+    public function getRowStyles()
+    {
+        return $this->rowStyles;
+    }
+
+    /**
+     * Clear styles
+     *
+     * @return Grid
+     */
+    public function clearRowStyles()
+    {
+        $this->rowStyles = array();
+
+        return $this;
+    }
+
+    /**
      * Make a deep clone of a grid
      *
      * @return void
@@ -641,11 +770,13 @@ class Grid implements
     {
         $items = $this->getIterator()->toArray(PriorityQueue::EXTR_BOTH);
 
-        $this->byName    = array();
-        $this->columns  = array();
+        $this->adapter = null;
+        $this->byName = array();
+        $this->columns = array();
         $this->container = null;
-        $this->iterator  = new PriorityQueue();
-        $this->namespace  = self::NAMESPACE_DEFAULT;
+        $this->iterator = new PriorityQueue();
+        $this->namespace = self::NAMESPACE_DEFAULT;
+        $this->platform = null;
         $this->sessionManager = null;
 
         foreach ($items as $item) {
@@ -704,44 +835,5 @@ class Grid implements
         $this->isPrepared = true;
 
         return $this;
-    }
-
-    /**
-     * Render data form given adapter
-     *
-     * @return void
-     */
-    public function renderData()
-    {
-        if (!$this->getAdapter() instanceof AbstractAdapter) {
-            throw new Exception\InvalidArgumentException('No Adapter instance given');
-        }
-
-        $resultSet = $this->getAdapter()->getResultSet();
-        $rows = $resultSet->getArrayCopy();
-        $rowsCount = count($rows);
-
-        $json = array(
-            'page'    => $this->getPlatform()->getNumberOfCurrentPage(),
-            'total'   => $this->getAdapter()->getNumberOfPages(),
-            'records' => $this->getAdapter()->getCountOfItemsTotal(),
-            'rows'    => array(),
-        );
-
-        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
-            $json['rows'][] = array(
-                'id'   => $indexRow +1,
-                'cell' => $rows[$indexRow]
-            );
-        }
-
-        $userData = $resultSet->getUserData();
-        if (!empty($userData)) {
-            $json['userdata'] = $userData;
-        }
-
-        ob_clean();
-        echo Json\Encoder::encode($json);
-        exit;
     }
 }

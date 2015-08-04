@@ -4,21 +4,24 @@ namespace LemoGrid\Adapter\Php;
 
 use DateTime;
 use LemoGrid\Adapter\AbstractAdapter;
-use LemoGrid\Column\AbstractColumn;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
-use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Exception;
 use LemoGrid\Event\AdapterEvent;
 use LemoGrid\Platform\AbstractPlatform;
-use LemoGrid\ResultSet\JqGrid;
+use LemoGrid\Platform\JqGrid as JqGridPlatform;
 
 class PhpArray extends AbstractAdapter
 {
     /**
      * @var array
      */
-    protected $rawData = array();
+    protected $dataFiltered = array();
+
+    /**
+     * @var array
+     */
+    protected $dataSource = array();
 
     /**
      * @var array
@@ -28,23 +31,13 @@ class PhpArray extends AbstractAdapter
     /**
      * Constuctor
      *
-     * @param array $rawData   Data as key => value or only values
+     * @param array $dataSource Data as key => value or only values
      * @param array $relations Relation as relation alias => array field
      */
-    public function __construct(array $rawData = array(), array $relations = array())
+    public function __construct(array $dataSource = array(), array $relations = array())
     {
-        $this->rawData = $rawData;
+        $this->dataSource = $dataSource;
         $this->relations = $relations;
-    }
-
-    /**
-     * Return adapter name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return 'php_array';
     }
 
     /**
@@ -52,24 +45,21 @@ class PhpArray extends AbstractAdapter
      *
      * @return array
      */
-    public function populateData()
+    public function fetchData()
     {
-        $grid = $this->getGrid();
-        $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
-        $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
-
-        $rows = $this->getRawData();
+        $rows = $this->getDataSource();
+        $rowsCount = count($rows);
         $columns = $this->getGrid()->getIterator()->toArray();
 
         // Nacteme si kolekci dat
-        $collection = array();
-        foreach($rows as $indexRow => $item) {
-            $data = array();
+        $data = array();
+        for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
+            $item = $rows[$indexRow];
 
             foreach($columns as $indexCol => $column) {
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
-                $data[$colName] = null;
+                $data[$indexRow][$colName] = null;
 
                 // Can we render value?
                 if (true === $column->isValid($this, $item)) {
@@ -97,97 +87,114 @@ class PhpArray extends AbstractAdapter
                         }
                     }
 
-                    $data[$colName] = $value;
+                    $data[$indexRow][$colName] = $value;
                     $column->setValue($value);
                 }
             }
-
-            $collection[] = $data;
         }
 
+        // Modify collection
+        $data = $this->applyFilters($data);
+        $data = $this->applySortings($data);
 
-        // Zafiltrujeme kolekci
-        $collection = $this->_filterCollection($collection);
+        // Set total count of items
+        $this->countItemsTotal = count($data);
+        $this->dataFiltered = $data;
 
-        // Seradime kolekci kolekci
-        $collection = $this->_sortCollection($collection);
+        // Paginate collection
+        $data = $this->applyPagination($data);
 
-        // Spocteme si pocet polozek
-        $this->countItems = count($collection);
-        $this->countItemsTotal = count($collection);
+        // Set count of items
+        $this->countItems = count($data);
 
-        // Najdeme si data pro souctovy radek
-        $dataSum = array();
-        if (!empty($collection)) {
-            foreach($collection as $indexRow => $item) {
-                foreach($columns as $indexCol => $column) {
-                    $colName = $column->getName();
+        $this->getGrid()->getPlatform()->getResultSet()->setData($data);
 
-                    if (null !== $column->getAttributes()->getSummaryType()) {
-                        $dataSum[$colName][$indexRow] = $item[$colName];
-                    }
-                }
-            }
-        }
-
-        // Strankovani
-        if ($numberVisibleRows > 0) {
-            $collection = array_slice($collection, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
-        }
-
-        $this->setResultSet(new JqGrid($collection));
-
-        // Calculate user data (SummaryRow)
-        $summaryData = array();
-        foreach($columns as $indexCol => $column) {
-
-            // Sloupec je skryty, takze ho preskocime
-            if (true === $column->getAttributes()->getIsHidden()) {
-                continue;
-            }
-
-            if (null !== $column->getAttributes()->getSummaryType()) {
-                $colName = $column->getName();
-                $summaryData[$colName] = '';
-                $summaryType = $column->getAttributes()->getSummaryType();
-
-                if (isset($dataSum[$colName])) {
-                    if ('sum' == $summaryType) {
-                        $summaryData[$colName] = array_sum($dataSum[$colName]);
-                    }
-                    if ('min' == $summaryType) {
-                        $summaryData[$colName] = min($dataSum[$colName]);
-                    }
-                    if ('max' == $summaryType) {
-                        $summaryData[$colName] = max($dataSum[$colName]);
-                    }
-                    if ('count' == $summaryType) {
-                        $summaryData[$colName] = array_sum($dataSum[$colName]) / count($dataSum[$colName]);
-                    }
-                }
-            }
-        }
-
-        $this->getResultSet()->setUserData($summaryData);
+        // Fetch summary data
+        $this->fetchDataSummary();
 
         $event = new AdapterEvent();
         $event->setAdapter($this);
-        $event->setAdapterName($this->getName());
-        $event->setData($collection);
-        $event->setGridName($this->getGrid()->getName());
+        $event->setGrid($this->getGrid());
+        $event->setResultSet($this->getGrid()->getPlatform()->getResultSet());
 
-        $grid->getEventManager()->trigger(AdapterEvent::EVENT_LOAD_DATA, $this, $event);
+        $this->getGrid()->getEventManager()->trigger(AdapterEvent::EVENT_FETCH_DATA, $this, $event);
 
         return $this;
     }
 
     /**
-     * Filtr collection
+     * @return PhpArray
+     */
+    protected function fetchDataSummary()
+    {
+        if ($this->getGrid()->getPlatform() instanceof JqGridPlatform && true === $this->getGrid()->getPlatform()->getOptions()->getUserDataOnFooter()) {
+            $items = $this->dataFiltered;
+            $itemsCount = count($items);
+
+            // Find columns data for summary
+            $columnsValues = array();
+            for ($indexItem = 0; $indexItem < $itemsCount; $indexItem++) {
+                $item = $items[$indexItem];
+
+                foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+                    $colName = $column->getName();
+
+                    // Can we render value?
+                    if (null !== $column->getAttributes()->getSummaryType() && true === $column->isValid($this, $item)) {
+                        $columnsValues[$colName][$indexItem] = $item[$colName];
+                    }
+                }
+            }
+
+            // Calculate user data (SummaryRow)
+            $dataUser = array();
+            foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+
+                // Sloupec je skryty, takze ho preskocime
+                if (true === $column->getAttributes()->getIsHidden()) {
+                    continue;
+                }
+
+                // Sloupec je skryty, musime ho preskocit
+                if (true === $column->getAttributes()->getIsHidden()) {
+                    continue;
+                }
+
+                if (null !== $column->getAttributes()->getSummaryType()) {
+                    $colName = $column->getName();
+                    $dataUser[$colName] = '';
+                    $summaryType = $column->getAttributes()->getSummaryType();
+
+                    if (isset($columnsValues[$colName])) {
+                        if ('sum' == $summaryType) {
+                            $dataUser[$colName] = array_sum($columnsValues[$colName]);
+                        }
+                        if ('min' == $summaryType) {
+                            $dataUser[$colName] = min($columnsValues[$colName]);
+                        }
+                        if ('max' == $summaryType) {
+                            $dataUser[$colName] = max($columnsValues[$colName]);
+                        }
+                        if ('count' == $summaryType) {
+                            $dataUser[$colName] = array_sum($columnsValues[$colName]) / count($columnsValues[$colName]);
+                        }
+                    }
+                }
+            }
+
+            $this->getGrid()->getPlatform()->getResultSet()->setDataUser($dataUser);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Apply filters to the collection
      *
      * @param  array $rows
      * @return array
      */
-    private function _filterCollection(array $rows)
+    protected function applyFilters(array $rows)
     {
         $grid = $this->getGrid();
         $filter = $grid->getParam('filters');
@@ -209,7 +216,7 @@ class PhpArray extends AbstractAdapter
                         // Jsou definovane filtry pro sloupec
                         if(!empty($filter['rules'][$column->getName()])) {
                             foreach ($filter['rules'][$column->getName()] as $filterDefinition) {
-                                if($column instanceof ColumnConcat || $column instanceof ColumnConcatGroup) {
+                                if($column instanceof ColumnConcat) {
                                     preg_match('/' . $filterDefinition['value'] . '/i', $item[$column->getName()], $matches);
 
                                     if (count($matches) == 0) {
@@ -231,12 +238,31 @@ class PhpArray extends AbstractAdapter
     }
 
     /**
-     * Sort collection
+     * Apply pagination to the collection
      *
      * @param  array $rows
      * @return array
      */
-    private function _sortCollection($rows)
+    protected function applyPagination(array $rows)
+    {
+        $numberCurrentPage = $this->getGrid()->getPlatform()->getNumberOfCurrentPage();
+        $numberVisibleRows = $this->getGrid()->getPlatform()->getNumberOfVisibleRows();
+
+        // Strankovani
+        if ($numberVisibleRows > 0) {
+            $rows = array_slice($rows, $numberVisibleRows * $numberCurrentPage - $numberVisibleRows, $numberVisibleRows);
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Apply sorting to the collection
+     *
+     * @param  array $rows
+     * @return array
+     */
+    protected function applySortings($rows)
     {
         $grid = $this->getGrid();
         $sort = $this->getGrid()->getPlatform()->getSort();
@@ -410,12 +436,12 @@ class PhpArray extends AbstractAdapter
     }
 
     /**
-     * @param  array $rawData
+     * @param  array $dataSource
      * @return PhpArray
      */
-    public function setRawData(array $rawData)
+    public function setDataSource(array $dataSource)
     {
-        $this->rawData = $rawData;
+        $this->dataSource = $dataSource;
         return $this;
     }
 
@@ -424,9 +450,9 @@ class PhpArray extends AbstractAdapter
      *
      * @return array|null
      */
-    public function getRawData()
+    public function getDataSource()
     {
-        return $this->rawData;
+        return $this->dataSource;
     }
 
     /**

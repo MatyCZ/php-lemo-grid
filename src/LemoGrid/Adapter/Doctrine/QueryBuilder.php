@@ -5,27 +5,19 @@ namespace LemoGrid\Adapter\Doctrine;
 use DateTime;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr;
-use Doctrine\ORM\Query\ResultSetMapping;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use LemoGrid\Adapter\AbstractAdapter;
-use LemoGrid\Column\AbstractColumn;
-use LemoGrid\Column\Buttons;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
-use LemoGrid\Column\ConcatGroup as ColumnConcatGroup;
 use LemoGrid\Event\AdapterEvent;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
+use LemoGrid\Platform\JqGrid as JqGridPlatform;
 
 class QueryBuilder extends AbstractAdapter
 {
-    /**
-     * @var string
-     */
-    protected $aliasRoot;
-
     /**
      * @var array
      */
@@ -37,38 +29,36 @@ class QueryBuilder extends AbstractAdapter
     protected $queryBuilder = null;
 
     /**
-     * Return adapter name
-     *
-     * @return string
-     */
-    public function getName()
-    {
-        return 'doctrine_queryBuilder';
-    }
-
-    /**
      * @throws Exception\UnexpectedValueException
      * @return QueryBuilder
      */
-    public function populateData()
+    public function fetchData()
     {
-        if(!$this->getGrid() instanceof GridInterface) {
+        if (!$this->getGrid() instanceof GridInterface) {
             throw new Exception\UnexpectedValueException("No Grid instance given");
         }
-        if(!$this->getQueryBuilder() instanceof DoctrineQueryBuilder) {
+        if (!$this->getQueryBuilder() instanceof DoctrineQueryBuilder) {
             throw new Exception\UnexpectedValueException("No QueryBuilder instance given");
         }
 
+        // Find join aliases in DQL
         $this->findAliases();
 
-        $rows = $this->executeQuery();
-        $rowsCount = count($rows);
+        // Modify DQL
+        $this->applyFilters();
+        $this->applyPagination();
+        $this->applySortings();
+
         $columns = $this->getGrid()->getIterator()->toArray();
-        $columnsCount = $this->getGrid()->getIterator()->count();
+        $paginator = new Paginator($this->getQueryBuilder()->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY));
+        $rows = $paginator->getIterator();
+        $rowsCount = $paginator->getIterator()->count();
+
+        // Update count of items
         $this->countItems = $rowsCount;
+        $this->countItemsTotal = $paginator->count();
 
         $data = array();
-        $summaryData = array();
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
 
@@ -76,11 +66,10 @@ class QueryBuilder extends AbstractAdapter
                 $item = $this->mergeSubqueryItem($item);
             }
 
-            $data = array();
             foreach ($columns as $indexCol => $column) {
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
-                $data[$colName] = null;
+                $data[$indexRow][$colName] = null;
 
                 // Can we render value?
                 if (true === $column->isValid($this, $item)) {
@@ -107,80 +96,121 @@ class QueryBuilder extends AbstractAdapter
                         }
                     }
 
-                    if (null !== $column->getAttributes()->getSummaryType()) {
-                        $dataSum[$colName][] = $value;
-                    }
-
-                    $data[$colName] = $value;
+                    $data[$indexRow][$colName] = $value;
                     $column->setValue($value);
                 }
             }
 
-            $this->getResultSet()->append($data);
         }
 
-        // Calculate user data (SummaryRow)
-        foreach($columns as $indexCol => $column) {
+        $this->getGrid()->getPlatform()->getResultSet()->setData($data);
 
-            // Sloupec je skryty, takze ho preskocime
-            if (true === $column->getAttributes()->getIsHidden()) {
-                continue;
-            }
-
-            // Sloupec je skryty, musime ho preskocit
-            if (true === $column->getAttributes()->getIsHidden()) {
-                continue;
-            }
-
-            if (null !== $column->getAttributes()->getSummaryType()) {
-                $colName = $column->getName();
-                $summaryData[$colName] = '';
-                $summaryType = $column->getAttributes()->getSummaryType();
-
-                if (isset($dataSum[$colName])) {
-                    if ('sum' == $summaryType) {
-                        $summaryData[$colName] = array_sum($dataSum[$colName]);
-                    }
-                    if ('min' == $summaryType) {
-                        $summaryData[$colName] = min($dataSum[$colName]);
-                    }
-                    if ('max' == $summaryType) {
-                        $summaryData[$colName] = max($dataSum[$colName]);
-                    }
-                    if ('count' == $summaryType) {
-                        $summaryData[$colName] = array_sum($dataSum[$colName]) / count($dataSum[$colName]);
-                    }
-                }
-            }
-        }
-
-        $this->getResultSet()->setUserData($summaryData);
+        // Fetch summary data
+        $this->fetchDataSummary();
 
         $event = new AdapterEvent();
         $event->setAdapter($this);
-        $event->setAdapterName($this->getName());
-        $event->setData($data);
-        $event->setGridName($this->getGrid()->getName());
+        $event->setGrid($this->getGrid());
+        $event->setResultSet($this->getGrid()->getPlatform()->getResultSet());
 
-        $this->getGrid()->getEventManager()->trigger(AdapterEvent::EVENT_LOAD_DATA, $this, $event);
+        $this->getGrid()->getEventManager()->trigger(AdapterEvent::EVENT_FETCH_DATA, $this, $event);
+
+        $this->getGrid()->setAdapter($event->getAdapter());
+        $this->getGrid()->getPlatform()->setResultSet($event->getResultSet());
 
         return $this;
     }
 
     /**
-     * @throws \Exception
-     * @return array
+     * @return QueryBuilder
      */
-    protected function executeQuery()
+    protected function fetchDataSummary()
     {
-        $grid = $this->getGrid();
-        $filter = $grid->getParam('filters');
-        $numberCurrentPage = $grid->getPlatform()->getNumberOfCurrentPage();
-        $numberVisibleRows = $grid->getPlatform()->getNumberOfVisibleRows();
-        $sort = $grid->getPlatform()->getSort();
+        if ($this->getGrid()->getPlatform() instanceof JqGridPlatform && true === $this->getGrid()->getPlatform()->getOptions()->getUserDataOnFooter()) {
+            $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->resetDQLPart('orderBy');
+            $queryBuilder->setFirstResult(null);
+            $queryBuilder->setMaxResults(null);
 
+            // Fetch data from DB
+            $items = $queryBuilder->getQuery()->getArrayResult();
+            $itemsCount = count($items);
+
+            // Find columns data for summary
+            $columnsValues = array();
+            for ($indexItem = 0; $indexItem < $itemsCount; $indexItem++) {
+                $item = $items[$indexItem];
+
+                if (isset($item[0])) {
+                    $item = $this->mergeSubqueryItem($item);
+                }
+
+                foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+                    $colIdentifier = $column->getIdentifier();
+                    $colName = $column->getName();
+
+                    // Can we render value?
+                    if (null !== $column->getAttributes()->getSummaryType() && true === $column->isValid($this, $item)) {
+
+                        // Nacteme si data radku
+                        $columnsValues[$colName][$indexItem] = $this->findValue($colIdentifier, $item);
+                    }
+                }
+            }
+
+            // Calculate user data (SummaryRow)
+            $summaryData = array();
+            foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+
+                // Sloupec je skryty, takze ho preskocime
+                if (true === $column->getAttributes()->getIsHidden()) {
+                    continue;
+                }
+
+                // Sloupec je skryty, musime ho preskocit
+                if (true === $column->getAttributes()->getIsHidden()) {
+                    continue;
+                }
+
+                if (null !== $column->getAttributes()->getSummaryType()) {
+                    $colName = $column->getName();
+                    $summaryData[$colName] = '';
+                    $summaryType = $column->getAttributes()->getSummaryType();
+
+                    if (isset($columnsValues[$colName])) {
+                        if ('sum' == $summaryType) {
+                            $summaryData[$colName] = array_sum($columnsValues[$colName]);
+                        }
+                        if ('min' == $summaryType) {
+                            $summaryData[$colName] = min($columnsValues[$colName]);
+                        }
+                        if ('max' == $summaryType) {
+                            $summaryData[$colName] = max($columnsValues[$colName]);
+                        }
+                        if ('count' == $summaryType) {
+                            $summaryData[$colName] = array_sum($columnsValues[$colName]) / count($columnsValues[$colName]);
+                        }
+                    }
+                }
+            }
+
+            $this->getGrid()->getPlatform()->getResultSet()->setDataUser($summaryData);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Apply filters to the QueryBuilder
+     *
+     * @throws \Exception
+     * @return QueryBuilder
+     */
+    protected function applyFilters()
+    {
         $columns = $this->getGrid()->getIterator()->toArray();
         $columnsCount = $this->getGrid()->getIterator()->count();
+        $filter = $this->getGrid()->getParam('filters');
 
         // WHERE
         if (!empty($filter['rules'])) {
@@ -200,7 +230,7 @@ class QueryBuilder extends AbstractAdapter
                                 $filterWords = explode(' ', $filterDefinition['value']);
 
                                 $wheres = array();
-                                if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
+                                if($col instanceof ColumnConcat) {
 
                                     // Operator AND
                                     if ('and' === $col->getAttributes()->getSearchGroupOperator()) {
@@ -302,7 +332,7 @@ class QueryBuilder extends AbstractAdapter
                             } else {
                                 // Sestavime filtr pro jednu podminku sloupce
                                 $exprFilterColSub = array();
-                                if($col instanceof ColumnConcat || $col instanceof ColumnConcatGroup) {
+                                if($col instanceof ColumnConcat) {
                                     foreach ($col->getOptions()->getIdentifiers() as $identifier) {
                                         $exprFilterColSub[] = $this->buildWhereFromFilter($col, $identifier, $filterDefinition);
                                     }
@@ -345,13 +375,49 @@ class QueryBuilder extends AbstractAdapter
             $this->getQueryBuilder()->andWhere($exprCols);
         }
 
+        return $this;
+    }
+
+    /**
+     * Apply pagination to the QueryBuilder
+     *
+     * @return QueryBuilder
+     */
+    protected function applyPagination()
+    {
+        $numberCurrentPage = $this->getGrid()->getPlatform()->getNumberOfCurrentPage();
+        $numberVisibleRows = $this->getGrid()->getPlatform()->getNumberOfVisibleRows();
+
+        // Calculate offset
+        if ($numberVisibleRows > 0) {
+            $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;
+            if($offset < 0) {
+                $offset = 0;
+            }
+
+            $this->getQueryBuilder()->setFirstResult($offset);
+            $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Apply sorting to the QueryBuilder
+     *
+     * @return QueryBuilder
+     */
+    protected function applySortings()
+    {
+        $sort = $this->getGrid()->getPlatform()->getSort();
+
         // ORDER
         if (!empty($sort)) {
             foreach ($sort as $sortColumn => $sortDirect) {
-                if ($grid->has($sortColumn)) {
-                    if (false !== $grid->get($sortColumn)->getAttributes()->getIsSortable() && true !== $grid->get($sortColumn)->getAttributes()->getIsHidden()) {
-                        if ($grid->get($sortColumn) instanceof ColumnConcat || $grid->get($sortColumn) instanceof ColumnConcatGroup) {
-                            foreach($grid->get($sortColumn)->getOptions()->getIdentifiers() as $identifier){
+                if ($this->getGrid()->has($sortColumn)) {
+                    if (false !== $this->getGrid()->get($sortColumn)->getAttributes()->getIsSortable() && true !== $this->getGrid()->get($sortColumn)->getAttributes()->getIsHidden()) {
+                        if ($this->getGrid()->get($sortColumn) instanceof ColumnConcat) {
+                            foreach($this->getGrid()->get($sortColumn)->getOptions()->getIdentifiers() as $identifier){
                                 if (count($this->getQueryBuilder()->getDQLPart('orderBy')) == 0) {
                                     $method = 'orderBy';
                                 } else {
@@ -368,32 +434,14 @@ class QueryBuilder extends AbstractAdapter
                                 $method = 'addOrderBy';
                             }
 
-                            $this->getQueryBuilder()->{$method}($grid->get($sortColumn)->getIdentifier(), $sortDirect);
+                            $this->getQueryBuilder()->{$method}($this->getGrid()->get($sortColumn)->getIdentifier(), $sortDirect);
                         }
                     }
                 }
             }
         }
 
-        // Calculate offset
-        if ($numberVisibleRows > 0) {
-            $offset = $numberVisibleRows * $numberCurrentPage - $numberVisibleRows;
-            if($offset < 0) {
-                $offset = 0;
-            }
-
-            $this->getQueryBuilder()->setFirstResult($offset);
-            $this->getQueryBuilder()->setMaxResults($numberVisibleRows);
-        }
-
-        $query = $this->getQueryBuilder()->getQuery();
-        $query->setHydrationMode(Query::HYDRATE_ARRAY);
-
-        $paginator = new Paginator($query, true);
-
-        $this->countItemsTotal = $paginator->count();
-
-        return $paginator->getIterator();
+        return $this;
     }
 
     /**

@@ -7,12 +7,13 @@ use LemoGrid\GridInterface;
 use LemoGrid\ResultSet\ResultSetInterface;
 use Zend\EventManager\Event;
 
-class AdapterEvent extends Event
+class RendererEvent extends Event
 {
     /**
      * List of events
      */
-    const EVENT_FETCH_DATA  = 'lemoGrid.adapter.loadData';
+    const EVENT_RENDER       = 'lemoGrid.renderer.render';
+    const EVENT_RENDER_DATA  = 'lemoGrid.renderer.renderData';
 
     /**
      * @var AdapterInterface
@@ -33,7 +34,7 @@ class AdapterEvent extends Event
      * Set adapter object to compose in this event
      *
      * @param  AdapterInterface $adapter
-     * @return AdapterEvent
+     * @return RendererEvent
      */
     public function setAdapter(AdapterInterface $adapter)
     {
@@ -45,7 +46,7 @@ class AdapterEvent extends Event
     /**
      * Get adapter object
      *
-     * @return null|object
+     * @return null|AdapterInterface
      */
     public function getAdapter()
     {
@@ -54,7 +55,7 @@ class AdapterEvent extends Event
 
     /**
      * @param  GridInterface $grid
-     * @return AdapterEvent
+     * @return RendererEvent
      */
     public function setGrid(GridInterface $grid)
     {
@@ -73,7 +74,7 @@ class AdapterEvent extends Event
 
     /**
      * @param  ResultSetInterface $resultSet
-     * @return AdapterEvent
+     * @return RendererEvent
      */
     public function setResultSet(ResultSetInterface $resultSet)
     {

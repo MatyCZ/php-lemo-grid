@@ -57,6 +57,11 @@ abstract class AbstractColumn implements
     protected $options = array();
 
     /**
+     * @var ColumnStyle[]
+     */
+    protected $styles = array();
+
+    /**
      * Attributes globally valid for all tags
      *
      * @var array
@@ -254,7 +259,7 @@ abstract class AbstractColumn implements
     /**
      * Return the specified option
      *
-     * @param string $option
+     * @param  string $option
      * @return null|mixed
      */
     public function getOption($option)
@@ -318,7 +323,7 @@ abstract class AbstractColumn implements
     /**
      * @param  int|string            $key
      * @param  array|ColumnCondition $condition
-     * @return $this
+     * @return AbstractColumn
      */
     public function addCondition($key, $condition)
     {
@@ -354,7 +359,7 @@ abstract class AbstractColumn implements
     /**
      * Return the specified condition
      *
-     * @param string $condition
+     * @param  string $condition
      * @return null|ColumnCondition
      */
     public function getCondition($condition)
@@ -438,7 +443,7 @@ abstract class AbstractColumn implements
     /**
      * Set the column value
      *
-     * @param string $value
+     * @param  string $value
      * @return AbstractColumn
      */
     public function setValue($value)

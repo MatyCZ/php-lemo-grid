@@ -68,7 +68,9 @@ abstract class AbstractAdapter implements AdapterInterface
             $dateDb = array();
 
             // Pokud je datumem
-            if (false !== $formatter->parse($value)) {
+            // https://bugs.php.net/bug.php?id=68528
+            // IntlDateFormatter::parse() throws warnings on not parsable date on windows only
+            if (false !== @$formatter->parse($value)) {
                 $timestamp = $formatter->parse($value);
 
                 $dateDb['day'] = date('d', $timestamp);
@@ -188,30 +190,5 @@ abstract class AbstractAdapter implements AdapterInterface
     public function getGrid()
     {
         return $this->grid;
-    }
-
-    /**
-     * @param  ResultSetInterface $resultSet
-     * @return AbstractAdapter
-     */
-    public function setResultSet(ResultSetInterface $resultSet)
-    {
-        $this->resultSet = $resultSet;
-
-        return $this;
-    }
-
-    /**
-     * @return ResultSetInterface
-     */
-    public function getResultSet()
-    {
-        if(null === $this->resultSet) {
-            $this->resultSet = new JqGrid();
-
-            $this->populateData();
-        }
-
-        return $this->resultSet;
     }
 }

@@ -4,6 +4,8 @@ namespace LemoGrid\Platform;
 
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
+use LemoGrid\Renderer\RendererInterface;
+use LemoGrid\ResultSet\ResultSetInterface;
 use Traversable;
 use Zend\Stdlib\AbstractOptions;
 
@@ -75,4 +77,26 @@ interface PlatformInterface
      * @return array
      */
     public function getSort();
+
+    /**
+     * Get class of platform renderer
+     *
+     * @return RendererInterface
+     */
+    public function getRenderer();
+
+    /**
+     * Set platform resultset
+     *
+     * @param  ResultSetInterface $resultSet
+     * @return JqGrid
+     */
+    public function setResultSet($resultSet);
+
+    /**
+     * Get class of platform resultset
+     *
+     * @return ResultSetInterface
+     */
+    public function getResultSet();
 }

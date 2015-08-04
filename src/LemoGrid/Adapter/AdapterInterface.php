@@ -3,17 +3,9 @@
 namespace LemoGrid\Adapter;
 
 use LemoGrid\GridInterface;
-use LemoGrid\ResultSet\ResultSetInterface;
 
 interface AdapterInterface
 {
-    /**
-     * Name of adapter
-     *
-     * @return string
-     */
-    public function getName();
-
     /**
      * Set grid instance
      *
@@ -30,11 +22,11 @@ interface AdapterInterface
     public function getGrid();
 
     /**
-     * Return data from adapter
+     * Fetch data from adapter to platform resultset
      *
-     * @return ResultSetInterface
+     * @return AdapterInterface
      */
-    public function getResultSet();
+    public function fetchData();
 
     /**
      * Find value for column
@@ -45,4 +37,25 @@ interface AdapterInterface
      * @return null|string|int|array
      */
     public function findValue($identifier, array $item, $depth = 0);
+
+    /**
+     * Get number of current page
+     *
+     * @return int
+     */
+    public function getNumberOfPages();
+
+    /**
+     * Return count of items
+     *
+     * @return int
+     */
+    public function getCountOfItems();
+
+    /**
+     * Return count of items total
+     *
+     * @return int
+     */
+    public function getCountOfItemsTotal();
 }

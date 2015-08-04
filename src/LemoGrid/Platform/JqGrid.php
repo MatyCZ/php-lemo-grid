@@ -3,6 +3,9 @@
 namespace LemoGrid\Platform;
 
 use LemoGrid\Exception;
+use LemoGrid\Renderer\JqGridRenderer;
+use LemoGrid\ResultSet\JqGrid as JqGridResultSet;
+use LemoGrid\ResultSet\ResultSetInterface;
 use Traversable;
 use Zend\Json;
 
@@ -26,11 +29,21 @@ class JqGrid extends AbstractPlatform
     protected $isRendered = false;
 
     /**
+     * @var JqGridRenderer
+     */
+    protected $renderer;
+
+    /**
+     * @var JqGridResultSet
+     */
+    protected $resultSet;
+
+    /**
      * @param  string      $name
      * @param  string|null $label
      * @param  string|null $icon
      * @param  string      $callback
-     * @return LemoGrid\Platform\JqGrid
+     * @return JqGrid
      */
     public function addButton($name, $label = null, $icon = null, $callback)
     {
@@ -134,7 +147,7 @@ class JqGrid extends AbstractPlatform
             foreach ($rules['rules'] as $rule) {
                 $value['rules'][$rule['field']][] = array(
                     'operator' => $this->getFilterOperator($rule['op']),
-                    'value' => addcslashes($rule['data'], "'_%\\\""),
+                    'value' => addcslashes(trim($rule['data']), "'_%\\\""),
                 );
             }
         }
@@ -364,5 +377,50 @@ class JqGrid extends AbstractPlatform
         }
 
         return $sort;
+    }
+
+    /**
+     * Get class of platform renderer
+     *
+     * @return JqGridRenderer
+     */
+    public function getRenderer()
+    {
+        if (null === $this->renderer) {
+            $this->renderer = new JqGridRenderer();
+        }
+
+        return $this->renderer;
+    }
+
+    /**
+     * Set platform resultset
+     *
+     * @param  null|JqGridResultSet $resultSet
+     * @return JqGrid
+     */
+    public function setResultSet($resultSet)
+    {
+        if (null !== $resultSet && !$resultSet instanceof ResultSetInterface) {
+            throw new Exception\InvalidResultSetException('ResultSet must be instance of JqGridResultSet');
+        }
+
+        $this->resultSet = $resultSet;
+
+        return $this;
+    }
+
+    /**
+     * Get class of platform resultset
+     *
+     * @return JqGridResultSet
+     */
+    public function getResultSet()
+    {
+        if (null === $this->resultSet) {
+            $this->resultSet = new JqGridResultSet();
+        }
+
+        return $this->resultSet;
     }
 }

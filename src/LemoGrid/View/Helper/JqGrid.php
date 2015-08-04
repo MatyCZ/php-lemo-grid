@@ -2,11 +2,15 @@
 
 namespace LemoGrid\View\Helper;
 
+use Doctrine\Tests\Common\DataFixtures\Executor\PHPCRExecutorTest;
 use LemoGrid\Column\ColumnAttributes;
 use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Event\RendererEvent;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\JqGridOptions;
+use LemoGrid\Style\ColumnStyle;
+use LemoGrid\Style\RowStyle;
 use Zend\Stdlib\AbstractOptions;
 
 class JqGrid extends AbstractHelper
@@ -127,7 +131,7 @@ class JqGrid extends AbstractHelper
             return $this;
         }
 
-        if(null !== $grid) {
+        if (null !== $grid) {
             $this->setGrid($grid);
         }
 
@@ -157,7 +161,10 @@ class JqGrid extends AbstractHelper
 
         if (isset($_GET['_name'])) {
             if ($_GET['_name'] == $grid->getName()) {
-                $grid->renderData();
+                $grid->getAdapter()->setGrid($grid);
+                $grid->getAdapter()->fetchData();
+                $grid->getPlatform()->getRenderer()->setGrid($grid);
+                $grid->getPlatform()->getRenderer()->renderData();
             } else {
                 return '';
             }
@@ -166,6 +173,17 @@ class JqGrid extends AbstractHelper
         }
 
         try {
+            $event = new RendererEvent();
+            $event->setAdapter($grid->getAdapter());
+            $event->setGrid($grid);
+            $event->setResultSet($grid->getPlatform()->getResultSet());
+
+            $this->getGrid()->getEventManager()->trigger(RendererEvent::EVENT_RENDER, $this, $event);
+
+            $this->setGrid($event->getGrid());
+            $this->getGrid()->setAdapter($event->getAdapter());
+            $this->getGrid()->getPlatform()->setResultSet($event->getResultSet());
+
             $view->inlineScript()->appendScript($this->renderScript());
             $view->inlineScript()->appendScript($this->renderScriptAutoresize());
 
@@ -238,7 +256,31 @@ class JqGrid extends AbstractHelper
         if (null !== $grid->getPlatform()->getOptions()->getResizeCallback()) {
             $script[] = '        resizeStop: function(width, index) {
                 ' . $grid->getPlatform()->getOptions()->getResizeCallback() . '(this, width, index);
-            }';
+            },';
+        }
+
+        // LOAD COMPLETE
+        if (!empty($grid->getColumnStyles()) || !empty($grid->getRowStyles())) {
+            $script[] = "        loadComplete: function(data) {";
+            $script[] = "            var rows = $(this).getDataIDs();";
+
+            if (!empty($grid->getColumnStyles())) {
+                $script[] = "            var colModel = $(this).jqGrid('getGridParam', 'colModel');";
+                $script[] = "            var colIndexes = new Array();";
+                $script[] = "            $(colModel).each(function(i, col) {";
+                $script[] = "                colIndexes[col.name] = i;";
+                $script[] = "            });";
+            }
+
+            $script[] = "            for (var i = 0; i < rows.length; i++) {";
+                foreach ($grid->getColumnStyles() as $columnStyle) {
+                    $script[] = $this->buildStyle($columnStyle);
+                }
+                foreach ($grid->getRowStyles() as $rowStyle) {
+                    $script[] = $this->buildStyle($rowStyle);
+                }
+            $script[] = "            }";
+            $script[] = "        }";
         }
 
         $script[] = '    });';
@@ -544,5 +586,47 @@ class JqGrid extends AbstractHelper
         $queryParams['_name'] = $this->getGrid()->getName();
 
         return $this->getView()->serverUrl() . $url['path'] . '?' . http_build_query($queryParams);
+    }
+
+    /**
+     * @param  ColumnStyle|RowStyle $style
+     * @return string
+     */
+    protected function buildStyle($style)
+    {
+        // Build condition string
+        $conditions = array();
+        foreach ($style->getConditions() as $condition) {
+            $conditions[] = "$(this).getCell(rows[i], 'grid_" . $condition->getColumn() . "') " . $condition->getExpression() . " " . $condition->getValue();
+        }
+        $conditions = implode(' && ', $conditions);
+
+        // Build properties string
+        $properties = array();
+        foreach ($style->getProperties() as $property) {
+            $properties[] = "'" . $property->getName() . "': '" . $property->getValue() . "'";
+        }
+        $properties = implode(', ', $properties);
+
+        $script = array();
+
+        // Condition - Start
+        if (!empty($style->getConditions())) {
+            $script[] = "                if(" . $conditions . ") {";
+        }
+
+        // Properties
+        if ($style instanceof ColumnStyle) {
+            $script[] = "                    $(this).jqGrid('setCell', rows[i], colIndexes['grid_" . $style->getColumn() . "'], '', {" . $properties . "});";
+        } else {
+            $script[] = "                    $(this).jqGrid('setRowData', rows[i], false, {" . $properties . "});";
+        }
+
+        // Condition - End
+        if (!empty($style->getConditions())) {
+            $script[] = "                }";
+        }
+
+        return implode(PHP_EOL, $script);
     }
 }

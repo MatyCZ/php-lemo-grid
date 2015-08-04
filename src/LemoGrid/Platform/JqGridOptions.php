@@ -211,7 +211,7 @@ class JqGridOptions extends AbstractOptions
      *
      * @var bool
      */
-    protected $gridView = true;
+    protected $gridView = false;
 
     /**
      * If the option is set to true the title attribute is added to the column headers.
@@ -234,6 +234,11 @@ class JqGridOptions extends AbstractOptions
      * @var bool
      */
     protected $hoverRows;
+
+    /**
+     * @var string
+     */
+    protected $loadDataCallback;
 
     /**
      * If this flag is set to true, the grid loads the data from the server only once (using the appropriate datatype).
@@ -1159,6 +1164,25 @@ class JqGridOptions extends AbstractOptions
     public function getHoverRows()
     {
         return $this->hoverRows;
+    }
+
+    /**
+     * @param  string $loadDataCallback
+     * @return JqGridOptions
+     */
+    public function setLoadDataCallback($loadDataCallback)
+    {
+        $this->loadDataCallback = $loadDataCallback;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getLoadDataCallback()
+    {
+        return $this->loadDataCallback;
     }
 
     /**

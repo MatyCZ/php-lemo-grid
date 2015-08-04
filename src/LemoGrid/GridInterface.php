@@ -8,7 +8,10 @@ use IteratorAggregate;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Platform\PlatformInterface;
 use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Style\ColumnStyle;
+use LemoGrid\Style\RowStyle;
 use Traversable;
+use Zend\Stdlib\AbstractOptions;
 
 interface GridInterface extends
     Countable,
@@ -179,4 +182,34 @@ interface GridInterface extends
      * @return bool
      */
     public function isPrepared();
+
+    /**
+     * Set column styles
+     *
+     * @param  array|Traversable|AbstractOptions $conditions
+     * @return GridInterface
+     */
+    public function setColumnStyles(array $conditions);
+
+    /**
+     * Retrieve column styles
+     *
+     * @return array|ColumnStyle[]
+     */
+    public function getColumnStyles();
+
+    /**
+     * Set column styles
+     *
+     * @param  array|Traversable|AbstractOptions $conditions
+     * @return GridInterface
+     */
+    public function setRowStyles(array $conditions);
+
+    /**
+     * Retrieve column styles
+     *
+     * @return array|RowStyle[]
+     */
+    public function getRowStyles();
 }

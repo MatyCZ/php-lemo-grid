@@ -2,22 +2,20 @@
 
 namespace LemoGrid\ResultSet;
 
-use Zend\Stdlib\ArrayObject;
-
-class JqGrid extends ArrayObject implements ResultSetInterface
+class JqGrid extends AbstractResultSet
 {
     /**
      * @var array
      */
-    protected $userData;
+    protected $dataUser;
 
     /**
-     * @param  array $userData
+     * @param  array $dataUser
      * @return JqGrid
      */
-    public function setUserData(array $userData)
+    public function setDataUser(array $dataUser)
     {
-        $this->userData = $userData;
+        $this->dataUser = $dataUser;
 
         return $this;
     }
@@ -25,8 +23,8 @@ class JqGrid extends ArrayObject implements ResultSetInterface
     /**
      * @return array
      */
-    public function getUserData()
+    public function getDataUser()
     {
-        return $this->userData;
+        return $this->dataUser;
     }
 }
