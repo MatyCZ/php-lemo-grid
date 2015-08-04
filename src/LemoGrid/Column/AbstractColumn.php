@@ -57,11 +57,6 @@ abstract class AbstractColumn implements
     protected $options = array();
 
     /**
-     * @var ColumnStyle[]
-     */
-    protected $styles = array();
-
-    /**
      * Attributes globally valid for all tags
      *
      * @var array

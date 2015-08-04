@@ -128,38 +128,11 @@ class QueryBuilder extends AbstractAdapter
     {
         if ($this->getGrid()->getPlatform() instanceof JqGridPlatform && true === $this->getGrid()->getPlatform()->getOptions()->getUserDataOnFooter()) {
             $queryBuilder = $this->getQueryBuilder();
+            $queryBuilder->resetDQLPart('select');
             $queryBuilder->resetDQLPart('orderBy');
             $queryBuilder->setFirstResult(null);
             $queryBuilder->setMaxResults(null);
 
-            // Fetch data from DB
-            $items = $queryBuilder->getQuery()->getArrayResult();
-            $itemsCount = count($items);
-
-            // Find columns data for summary
-            $columnsValues = array();
-            for ($indexItem = 0; $indexItem < $itemsCount; $indexItem++) {
-                $item = $items[$indexItem];
-
-                if (isset($item[0])) {
-                    $item = $this->mergeSubqueryItem($item);
-                }
-
-                foreach($this->getGrid()->getColumns() as $indexCol => $column) {
-                    $colIdentifier = $column->getIdentifier();
-                    $colName = $column->getName();
-
-                    // Can we render value?
-                    if (null !== $column->getAttributes()->getSummaryType() && true === $column->isValid($this, $item)) {
-
-                        // Nacteme si data radku
-                        $columnsValues[$colName][$indexItem] = $this->findValue($colIdentifier, $item);
-                    }
-                }
-            }
-
-            // Calculate user data (SummaryRow)
-            $summaryData = array();
             foreach($this->getGrid()->getColumns() as $indexCol => $column) {
 
                 // Sloupec je skryty, takze ho preskocime
@@ -173,28 +146,15 @@ class QueryBuilder extends AbstractAdapter
                 }
 
                 if (null !== $column->getAttributes()->getSummaryType()) {
-                    $colName = $column->getName();
-                    $summaryData[$colName] = '';
                     $summaryType = $column->getAttributes()->getSummaryType();
 
-                    if (isset($columnsValues[$colName])) {
-                        if ('sum' == $summaryType) {
-                            $summaryData[$colName] = array_sum($columnsValues[$colName]);
-                        }
-                        if ('min' == $summaryType) {
-                            $summaryData[$colName] = min($columnsValues[$colName]);
-                        }
-                        if ('max' == $summaryType) {
-                            $summaryData[$colName] = max($columnsValues[$colName]);
-                        }
-                        if ('count' == $summaryType) {
-                            $summaryData[$colName] = array_sum($columnsValues[$colName]) / count($columnsValues[$colName]);
-                        }
-                    }
+                    $queryBuilder->select(strtoupper($summaryType) . '(' . $column->getIdentifier() . ') AS ' . $column->getName());
                 }
             }
 
-            $this->getGrid()->getPlatform()->getResultSet()->setDataUser($summaryData);
+            $summary = $queryBuilder->getQuery()->getSingleResult();
+
+            $this->getGrid()->getPlatform()->getResultSet()->setDataUser($summary);
         }
 
         return $this;
@@ -591,7 +551,7 @@ class QueryBuilder extends AbstractAdapter
             case AbstractPlatform::OPERATOR_NOT_EQUAL:
                 $where = $expr->orX(
                     $expr->neq($identifier, "'" . $value . "'"),
-                    $expr->isNull($column)
+                    $expr->isNull($identifier)
                 );
                 break;
             case AbstractPlatform::OPERATOR_LESS:
@@ -612,7 +572,7 @@ class QueryBuilder extends AbstractAdapter
             case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
                 $where = $expr->orX(
                     $expr->notLike($identifier, "'" . $value . "%'"),
-                    $expr->isNull($column)
+                    $expr->isNull($identifier)
                 );
                 break;
             case AbstractPlatform::OPERATOR_IN:
@@ -621,7 +581,7 @@ class QueryBuilder extends AbstractAdapter
             case AbstractPlatform::OPERATOR_NOT_IN:
                 $where = $expr->orX(
                     $expr->notIn($identifier, "'" . $value . "'"),
-                    $expr->isNull($column)
+                    $expr->isNull($identifier)
                 );
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
