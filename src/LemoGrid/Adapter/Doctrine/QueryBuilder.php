@@ -148,7 +148,7 @@ class QueryBuilder extends AbstractAdapter
                 if (null !== $column->getAttributes()->getSummaryType()) {
                     $summaryType = $column->getAttributes()->getSummaryType();
 
-                    $queryBuilder->select(strtoupper($summaryType) . '(' . $column->getIdentifier() . ') AS ' . $column->getName());
+                    $queryBuilder->addSelect(strtoupper($summaryType) . '(' . $column->getIdentifier() . ') AS ' . $column->getName());
                 }
             }
 
