@@ -133,6 +133,7 @@ class QueryBuilder extends AbstractAdapter
             $queryBuilder->setFirstResult(null);
             $queryBuilder->setMaxResults(null);
 
+            $countOfSummaryColumn = 0;
             foreach($this->getGrid()->getColumns() as $indexCol => $column) {
 
                 // Sloupec je skryty, takze ho preskocime
@@ -149,7 +150,13 @@ class QueryBuilder extends AbstractAdapter
                     $summaryType = $column->getAttributes()->getSummaryType();
 
                     $queryBuilder->addSelect(strtoupper($summaryType) . '(' . $column->getIdentifier() . ') AS ' . $column->getName());
+
+                    $countOfSummaryColumn++;
                 }
+            }
+
+            if (0 == $countOfSummaryColumn) {
+                return $this;
             }
 
             $summary = $queryBuilder->getQuery()->getSingleResult();
