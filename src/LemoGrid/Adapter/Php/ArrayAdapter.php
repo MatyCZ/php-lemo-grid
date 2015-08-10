@@ -271,26 +271,27 @@ class ArrayAdapter extends AbstractAdapter
             return $rows;
         }
 
-        // Obtain a list of column
-        foreach ($rows as $indexRow => $column) {
-            $keys = array_keys($column);
-
-            foreach ($keys as $key) {
-                $parts[$key][$indexRow] = $column[$key];
-            }
-        }
-
         $arguments = array();
         foreach ($sort as $sortColumn => $sortDirect) {
             if ($grid->has($sortColumn)) {
                 if (false !== $grid->get($sortColumn)->getAttributes()->getIsSortable() && true !== $grid->get($sortColumn)->getAttributes()->getIsHidden()) {
-                    $arguments[] = $parts[$sortColumn];
+
+                    $columnValues = array();
+                    foreach ($rows as $indexRow => $rowValues) {
+                        if (!isset($rowValues[$sortColumn])) {
+                            break;
+                        }
+
+                        $columnValues[] = $rowValues[$sortColumn];
+                    }
+
+                    $arguments[] = $columnValues;
                     $arguments[] = ('asc' == $sortDirect) ? SORT_ASC : SORT_DESC;
-                    $arguments[] = SORT_REGULAR;
                 }
             }
         }
-        $arguments[] = & $rows;
+
+        $arguments[] = &$rows;
 
         call_user_func_array('array_multisort', $arguments);
 
