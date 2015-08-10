@@ -2,7 +2,7 @@
 
 namespace LemoGrid\ResultSet;
 
-class JqGrid extends AbstractResultSet
+class JqGridResultSet extends AbstractResultSet
 {
     /**
      * @var array
@@ -11,7 +11,7 @@ class JqGrid extends AbstractResultSet
 
     /**
      * @param  array $dataUser
-     * @return JqGrid
+     * @return JqGridResultSet
      */
     public function setDataUser(array $dataUser)
     {

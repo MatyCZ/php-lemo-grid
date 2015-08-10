@@ -605,7 +605,7 @@ class Grid implements
     public function getStorage()
     {
         if (null === $this->storage) {
-            $this->setStorage(new Storage\SessionStorage());
+            $this->setStorage(new Storage\Php\SessionStorage());
         }
 
         return $this->storage;

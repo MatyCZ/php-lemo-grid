@@ -20,7 +20,7 @@ class GridPlatformManager extends AbstractPluginManager
      * @var array
      */
     protected $invokableClasses = array(
-        'jqgrid' => 'LemoGrid\Platform\JqGrid',
+        'jqgrid' => 'LemoGrid\Platform\JqGridPlatform',
     );
 
     /**
@@ -59,7 +59,7 @@ class GridPlatformManager extends AbstractPluginManager
         }
 
         throw new Exception\InvalidPlatformException(sprintf(
-            'Plugin of type %s is invalid; must implement LemoGrid\Platform\PlatformInterface',
+            'Platform of type %s is invalid; must implement LemoGrid\Platform\PlatformInterface',
             (is_object($plugin) ? get_class($plugin) : gettype($plugin))
         ));
     }

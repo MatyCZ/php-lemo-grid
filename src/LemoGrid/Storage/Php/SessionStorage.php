@@ -1,8 +1,9 @@
 <?php
 
-namespace LemoGrid\Storage;
+namespace LemoGrid\Storage\Php;
 
 use ArrayIterator;
+use LemoGrid\Storage\StorageInterface;
 use Zend\Session\Container as SessionContainer;
 use Zend\Session\ManagerInterface as SessionManager;
 

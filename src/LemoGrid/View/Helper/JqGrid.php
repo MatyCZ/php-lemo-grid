@@ -2,13 +2,12 @@
 
 namespace LemoGrid\View\Helper;
 
-use Doctrine\Tests\Common\DataFixtures\Executor\PHPCRExecutorTest;
 use LemoGrid\Column\ColumnAttributes;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Event\RendererEvent;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
-use LemoGrid\Platform\JqGridOptions;
+use LemoGrid\Platform\JqGridPlatformOptions;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
 use Zend\Stdlib\AbstractOptions;
@@ -548,11 +547,12 @@ class JqGrid extends AbstractHelper
 
     /**
      * Modify grid attributes before rendering
-     *
-     * @param  JqGridOptions $attributes
-     * @return JqGridOptions
+
+*
+*@param  JqGridPlatformOptions $attributes
+     * @return JqGridPlatformOptions
      */
-    protected function gridModifyAttributes(JqGridOptions $attributes)
+    protected function gridModifyAttributes(JqGridPlatformOptions $attributes)
     {
         // Pager element ID
         if (null === $attributes->getPagerElementId()) {
@@ -600,7 +600,7 @@ class JqGrid extends AbstractHelper
         return $attributes;
     }
 
-    protected function buildUrl(JqGridOptions $attributes)
+    protected function buildUrl(JqGridPlatformOptions $attributes)
     {
         // URL
         $url = $attributes->getUrl();

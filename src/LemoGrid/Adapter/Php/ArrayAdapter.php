@@ -9,9 +9,9 @@ use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Exception;
 use LemoGrid\Event\AdapterEvent;
 use LemoGrid\Platform\AbstractPlatform;
-use LemoGrid\Platform\JqGrid as JqGridPlatform;
+use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
 
-class PhpArray extends AbstractAdapter
+class ArrayAdapter extends AbstractAdapter
 {
     /**
      * @var array
@@ -123,7 +123,7 @@ class PhpArray extends AbstractAdapter
     }
 
     /**
-     * @return PhpArray
+     * @return ArrayAdapter
      */
     protected function fetchDataSummary()
     {
@@ -436,7 +436,7 @@ class PhpArray extends AbstractAdapter
 
     /**
      * @param  array $dataSource
-     * @return PhpArray
+     * @return ArrayAdapter
      */
     public function setDataSource(array $dataSource)
     {
@@ -456,7 +456,7 @@ class PhpArray extends AbstractAdapter
 
     /**
      * @param  array $relations
-     * @return PhpArray
+     * @return ArrayAdapter
      */
     public function setRelations(array $relations)
     {

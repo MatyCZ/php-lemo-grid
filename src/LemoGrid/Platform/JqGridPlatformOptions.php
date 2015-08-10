@@ -5,7 +5,7 @@ namespace LemoGrid\Platform;
 use LemoGrid\Exception;
 use Zend\Stdlib\AbstractOptions;
 
-class JqGridOptions extends AbstractOptions
+class JqGridPlatformOptions extends AbstractOptions
 {
     /**
      * Data types
@@ -599,7 +599,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $alternativeRows
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setAlternativeRows($alternativeRows)
     {
@@ -618,7 +618,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $alternativeRowsClass
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setAlternativeRowsClass($alternativeRowsClass)
     {
@@ -637,7 +637,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $autoEncodeIncomingAndPostData
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setAutoEncodeIncomingAndPostData($autoEncodeIncomingAndPostData)
     {
@@ -656,7 +656,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $autowidth
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setAutowidth($autowidth)
     {
@@ -675,7 +675,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $caption
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setCaption($caption)
     {
@@ -694,7 +694,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $cellEdit
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setCellEdit($cellEdit)
     {
@@ -713,7 +713,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $cellEditUrl
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setCellEditUrl($cellEditUrl)
     {
@@ -732,7 +732,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param int $cellLayout
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setCellLayout($cellLayout)
     {
@@ -751,7 +751,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $cellSaveType
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setCellSaveType($cellSaveType)
     {
@@ -770,7 +770,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $cellSaveUrl
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setCellSaveUrl($cellSaveUrl)
     {
@@ -789,7 +789,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  boolean $columnChooser
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setColumnChooser($columnChooser)
     {
@@ -808,7 +808,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param array $data
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setData($data)
     {
@@ -827,7 +827,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $dataString
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setDataString($dataString)
     {
@@ -847,7 +847,7 @@ class JqGridOptions extends AbstractOptions
     /**
      * @param  string $dataType
      * @throws Exception\InvalidArgumentException
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setDataType($dataType)
     {
@@ -872,7 +872,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $expandColumnIdentifier
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setExpandColumnIdentifier($expandColumnIdentifier)
     {
@@ -891,7 +891,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $expandColumnOnClick
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setExpandColumnOnClick($expandColumnOnClick)
     {
@@ -911,7 +911,7 @@ class JqGridOptions extends AbstractOptions
     /**
      * @param  bool $searchOnEnter
      * @param  bool $showOperators
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setFilterToolbar($searchOnEnter, $showOperators)
     {
@@ -934,9 +934,10 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * Set filter toolbar enable clear
+
      *
-     * @param  bool $enableClear
-     * @return JqGridOptions
+*@param  bool $enableClear
+     * @return JqGridPlatformOptions
      */
     public function setFilterToolbarEnableClear($enableClear)
     {
@@ -956,9 +957,10 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * Set if filter toolbar search only on Enter
+
      *
-     * @param  bool $searchOnEnter
-     * @return JqGridOptions
+*@param  bool $searchOnEnter
+     * @return JqGridPlatformOptions
      */
     public function setFilterToolbarSearchOnEnter($searchOnEnter)
     {
@@ -978,9 +980,10 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * Set if filter toolbar show operators
+
      *
-     * @param  bool $showOperators
-     * @return JqGridOptions
+*@param  bool $showOperators
+     * @return JqGridPlatformOptions
      */
     public function setFilterToolbarShowOperators($showOperators)
     {
@@ -1000,9 +1003,10 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * Set if filter toolbar is enabled
+
      *
-     * @param  bool $filterToolbarEnabled
-     * @return JqGridOptions
+*@param  bool $filterToolbarEnabled
+     * @return JqGridPlatformOptions
      */
     public function setFilterToolbarEnabled($filterToolbarEnabled)
     {
@@ -1023,7 +1027,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  bool $forceFit
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setForceFit($forceFit)
     {
@@ -1042,7 +1046,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $gridState
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setGridState($gridState)
     {
@@ -1061,7 +1065,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  boolean $gridView
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setGridView($gridView)
     {
@@ -1079,7 +1083,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $grouping
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setGrouping($grouping)
     {
@@ -1098,7 +1102,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  mixed $groupingView
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setGroupingView($groupingView)
     {
@@ -1116,7 +1120,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $headerTitles
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setHeaderTitles($headerTitles)
     {
@@ -1135,7 +1139,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $height
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setHeight($height)
     {
@@ -1154,7 +1158,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $hoverRows
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setHoverRows($hoverRows)
     {
@@ -1173,7 +1177,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  string $loadDataCallback
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setLoadDataCallback($loadDataCallback)
     {
@@ -1192,7 +1196,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $loadOnce
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setLoadOnce($loadOnce)
     {
@@ -1211,7 +1215,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $loadType
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setLoadType($loadType)
     {
@@ -1230,7 +1234,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $multiSelect
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setMultiSelect($multiSelect)
     {
@@ -1249,7 +1253,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $multiSelectKey
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setMultiSelectKey($multiSelectKey)
     {
@@ -1268,7 +1272,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param int $multiSelectWidth
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setMultiSelectWidth($multiSelectWidth)
     {
@@ -1287,7 +1291,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  boolean $multiSort
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setMultiSort($multiSort)
     {
@@ -1306,7 +1310,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  int $page
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setPage($page)
     {
@@ -1325,7 +1329,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $pagerElementId
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setPagerElementId($pagerElementId)
     {
@@ -1344,7 +1348,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $pagerPosition
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setPagerPosition($pagerPosition)
     {
@@ -1363,7 +1367,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $pagerShowButtons
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setPagerShowButtons($pagerShowButtons)
     {
@@ -1382,7 +1386,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $pagerShowInput
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setPagerShowInput($pagerShowInput)
     {
@@ -1401,7 +1405,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $recordPosition
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRecordPosition($recordPosition)
     {
@@ -1420,7 +1424,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param int $recordsPerPage
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRecordsPerPage($recordsPerPage)
     {
@@ -1439,7 +1443,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param array $recordsPerPageList
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRecordsPerPageList($recordsPerPageList)
     {
@@ -1458,7 +1462,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  string $remapCallback
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRemapCallback($remapCallback)
     {
@@ -1477,7 +1481,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $renderFooterRow
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRenderFooterRow($renderFooterRow)
     {
@@ -1496,7 +1500,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $renderHideGridButton
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRenderHideGridButton($renderHideGridButton)
     {
@@ -1515,7 +1519,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $renderRecordsInfo
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRenderRecordsInfo($renderRecordsInfo)
     {
@@ -1534,7 +1538,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $renderRowNumbersColumn
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRenderRowNumbersColumn($renderRowNumbersColumn)
     {
@@ -1553,7 +1557,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $requestType
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setRequestType($requestType)
     {
@@ -1572,7 +1576,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $resizeClass
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setResizeClass($resizeClass)
     {
@@ -1591,7 +1595,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  string $resizeCallback
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setResizeCallback($resizeCallback)
     {
@@ -1610,7 +1614,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param bool|int $scroll
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setScroll($scroll)
     {
@@ -1629,7 +1633,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param int $scrollOffset
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setScrollOffset($scrollOffset)
     {
@@ -1648,7 +1652,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $scrollRows
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setScrollRows($scrollRows)
     {
@@ -1667,7 +1671,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  int $scrollTimeout
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setScrollTimeout($scrollTimeout)
     {
@@ -1686,7 +1690,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  bool $shrinkToFit
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setShrinkToFit($shrinkToFit)
     {
@@ -1705,7 +1709,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  string $sortName
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setSortName($sortName)
     {
@@ -1725,7 +1729,7 @@ class JqGridOptions extends AbstractOptions
     /**
      * @param  string $sortOrder
      * @throws Exception\InvalidArgumentException
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setSortOrder($sortOrder)
     {
@@ -1751,7 +1755,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $sortingColumns
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setSortingColumns($sortingColumns)
     {
@@ -1770,7 +1774,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param array $sortingColumnsDefinition
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setSortingColumnsDefinition($sortingColumnsDefinition)
     {
@@ -1789,7 +1793,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  string $styleUi
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setStyleUi($styleUi)
     {
@@ -1808,7 +1812,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param boolean $treeGrid
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setTreeGrid($treeGrid)
     {
@@ -1830,11 +1834,12 @@ class JqGridOptions extends AbstractOptions
      *  - plus: ui-icon-triangle-1-e
      *  - minus: ui-icon-triangle-1-s
      *  - leaf: ui-icon-radio-off
+
      *
-     * @param string $plus
+*@param string $plus
      * @param string $minus
      * @param string $leaf
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setTreeGridIcons($plus, $minus, $leaf)
     {
@@ -1857,7 +1862,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param string $treeGridType
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setTreeGridType($treeGridType)
     {
@@ -1876,7 +1881,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  string $url
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setUrl($url)
     {
@@ -1895,7 +1900,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  array $userData
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setUserData(array $userData)
     {
@@ -1914,7 +1919,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  bool $userDataOnFooter
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setUserDataOnFooter($userDataOnFooter)
     {
@@ -1933,7 +1938,7 @@ class JqGridOptions extends AbstractOptions
 
     /**
      * @param  int $width
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function setWidth($width)
     {

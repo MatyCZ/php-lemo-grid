@@ -2,30 +2,30 @@
 
 namespace LemoGrid;
 
-use LemoGrid\Adapter\AdapterInterface;
+use LemoGrid\Storage\StorageInterface;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ConfigInterface;
 use Zend\Stdlib\InitializableInterface;
 
 /**
- * Plugin manager implementation for grid adapters.
+ * Plugin manager implementation for grid storages.
  *
- * Enforces that adapters retrieved are instances of AdapterInterface.
+ * Enforces that storages retrieved are instances of StorageInterface.
  */
-class GridAdapterManager extends AbstractPluginManager
+class GridStorageManager extends AbstractPluginManager
 {
     /**
-     * Default set of adapters
+     * Default set of storages
      *
      * @var array
      */
     protected $invokableClasses = array(
-        'doctrine_querybuilder' => 'LemoGrid\Adapter\Doctrine\QueryBuilderAdapter',
-        'php_array'             => 'LemoGrid\Adapter\Php\ArrayAdapter',
+        'doctrine_entity' => 'LemoGrid\Storage\Doctrine\EntityStorage',
+        'php_session    ' => 'LemoGrid\Storage\Php\SessionStorage',
     );
 
     /**
-     * Don't share grid adapters by default
+     * Don't share grid storages by default
      *
      * @var bool
      */
@@ -42,25 +42,25 @@ class GridAdapterManager extends AbstractPluginManager
     /**
      * Validate the plugin
      *
-     * Checks that the adapter is an instance of AdapterInterface
+     * Checks that the storage is an instance of StorageInterface
      *
      * @param  mixed $plugin
-     * @throws Exception\InvalidAdapterException
+     * @throws Exception\InvalidStorageException
      * @return void
      */
     public function validatePlugin($plugin)
     {
-        // Hook to perform various initialization, when the adapter is not created through the factory
+        // Hook to perform various initialization, when the storage is not created through the factory
         if ($plugin instanceof InitializableInterface) {
             $plugin->init();
         }
 
-        if ($plugin instanceof AdapterInterface) {
+        if ($plugin instanceof StorageInterface) {
             return; // we're okay
         }
 
-        throw new Exception\InvalidAdapterException(sprintf(
-            'Adapter of type %s is invalid; must implement LemoGrid\Adapter\AdapterInterface',
+        throw new Exception\InvalidStorageException(sprintf(
+            'Storage of type %s is invalid; must implement LemoGrid\Storage\StorageInterface',
             (is_object($plugin) ? get_class($plugin) : gettype($plugin))
         ));
     }

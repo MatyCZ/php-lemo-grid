@@ -78,6 +78,12 @@ class Module implements
             'LemoGrid\ModuleManager\Feature\GridPlatformProviderInterface',
             'getGridPlatformConfig'
         );
+        $serviceListener->addServiceManager(
+            'GridStorageManager',
+            'grid_storages',
+            'LemoGrid\ModuleManager\Feature\GridStorageProviderInterface',
+            'getGridStorageConfig'
+        );
 
         // Add initializer to service manager
         $serviceManager->addInitializer(function ($instance) use ($serviceManager) {
@@ -102,6 +108,7 @@ class Module implements
                 'GridAdapterManager'  => 'LemoGrid\Mvc\Service\GridAdapterManagerFactory',
                 'GridColumnManager'   => 'LemoGrid\Mvc\Service\GridColumnManagerFactory',
                 'GridPlatformManager' => 'LemoGrid\Mvc\Service\GridPlatformManagerFactory',
+                'GridStorageManager'  => 'LemoGrid\Mvc\Service\GridStorageManagerFactory',
                 'LemoGrid\Mvc\Service\GridColumnManagerFactory' => function ($sm) {
                     $instance = new GridColumnManager();
                     $instance->setServiceLocator($sm);
@@ -112,6 +119,7 @@ class Module implements
                     $instance->setGridAdapterManager($sm->get('GridAdapterManager'));
                     $instance->setGridColumnManager($sm->get('GridColumnManager'));
                     $instance->setGridPlatformManager($sm->get('GridPlatformManager'));
+                    $instance->setGridStorageManager($sm->get('GridStorageManager'));
                     return $instance;
                 },
             ),

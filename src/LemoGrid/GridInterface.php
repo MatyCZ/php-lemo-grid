@@ -8,6 +8,7 @@ use IteratorAggregate;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Platform\PlatformInterface;
 use LemoGrid\Column\ColumnInterface;
+use LemoGrid\Storage\StorageInterface;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
 use Traversable;
@@ -160,6 +161,21 @@ interface GridInterface extends
      * @return PlatformInterface
      */
     public function getPlatform();
+
+    /**
+     * Sets the storage handler
+     *
+     * @param  StorageInterface $storage
+     * @return GridInterface
+     */
+    public function setStorage(StorageInterface $storage);
+
+    /**
+     * Returns the persistent storage handler
+     *
+     * @return StorageInterface
+     */
+    public function getStorage();
 
     /**
      * Check if is prepared

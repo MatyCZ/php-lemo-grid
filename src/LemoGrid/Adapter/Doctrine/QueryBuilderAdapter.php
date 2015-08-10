@@ -14,9 +14,9 @@ use LemoGrid\Event\AdapterEvent;
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
-use LemoGrid\Platform\JqGrid as JqGridPlatform;
+use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
 
-class QueryBuilder extends AbstractAdapter
+class QueryBuilderAdapter extends AbstractAdapter
 {
     /**
      * @var array
@@ -30,7 +30,7 @@ class QueryBuilder extends AbstractAdapter
 
     /**
      * @throws Exception\UnexpectedValueException
-     * @return QueryBuilder
+     * @return QueryBuilderAdapter
      */
     public function fetchData()
     {
@@ -122,7 +122,7 @@ class QueryBuilder extends AbstractAdapter
     }
 
     /**
-     * @return QueryBuilder
+     * @return QueryBuilderAdapter
      */
     protected function fetchDataSummary()
     {
@@ -171,7 +171,7 @@ class QueryBuilder extends AbstractAdapter
      * Apply filters to the QueryBuilder
      *
      * @throws \Exception
-     * @return QueryBuilder
+     * @return QueryBuilderAdapter
      */
     protected function applyFilters()
     {
@@ -348,7 +348,7 @@ class QueryBuilder extends AbstractAdapter
     /**
      * Apply pagination to the QueryBuilder
      *
-     * @return QueryBuilder
+     * @return QueryBuilderAdapter
      */
     protected function applyPagination()
     {
@@ -372,11 +372,15 @@ class QueryBuilder extends AbstractAdapter
     /**
      * Apply sorting to the QueryBuilder
      *
-     * @return QueryBuilder
+     * @return QueryBuilderAdapter
      */
     protected function applySortings()
     {
         $sort = $this->getGrid()->getPlatform()->getSort();
+
+        // Store default order to variable and reset orderBy
+        $orderBy = $this->getQueryBuilder()->getDQLPart('orderBy');
+        $this->getQueryBuilder()->resetDQLPart('orderBy');
 
         // ORDER
         if (!empty($sort)) {
@@ -408,13 +412,20 @@ class QueryBuilder extends AbstractAdapter
             }
         }
 
+        // Add default order from variable
+        if (!empty($orderBy)) {
+            foreach ($orderBy as $order) {
+                $this->getQueryBuilder()->addOrderBy($order);
+            }
+        }
+
         return $this;
     }
 
     /**
      * Find aliases used in Query
      *
-     * @return QueryBuilder
+     * @return QueryBuilderAdapter
      */
     protected function findAliases()
     {

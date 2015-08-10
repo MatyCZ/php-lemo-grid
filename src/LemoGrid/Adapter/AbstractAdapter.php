@@ -4,7 +4,7 @@ namespace LemoGrid\Adapter;
 
 use IntlDateFormatter;
 use LemoGrid\GridInterface;
-use LemoGrid\ResultSet\JqGrid;
+use LemoGrid\ResultSet\JqGridResultSet;
 use LemoGrid\ResultSet\ResultSetInterface;
 use Locale;
 

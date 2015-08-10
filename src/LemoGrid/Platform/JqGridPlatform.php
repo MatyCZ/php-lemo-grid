@@ -6,12 +6,12 @@ use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Renderer\JqGridRenderer;
 use LemoGrid\Renderer\RendererInterface;
-use LemoGrid\ResultSet\JqGrid as JqGridResultSet;
+use LemoGrid\ResultSet\JqGridResultSet;
 use LemoGrid\ResultSet\ResultSetInterface;
 use Traversable;
 use Zend\Json;
 
-class JqGrid extends AbstractPlatform
+class JqGridPlatform extends AbstractPlatform
 {
     /**
      * @var array
@@ -19,7 +19,7 @@ class JqGrid extends AbstractPlatform
     protected $buttons;
 
     /**
-     * @var JqGridOptions
+     * @var JqGridPlatformOptions
      */
     protected $options;
 
@@ -43,13 +43,13 @@ class JqGrid extends AbstractPlatform
     /**
      * Set grid options
      *
-     * @param  array|Traversable|JqGridOptions $options
+     * @param  array|Traversable|JqGridPlatformOptions $options
      * @throws Exception\InvalidArgumentException
-     * @return JqGrid
+     * @return JqGridPlatform
      */
     public function setOptions($options)
     {
-        if (!$options instanceof JqGridOptions) {
+        if (!$options instanceof JqGridPlatformOptions) {
             if (is_object($options) && !$options instanceof Traversable) {
                 throw new Exception\InvalidArgumentException(sprintf(
                         'Expected instance of LemoGrid\Platform\JqGridOptions; '
@@ -57,7 +57,7 @@ class JqGrid extends AbstractPlatform
                 );
             }
 
-            $options = new JqGridOptions($options);
+            $options = new JqGridPlatformOptions($options);
         }
 
         $this->options = $options;
@@ -68,12 +68,12 @@ class JqGrid extends AbstractPlatform
     /**
      * Get grid options
      *
-     * @return JqGridOptions
+     * @return JqGridPlatformOptions
      */
     public function getOptions()
     {
         if (!$this->options) {
-            $this->setOptions(new JqGridOptions());
+            $this->setOptions(new JqGridPlatformOptions());
         }
 
         return $this->options;
@@ -84,7 +84,7 @@ class JqGrid extends AbstractPlatform
      * @param  string|null $label
      * @param  string|null $icon
      * @param  string      $callback
-     * @return JqGrid
+     * @return JqGridPlatform
      */
     public function addButton($name, $label = null, $icon = null, $callback)
     {
@@ -398,7 +398,7 @@ class JqGrid extends AbstractPlatform
      * Set instance of platform renderer
      *
      * @param  RendererInterface $renderer
-     * @return JqGrid
+     * @return JqGridPlatform
      */
     public function setRenderer(RendererInterface $renderer)
     {
@@ -425,7 +425,7 @@ class JqGrid extends AbstractPlatform
      * Set platform resultset
      *
      * @param  ResultSetInterface $resultSet
-     * @return JqGrid
+     * @return JqGridPlatform
      */
     public function setResultSet(ResultSetInterface $resultSet)
     {

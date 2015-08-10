@@ -6,6 +6,7 @@ use ArrayAccess;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Platform\PlatformInterface;
+use LemoGrid\Storage\StorageInterface;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\Hydrator;
@@ -28,22 +29,32 @@ class Factory
     protected $gridPlatformManager;
 
     /**
-     * @param GridPlatformManager $gridPlatformManager
-     * @param GridAdapterManager $gridAdapterManager
-     * @param GridColumnManager $gridColumnManager
+     * @var GridStorageManager
      */
-    public function __construct(GridPlatformManager $gridPlatformManager = null, GridAdapterManager $gridAdapterManager = null, GridColumnManager $gridColumnManager = null)
-    {
-        if (null !== $gridPlatformManager) {
-            $this->setGridPlatformManager($gridPlatformManager);
-        }
+    protected $gridStorageManager;
 
+    /**
+     * @param GridAdapterManager  $gridAdapterManager
+     * @param GridColumnManager   $gridColumnManager
+     * @param GridPlatformManager $gridPlatformManager
+     * @param GridStorageManager  $gridStorageManager
+     */
+    public function __construct(GridAdapterManager $gridAdapterManager = null, GridColumnManager $gridColumnManager = null, GridPlatformManager $gridPlatformManager = null, GridStorageManager $gridStorageManager = null)
+    {
         if (null !== $gridAdapterManager) {
             $this->setGridAdapterManager($gridAdapterManager);
         }
 
         if (null !== $gridColumnManager) {
             $this->setGridColumnManager($gridColumnManager);
+        }
+
+        if (null !== $gridPlatformManager) {
+            $this->setGridPlatformManager($gridPlatformManager);
+        }
+
+        if (null !== $gridStorageManager) {
+            $this->setGridStorageManager($gridStorageManager);
         }
     }
 
@@ -126,6 +137,33 @@ class Factory
         }
 
         return $this->gridPlatformManager;
+    }
+
+    /**
+     * Set the grid storage manager
+     *
+     * @param  GridStorageManager $gridStorageManager
+     * @return Factory
+     */
+    public function setGridStorageManager(GridStorageManager $gridStorageManager)
+    {
+        $this->gridStorageManager = $gridStorageManager;
+
+        return $this;
+    }
+
+    /**
+     * Get grid storage manager
+     *
+     * @return GridStorageManager
+     */
+    public function getGridStorageManager()
+    {
+        if ($this->gridStorageManager === null) {
+            $this->setGridStorageManager(new GridStorageManager());
+        }
+
+        return $this->gridStorageManager;
     }
 
     /**
@@ -220,6 +258,34 @@ class Factory
             '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
             __METHOD__,
             'LemoGrid\Platform\PlatformInterface',
+            $spec['type']
+        ));
+    }
+
+    /**
+     * Create a storage
+     *
+     * @param  array $spec
+     * @throws Exception\DomainException
+     * @return StorageInterface
+     */
+    public function createStorage($spec)
+    {
+        $spec = $this->validateSpecification($spec, __METHOD__);
+        if (!isset($spec['type'])) {
+            $spec['type'] = 'LemoGrid\Storage';
+        }
+
+        $storage = $this->getGridStorageManager()->get($spec['type']);
+
+        if ($storage instanceof StorageInterface) {
+            return $this->configureStorage($storage, $spec);
+        }
+
+        throw new Exception\DomainException(sprintf(
+            '%s expects the $spec["type"] to implement one of %s, %s, or %s; received %s',
+            __METHOD__,
+            'LemoGrid\Storage\StorageInterface',
             $spec['type']
         ));
     }
@@ -361,6 +427,24 @@ class Factory
         }
 
         return $platform;
+    }
+
+    /**
+     * Configure an storage based on the provided specification
+     *
+     * Specification can contain any of the following:
+     * - options: an array, Traversable, or ArrayAccess object of storage options
+     *
+     * @param  StorageInterface              $storage
+     * @param  array|Traversable|ArrayAccess $spec
+     * @throws Exception\DomainException
+     * @return StorageInterface
+     */
+    public function configureStorage(StorageInterface $storage, $spec)
+    {
+        $this->validateSpecification($spec, __METHOD__);
+
+        return $storage;
     }
 
     /**
@@ -521,6 +605,52 @@ class Factory
     }
 
     /**
+     * Prepare and inject a named storage
+     *
+     * Takes a string indicating a storage class name (or a concrete instance), try first to instantiates the class
+     * by pulling it from service manager, and injects the storage instance into the form.
+     *
+     * @param  string|array|Storage\StorageInterface $storageOrName
+     * @param  GridInterface                           $grid
+     * @param  string                                  $method
+     * @return void
+     * @throws Exception\DomainException If $storageOrName is not a string, does not resolve to a known class, or
+     *                                   the class does not implement Storage\StorageInterface
+     */
+    protected function prepareAndInjectStorage($storageOrName, GridInterface $grid, $method)
+    {
+        if (is_object($storageOrName) && $storageOrName instanceof Storage\StorageInterface) {
+            $grid->setStorage($storageOrName);
+            return;
+        }
+
+        if (is_array($storageOrName)) {
+            if (!isset($storageOrName['type'])) {
+                throw new Exception\DomainException(sprintf(
+                    '%s expects array specification to have a type value',
+                    $method
+                ));
+            }
+
+            $storageOrName = $storageOrName['type'];
+        }
+
+        if (is_string($storageOrName)) {
+            $storage = $this->getStorageFromName($storageOrName);
+        }
+
+        if (!$storage instanceof Storage\StorageInterface) {
+            throw new Exception\DomainException(sprintf(
+                '%s expects a valid implementation of LemoGrid\Storage\StorageInterface; received "%s"',
+                $method,
+                $storageOrName
+            ));
+        }
+
+        $grid->setStorage($storage);
+    }
+
+    /**
      * Try to pull adapter from service manager, or instantiates it from its name
      *
      * @param  string $adapterName
@@ -570,5 +700,31 @@ class Factory
 
         $platform = new $platformName;
         return $platform;
+    }
+
+    /**
+     * Try to pull storage from service manager, or instantiates it from its name
+     *
+     * @param  string $storageName
+     * @return mixed
+     * @throws Exception\DomainException
+     */
+    protected function getStorageFromName($storageName)
+    {
+        $serviceLocator = $this->getGridStorageManager()->getServiceLocator();
+
+        if ($serviceLocator && $serviceLocator->has($storageName)) {
+            return $serviceLocator->get($storageName);
+        }
+
+        if (!class_exists($storageName)) {
+            throw new Exception\DomainException(sprintf(
+                'Expects string storage name to be a valid class name; received "%s"',
+                $storageName
+            ));
+        }
+
+        $storage = new $storageName;
+        return $storage;
     }
 }

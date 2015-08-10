@@ -107,9 +107,10 @@ interface PlatformInterface
 
     /**
      * Set instance of platform renderer
+
      *
-     * @param  RendererInterface $renderer
-     * @return JqGrid
+*@param  RendererInterface $renderer
+     * @return JqGridPlatform
      */
     public function setRenderer(RendererInterface $renderer);
 
@@ -122,9 +123,10 @@ interface PlatformInterface
 
     /**
      * Set instance of platform resultset
+
      *
-     * @param  ResultSetInterface $resultSet
-     * @return JqGrid
+*@param  ResultSetInterface $resultSet
+     * @return JqGridPlatform
      */
     public function setResultSet(ResultSetInterface $resultSet);
 
