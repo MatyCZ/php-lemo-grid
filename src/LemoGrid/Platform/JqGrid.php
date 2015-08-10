@@ -3,7 +3,9 @@
 namespace LemoGrid\Platform;
 
 use LemoGrid\Exception;
+use LemoGrid\GridInterface;
 use LemoGrid\Renderer\JqGridRenderer;
+use LemoGrid\Renderer\RendererInterface;
 use LemoGrid\ResultSet\JqGrid as JqGridResultSet;
 use LemoGrid\ResultSet\ResultSetInterface;
 use Traversable;
@@ -37,6 +39,45 @@ class JqGrid extends AbstractPlatform
      * @var JqGridResultSet
      */
     protected $resultSet;
+
+    /**
+     * Set grid options
+     *
+     * @param  array|Traversable|JqGridOptions $options
+     * @throws Exception\InvalidArgumentException
+     * @return JqGrid
+     */
+    public function setOptions($options)
+    {
+        if (!$options instanceof JqGridOptions) {
+            if (is_object($options) && !$options instanceof Traversable) {
+                throw new Exception\InvalidArgumentException(sprintf(
+                        'Expected instance of LemoGrid\Platform\JqGridOptions; '
+                        . 'received "%s"', get_class($options))
+                );
+            }
+
+            $options = new JqGridOptions($options);
+        }
+
+        $this->options = $options;
+
+        return $this;
+    }
+
+    /**
+     * Get grid options
+     *
+     * @return JqGridOptions
+     */
+    public function getOptions()
+    {
+        if (!$this->options) {
+            $this->setOptions(new JqGridOptions());
+        }
+
+        return $this->options;
+    }
 
     /**
      * @param  string      $name
@@ -79,45 +120,6 @@ class JqGrid extends AbstractPlatform
     }
 
     /**
-     * Set grid options
-     *
-     * @param  array|Traversable|JqGridOptions $options
-     * @throws Exception\InvalidArgumentException
-     * @return JqGrid
-     */
-    public function setOptions($options)
-    {
-        if (!$options instanceof JqGridOptions) {
-            if (is_object($options) && !$options instanceof Traversable) {
-                throw new Exception\InvalidArgumentException(sprintf(
-                    'Expected instance of LemoGrid\Platform\JqGridOptions; '
-                        . 'received "%s"', get_class($options))
-                );
-            }
-
-            $options = new JqGridOptions($options);
-        }
-
-        $this->options = $options;
-
-        return $this;
-    }
-
-    /**
-     * Get grid options
-     *
-     * @return JqGridOptions
-     */
-    public function getOptions()
-    {
-        if (!$this->options) {
-            $this->setOptions(new JqGridOptions());
-        }
-
-        return $this->options;
-    }
-
-    /**
      * Is the grid rendered?
      *
      * @return bool
@@ -130,7 +132,7 @@ class JqGrid extends AbstractPlatform
     /**
      * @param  string $key
      * @param  mixed  $value
-     * @return mixed|bool
+     * @return mixed
      */
     public function modifyParam($key, $value)
     {
@@ -155,10 +157,23 @@ class JqGrid extends AbstractPlatform
         // Dont save grid name to Session
         if ('_name' == $key) {
             $this->isRendered = true;
-            return false;
         }
 
         return $value;
+    }
+
+    /**
+     * @param  GridInterface $grid
+     * @param  Traversable   $params
+     * @return bool
+     */
+    public function canUseParams(GridInterface $grid, Traversable $params)
+    {
+        if ($params->offsetExists('_name') && $params->offsetGet('_name') == $grid->getName()) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -380,7 +395,20 @@ class JqGrid extends AbstractPlatform
     }
 
     /**
-     * Get class of platform renderer
+     * Set instance of platform renderer
+     *
+     * @param  RendererInterface $renderer
+     * @return JqGrid
+     */
+    public function setRenderer(RendererInterface $renderer)
+    {
+        $this->renderer = $renderer;
+
+        return $this;
+    }
+
+    /**
+     * Get instance of platform renderer
      *
      * @return JqGridRenderer
      */
@@ -396,15 +424,11 @@ class JqGrid extends AbstractPlatform
     /**
      * Set platform resultset
      *
-     * @param  null|JqGridResultSet $resultSet
+     * @param  ResultSetInterface $resultSet
      * @return JqGrid
      */
-    public function setResultSet($resultSet)
+    public function setResultSet(ResultSetInterface $resultSet)
     {
-        if (null !== $resultSet && !$resultSet instanceof ResultSetInterface) {
-            throw new Exception\InvalidResultSetException('ResultSet must be instance of JqGridResultSet');
-        }
-
         $this->resultSet = $resultSet;
 
         return $this;

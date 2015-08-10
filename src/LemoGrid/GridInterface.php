@@ -99,21 +99,6 @@ interface GridInterface extends
     public function getName();
 
     /**
-     * Change the grid namespace for params
-     *
-     * @param  string $namespace
-     * @return GridInterface
-     */
-    public function setNamespace($namespace);
-
-    /**
-     * Get the grid namespace for params
-     *
-     * @return string
-     */
-    public function getNamespace();
-
-    /**
      * Set params
      *
      * @param  array|ArrayAccess|Traversable $params
@@ -182,6 +167,13 @@ interface GridInterface extends
      * @return bool
      */
     public function isPrepared();
+
+    /**
+     * Prepare grid
+     *
+     * @return bool
+     */
+    public function prepare();
 
     /**
      * Set column styles

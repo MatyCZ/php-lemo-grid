@@ -49,6 +49,24 @@ interface PlatformInterface
     public function isRendered();
 
     /**
+     * Can grid use params from current request?
+     *
+     * @param  GridInterface $grid
+     * @param  Traversable   $params
+     * @return bool
+     */
+    public function canUseParams(GridInterface $grid, Traversable $params);
+
+    /**
+     * Modify param
+     *
+     * @param  string $key
+     * @param  mixed  $value
+     * @return mixed
+     */
+    public function modifyParam($key, $value);
+
+    /**
      * Return converted filter operator
      *
      * @param  string $operator
@@ -56,6 +74,15 @@ interface PlatformInterface
      * @throws Exception\InvalidArgumentException
      */
     public function getFilterOperator($operator);
+
+    /**
+     * Return converted filter operator
+     *
+     * @param  string $operator
+     * @return string
+     * @throws Exception\InvalidArgumentException
+     */
+    public function getFilterOperatorOutput($operator);
 
     /**
      * Get number of current page
@@ -79,22 +106,30 @@ interface PlatformInterface
     public function getSort();
 
     /**
-     * Get class of platform renderer
+     * Set instance of platform renderer
+     *
+     * @param  RendererInterface $renderer
+     * @return JqGrid
+     */
+    public function setRenderer(RendererInterface $renderer);
+
+    /**
+     * Get instance of platform renderer
      *
      * @return RendererInterface
      */
     public function getRenderer();
 
     /**
-     * Set platform resultset
+     * Set instance of platform resultset
      *
      * @param  ResultSetInterface $resultSet
      * @return JqGrid
      */
-    public function setResultSet($resultSet);
+    public function setResultSet(ResultSetInterface $resultSet);
 
     /**
-     * Get class of platform resultset
+     * Get instance of platform resultset
      *
      * @return ResultSetInterface
      */

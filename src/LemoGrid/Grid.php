@@ -4,20 +4,18 @@ namespace LemoGrid;
 
 use ArrayAccess;
 use ArrayIterator;
-use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\ColumnPrepareAwareInterface;
-use LemoGrid\Platform\JqGrid;
 use LemoGrid\Platform\PlatformInterface;
+use LemoGrid\Storage\StorageInterface;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
 use Traversable;
 use Zend\EventManager\EventManager;
 use Zend\EventManager\EventManagerAwareInterface;
 use Zend\EventManager\EventManagerInterface;
-use Zend\Session\SessionManager;
-use Zend\Session\Container as SessionContainer;
+use Zend\Mvc\MvcEvent;
 use Zend\Stdlib\PriorityQueue;
 
 class Grid implements
@@ -52,11 +50,6 @@ class Grid implements
     protected $columnStyles = array();
 
     /**
-     * @var SessionContainer
-     */
-    protected $container;
-
-    /**
      * @var EventManagerInterface
      */
     protected $eventManager;
@@ -79,18 +72,17 @@ class Grid implements
     protected $isPrepared = false;
 
     /**
+     *
+     * @var MvcEvent
+     */
+    protected $mvcEvent;
+
+    /**
      * Grid name
      *
      * @var string
      */
     protected $name = 'grid';
-
-    /**
-     * Instance namespace
-     *
-     * @var string
-     */
-    protected $namespace;
 
     /**
      * Platform
@@ -105,19 +97,23 @@ class Grid implements
     protected $rowStyles = array();
 
     /**
-     * @var SessionManager
+     * Persistent storage handler
+     *
+     * @var Storage\StorageInterface
      */
-    protected $sessionManager;
+    protected $storage = null;
 
     /**
      * Constructor
      *
      * @param  null|string            $name
      * @param  null|AdapterInterface  $adapter
+     * @param  null|MvcEvent          $mvcEvent
      * @param  null|PlatformInterface $platform
+     * @param  null|StorageInterface  $storage
      * @return Grid
      */
-    public function __construct($name = null, AdapterInterface $adapter = null, $platform = null)
+    public function __construct($name = null, $adapter = null, $mvcEvent = null, $platform = null, $storage = null)
     {
         $this->iterator = new PriorityQueue();
 
@@ -129,8 +125,16 @@ class Grid implements
             $this->setAdapter($adapter);
         }
 
+        if (null !== $mvcEvent) {
+            $this->setMvcEvent($mvcEvent);
+        }
+
         if (null !== $platform) {
             $this->setPlatform($platform);
+        }
+
+        if (null !== $storage) {
+            $this->setStorage($storage);
         }
     }
 
@@ -351,22 +355,6 @@ class Grid implements
     }
 
     /**
-     * Get session container for grid
-     *
-     * @return SessionContainer
-     */
-    public function getContainer()
-    {
-        if ($this->container instanceof SessionContainer) {
-            return $this->container;
-        }
-
-        $this->container = new SessionContainer('Grid', $this->getSessionManager());
-
-        return $this->container;
-    }
-
-    /**
      * Compose a grid factory to use when calling add() with a non-element
      *
      * @param  Factory $factory
@@ -419,6 +407,26 @@ class Grid implements
     }
 
     /**
+     * @param  MvcEvent $mvcEvent
+     * @return Grid
+     */
+    public function setMvcEvent(MvcEvent $mvcEvent)
+    {
+        $this->mvcEvent = $mvcEvent;
+
+        return $this;
+    }
+
+    /**
+     *
+     * @return MvcEvent
+     */
+    public function getMvcEvent()
+    {
+        return $this->mvcEvent;
+    }
+
+    /**
      * Set name
      *
      * @param  string $name
@@ -441,32 +449,6 @@ class Grid implements
     }
 
     /**
-     * Change the grid namespace for params
-     *
-     * @param  string $namespace
-     * @return Grid
-     */
-    public function setNamespace($namespace = self::NAMESPACE_DEFAULT)
-    {
-        $this->namespace = (string) $namespace;
-        return $this;
-    }
-
-    /**
-     * Get the grid namespace for params
-     *
-     * @return string
-     */
-    public function getNamespace()
-    {
-        if (null === $this->namespace) {
-            $this->namespace = $this->getName();
-        }
-
-        return $this->namespace;
-    }
-
-    /**
      * Set param
      *
      * @param  string $key
@@ -475,61 +457,21 @@ class Grid implements
      */
     public function setParam($key, $value)
     {
-        $container = $this->getContainer();
-        $namespace = $this->getNamespace();
+        $content = $this->getStorage()->read($this->getName());
 
-        if (!isset($container[$namespace]) || !($container[$namespace] instanceof Traversable)) {
-            $container[$namespace] = new ArrayIterator();
+        if (!($content instanceof Traversable)) {
+            $content = new ArrayIterator();
         }
 
         // Modifi param in Platform
         $value = $this->getPlatform()->modifyParam($key, $value);
 
         if (false !== $value) {
-            $container[$namespace]->offsetSet($key, $value);
+            $content->offsetSet($key, $value);
+            $this->getStorage()->write($this->getName(), $content);
         }
 
         return $this;
-    }
-
-    /**
-     * Get param
-     *
-     * @param  string $key
-     * @return mixed
-     */
-    public function getParam($key)
-    {
-        $container = $this->getContainer();
-        $namespace = $this->getNamespace();
-
-        if (isset($container[$namespace]) && isset($container[$namespace][$key])) {
-            return $container[$namespace]->offsetGet($key);
-        }
-
-        if ('filters' == $key) {
-            return array();
-        }
-
-        return null;
-    }
-
-    /**
-     * Exist param with given name?
-     *
-     * @param  string $name
-     * @return bool
-     */
-    public function hasParam($name)
-    {
-        $container = $this->getContainer();
-        $namespace = $this->getNamespace();
-
-        if (isset($container[$namespace])) {
-            return $container[$namespace]->offsetExists($name);
-        }
-
-        return false;
     }
 
     /**
@@ -549,19 +491,35 @@ class Grid implements
             ));
         }
 
-        if(empty($params['_name']) || $params['_name'] != $this->getNamespace()) {
-            return $this;
-        }
+        // Set params to storage
+        if ($this->getPlatform()->canUseParams($this, $params)) {
+            // Create new storage
+            $content = new ArrayIterator();
 
-        if (isset($params['sidx']) && empty($params['sidx'])) {
-            unset($params['sidx'], $params['sord']);
-        }
+            foreach ($params as $key => $value) {
+                $content->offsetSet($key, $this->getPlatform()->modifyParam($key, $value));
+            }
 
-        foreach ($params as $key => $value) {
-            $this->setParam($key, $value);
+            // Save params to storage
+            $this->getStorage()->write($this->getName(), $content);
         }
 
         return $this;
+    }
+
+    /**
+     * Get param
+     *
+     * @param  string $key
+     * @return mixed
+     */
+    public function getParam($key)
+    {
+        if ($this->hasParams() && $this->getStorage()->read($this->getName())->offsetExists($key)) {
+            return $this->getStorage()->read($this->getName())->offsetGet($key);
+        }
+
+        return null;
     }
 
     /**
@@ -571,14 +529,22 @@ class Grid implements
      */
     public function getParams()
     {
-        $container = $this->getContainer();
-        $namespace = $this->getNamespace();
+        return $this->getStorage()->read($this->getName());
+    }
 
+    /**
+     * Exist param with given name?
+     *
+     * @param  string $key
+     * @return bool
+     */
+    public function hasParam($key)
+    {
         if ($this->hasParams()) {
-            return $container[$namespace];
+            return $this->getStorage()->read($this->getName())->offsetExists($key);
         }
 
-        return array();
+        return false;
     }
 
     /**
@@ -588,10 +554,7 @@ class Grid implements
      */
     public function hasParams()
     {
-        $container = $this->getContainer();
-        $namespace = $this->getNamespace();
-
-        return isset($container[$namespace]);
+        return (false === $this->getStorage()->isEmpty($this->getName())) ? true : false;
     }
 
     /**
@@ -620,31 +583,32 @@ class Grid implements
     }
 
     /**
-     * Set the session manager
+     * Sets the storage handler
      *
-     * @param  SessionManager $manager
+     * @param  Storage\StorageInterface $storage
      * @return Grid
      */
-    public function setSessionManager(SessionManager $manager)
+    public function setStorage(Storage\StorageInterface $storage)
     {
-        $this->sessionManager = $manager;
+        $this->storage = $storage;
+
         return $this;
     }
 
     /**
-     * Retrieve the session manager
+     * Returns the persistent storage handler
      *
-     * If none composed, lazy-loads a SessionManager instance
+     * Session storage is used by default unless a different storage adapter has been set.
      *
-     * @return SessionManager
+     * @return Storage\StorageInterface
      */
-    public function getSessionManager()
+    public function getStorage()
     {
-        if (!$this->sessionManager instanceof SessionManager) {
-            $this->setSessionManager(SessionContainer::getDefaultManager());
+        if (null === $this->storage) {
+            $this->setStorage(new Storage\SessionStorage());
         }
 
-        return $this->sessionManager;
+        return $this->storage;
     }
 
     /**
@@ -777,7 +741,7 @@ class Grid implements
         $this->iterator = new PriorityQueue();
         $this->namespace = self::NAMESPACE_DEFAULT;
         $this->platform = null;
-        $this->sessionManager = null;
+        $this->storage = null;
 
         foreach ($items as $item) {
             $column = clone $item['data'];
@@ -815,7 +779,58 @@ class Grid implements
             return $this;
         }
 
+        // Verify if was adapter set
+        if (null === $this->adapter) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Grid '%s' has no adapter",
+                $this->getName()
+            ));
+        }
+
+        // Verify if was platform set
+        if (null === $this->platform) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Grid '%s' has no platform set",
+                $this->getName()
+            ));
+        }
+
+        // Verify if was platform renderer set
+        if (null === $this->platform->getRenderer()) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Grid '%s' has no platform '%s' renderer",
+                $this->getName(),
+                get_class($this->getPlatform())
+            ));
+        }
+
+        // Verify if was platform result set set
+        if (null === $this->platform->getResultSet()) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Grid '%s' has no platform '%s' result set",
+                $this->getName(),
+                get_class($this->getPlatform())
+            ));
+        }
+
+        // Verify if was mvc event set
+        if (null === $this->mvcEvent) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Grid '%s' has no mvc event",
+                $this->getName()
+            ));
+        }
+
+        // Verify if was storage set
+        if (null === $this->storage) {
+            throw new Exception\InvalidArgumentException(sprintf(
+                "Grid '%s' has no storage",
+                $this->getName()
+            ));
+        }
+
         $this->init();
+        $this->setParams($this->getMvcEvent()->getRequest()->getQuery());
 
         $name = $this->getName();
         if ((null === $name || '' === $name)) {

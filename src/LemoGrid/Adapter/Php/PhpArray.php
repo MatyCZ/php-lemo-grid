@@ -68,7 +68,7 @@ class PhpArray extends AbstractAdapter
                     $value = $this->findValue($colIdentifier, $item);
 
                     // COLUMN - DateTime
-                    if($value instanceof DateTime) {
+                    if ($value instanceof DateTime) {
                         $value = $value->format('Y-m-d H:i:s');
                     }
 
@@ -77,8 +77,8 @@ class PhpArray extends AbstractAdapter
                     $value = $column->renderValue($this, $item);
 
                     // Projdeme data a nahradime data ve formatu %xxx%
-                    if(null !== preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
-                        foreach($matches[0] as $key => $match) {
+                    if (null !== preg_match_all('/%(_?[a-zA-Z0-9\._-]+)%/', $value, $matches)) {
+                        foreach ($matches[0] as $key => $match) {
                             if ('%_index%' == $matches[0][$key]) {
                                 $value = str_replace($matches[0][$key], $indexRow, $value);
                             } else {
@@ -136,7 +136,7 @@ class PhpArray extends AbstractAdapter
             for ($indexItem = 0; $indexItem < $itemsCount; $indexItem++) {
                 $item = $items[$indexItem];
 
-                foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+                foreach ($this->getGrid()->getColumns() as $indexCol => $column) {
                     $colName = $column->getName();
 
                     // Can we render value?
@@ -148,7 +148,7 @@ class PhpArray extends AbstractAdapter
 
             // Calculate user data (SummaryRow)
             $dataUser = array();
-            foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+            foreach ($this->getGrid()->getColumns() as $indexCol => $column) {
 
                 // Sloupec je skryty, takze ho preskocime
                 if (true === $column->getAttributes()->getIsHidden()) {
@@ -199,31 +199,31 @@ class PhpArray extends AbstractAdapter
         $grid = $this->getGrid();
         $filter = $grid->getParam('filters');
 
-        if(empty($rows) || empty($filter['rules'])) {
+        if (empty($rows) || empty($filter['rules'])) {
             return $rows;
         }
 
         $columns = $this->getGrid()->getColumns();
 
-        foreach($rows as $indexRow => $item) {
+        foreach ($rows as $indexRow => $item) {
 
             if (!empty($columns)) {
-                foreach($columns as $indexCol => $column) {
+                foreach ($columns as $indexCol => $column) {
 
                     // Ma sloupec povolene vyhledavani?
-                    if($column->getAttributes()->getIsSearchable() && true !== $column->getAttributes()->getIsHidden()) {
+                    if (true === $column->getAttributes()->getIsSearchable() && true !== $column->getAttributes()->getIsHidden()) {
 
                         // Jsou definovane filtry pro sloupec
-                        if(!empty($filter['rules'][$column->getName()])) {
+                        if (!empty($filter['rules'][$column->getName()])) {
                             foreach ($filter['rules'][$column->getName()] as $filterDefinition) {
-                                if($column instanceof ColumnConcat) {
+                                if ($column instanceof ColumnConcat) {
                                     preg_match('/' . $filterDefinition['value'] . '/i', $item[$column->getName()], $matches);
 
                                     if (count($matches) == 0) {
                                         unset($rows[$indexRow]);
                                     }
                                 } else {
-                                    if(false === $this->buildWhereFromFilter($column, $filterDefinition, $item[$column->getName()])) {
+                                    if (false === $this->buildWhereFromFilter($column, $filterDefinition, $item[$column->getName()])) {
                                         unset($rows[$indexRow]);
                                     }
                                 }
@@ -267,13 +267,12 @@ class PhpArray extends AbstractAdapter
         $grid = $this->getGrid();
         $sort = $this->getGrid()->getPlatform()->getSort();
 
-        if(empty($rows) || empty($sort)) {
+        if (empty($rows) || empty($sort)) {
             return $rows;
         }
 
         // Obtain a list of column
-        foreach($rows as $indexRow => $column) {
-
+        foreach ($rows as $indexRow => $column) {
             $keys = array_keys($column);
 
             foreach ($keys as $key) {

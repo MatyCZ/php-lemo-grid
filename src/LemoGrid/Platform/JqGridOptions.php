@@ -526,6 +526,11 @@ class JqGridOptions extends AbstractOptions
     protected $sortingColumnsDefinition = array(true, 'vertical', true);
 
     /**
+     * @var string
+     */
+    protected $styleUi;
+
+    /**
      * Enables (disables) the tree grid format.
      *
      * @var bool
@@ -1780,6 +1785,25 @@ class JqGridOptions extends AbstractOptions
     public function getSortingColumnsDefinition()
     {
         return $this->sortingColumnsDefinition;
+    }
+
+    /**
+     * @param  string $styleUi
+     * @return JqGridOptions
+     */
+    public function setStyleUi($styleUi)
+    {
+        $this->styleUi = $styleUi;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getStyleUi()
+    {
+        return $this->styleUi;
     }
 
     /**

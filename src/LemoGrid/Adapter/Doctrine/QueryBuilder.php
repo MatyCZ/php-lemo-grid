@@ -184,7 +184,7 @@ class QueryBuilder extends AbstractAdapter
 
             $whereCol = array();
             foreach($columns as $indexCol => $col) {
-                if($col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
+                if (true === $col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
 
                     // Jsou definovane filtry pro sloupec
                     if(!empty($filter['rules'][$col->getName()])) {

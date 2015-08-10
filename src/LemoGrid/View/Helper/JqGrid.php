@@ -108,6 +108,7 @@ class JqGrid extends AbstractHelper
         'sorting_columns_definition'         => 'viewsortcols',
         'sort_name'                          => 'sortname',
         'sort_order'                         => 'sortorder',
+        'style_ui'                           => 'styleUI',
         'tree_grid'                          => 'treeGrid',
         'tree_grid_type'                     => 'treeGridModel',
         'tree_grid_icons'                    => 'treeIcons',
@@ -220,15 +221,14 @@ class JqGrid extends AbstractHelper
     public function renderScript()
     {
         $grid = $this->getGrid();
+        $filters = $grid->getParam('filters');
 
         $colNames = array();
-        foreach($grid->getColumns() as $column) {
+        foreach ($grid->getColumns() as $column) {
             $label = $column->getAttributes()->getLabel();
 
             if (null !== ($translator = $this->getTranslator()) && !empty($label)) {
-                $label = $translator->translate(
-                    $label, $this->getTranslatorTextDomain()
-                );
+                $label = $translator->translate($label, $this->getTranslatorTextDomain());
             }
 
             $colNames[] = $label;
@@ -236,13 +236,44 @@ class JqGrid extends AbstractHelper
 
         $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid({';
         $script[] = '        ' . $this->buildScript('grid', $grid->getPlatform()->getOptions()) . ', ' . PHP_EOL;
+
+        // Vychozi filtry a ulozene filtry
+        $rules = array();
+        if (empty($filters['rules']) || empty($filters['operator'])) {
+            foreach ($grid->getColumns() as $column) {
+                $searchOptions = $column->getAttributes()->getSearchOptions();
+
+                if (isset($searchOptions['defaultValue'])) {
+                    $rules[] = array(
+                        'field' => $column->getName(),
+                        'op'    => 'cn',
+                        'data'  => $searchOptions['defaultValue'],
+                    );
+                }
+            }
+        } else {
+            foreach ($filters['rules'] as $field => $rule) {
+                foreach ($rule as $filterDefinition) {
+                    $rules[] = array(
+                        'field' => $field,
+                        'op'    => $grid->getPlatform()->getFilterOperatorOutput($filterDefinition['operator']),
+                        'data'  => $filterDefinition['value'],
+                    );
+                }
+            }
+        }
+
+        if (!empty($rules)) {
+            $script[] = '        postData: {"filters":\'{"groupOp": "' . strtoupper($filters['operator']) . '","rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
+        }
+
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
         $script[] = '        colModel: [';
 
         $i = 1;
         $columns = $grid->getColumns();
         $columnsCount = count($columns);
-        foreach($columns as $column) {
+        foreach ($columns as $column) {
             $attributes = $this->columnModifyAttributes($column, $column->getAttributes());
 
             if($i != $columnsCount) { $delimiter = ','; } else { $delimiter = ''; }
@@ -347,12 +378,12 @@ class JqGrid extends AbstractHelper
         // Convert attributes to array
         $attributes = $attributes->toArray();
 
-        foreach($attributes as $key => $value) {
-            if(null === $value) {
+        foreach ($attributes as $key => $value) {
+            if (null === $value) {
                 continue;
             }
 
-            if('grid' == $type) {
+            if ('grid' == $type) {
                 if(!array_key_exists($key, $this->gridAttributes)) {
                     continue;
                 }
@@ -360,7 +391,7 @@ class JqGrid extends AbstractHelper
                 $key = $this->gridConvertAttributeName($key);
                 $separator = ', ' . PHP_EOL;
             }
-            if('column' == $type) {
+            if ('column' == $type) {
                 if(!array_key_exists($key, $this->columnAttributes)) {
                     continue;
                 }
@@ -371,7 +402,7 @@ class JqGrid extends AbstractHelper
 
             $scriptRow = $this->buildScriptAttributes($key, $value);
 
-            if(null !== $scriptRow) {
+            if (null !== $scriptRow) {
                 $script[] = $scriptRow;
             }
         }
@@ -477,7 +508,7 @@ class JqGrid extends AbstractHelper
      */
     protected function columnConvertAttributeName($name)
     {
-        if(array_key_exists($name, $this->columnAttributes)) {
+        if (array_key_exists($name, $this->columnAttributes)) {
             $name = $this->columnAttributes[$name];
         }
 
@@ -508,7 +539,7 @@ class JqGrid extends AbstractHelper
      */
     protected function gridConvertAttributeName($name)
     {
-        if(array_key_exists($name, $this->gridAttributes)) {
+        if (array_key_exists($name, $this->gridAttributes)) {
             $name = $this->gridAttributes[$name];
         }
 
@@ -524,7 +555,7 @@ class JqGrid extends AbstractHelper
     protected function gridModifyAttributes(JqGridOptions $attributes)
     {
         // Pager element ID
-        if(null === $attributes->getPagerElementId()) {
+        if (null === $attributes->getPagerElementId()) {
             $attributes->setPagerElementId($this->getGrid()->getName() . '_pager');
         }
 
