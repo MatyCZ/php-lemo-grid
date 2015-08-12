@@ -278,11 +278,7 @@ class ArrayAdapter extends AbstractAdapter
 
                     $columnValues = array();
                     foreach ($rows as $indexRow => $rowValues) {
-                        if (!isset($rowValues[$sortColumn])) {
-                            break;
-                        }
-
-                        $columnValues[] = $rowValues[$sortColumn];
+                        $columnValues[] = isset($rowValues[$sortColumn]) ? $rowValues[$sortColumn] : null;
                     }
 
                     $arguments[] = $columnValues;
