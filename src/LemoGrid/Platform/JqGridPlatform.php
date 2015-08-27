@@ -144,6 +144,10 @@ class JqGridPlatform extends AbstractPlatform
                 $rules = Json\Decoder::decode(stripslashes($value), Json\Json::TYPE_ARRAY);
             }
 
+            if(empty($rules['groupOp'])) {
+                return $value;
+            }
+
             $value = array();
             $value['operator'] = strtolower($rules['groupOp']);
             foreach ($rules['rules'] as $rule) {

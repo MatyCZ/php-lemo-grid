@@ -195,46 +195,6 @@ class QueryBuilderAdapter extends AbstractAdapter
     }
 
     /**
-     * Appends a custom tree walker to the tree walkers hint.
-     *
-     * @param Query $query
-     * @param string $walkerClass
-     */
-    private function appendTreeWalker(Query $query, $walkerClass)
-    {
-        $hints = $query->getHint(Query::HINT_CUSTOM_TREE_WALKERS);
-
-        if ($hints === false) {
-            $hints = array();
-        }
-
-        $hints[] = $walkerClass;
-        $query->setHint(Query::HINT_CUSTOM_TREE_WALKERS, $hints);
-    }
-
-    /**
-     * Clones a query.
-     *
-     * @param Query $query The query.
-     *
-     * @return Query The cloned query.
-     */
-    private function cloneQuery(Query $query)
-    {
-        /* @var $cloneQuery Query */
-        $cloneQuery = clone $query;
-
-        $cloneQuery->setParameters(clone $query->getParameters());
-        $cloneQuery->setCacheable(false);
-
-        foreach ($query->getHints() as $name => $value) {
-            $cloneQuery->setHint($name, $value);
-        }
-
-        return $cloneQuery;
-    }
-
-    /**
      * Apply filters to the QueryBuilder
      *
      * @throws \Exception
@@ -260,8 +220,19 @@ class QueryBuilderAdapter extends AbstractAdapter
                         foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
                             if ('~' == $filterDefinition['operator']) {
 
-                                // Sestavime WHERE
-                                $filterWords = explode(' ', $filterDefinition['value']);
+                                // Odstranime duplicity a prazdne hodnoty
+                                $filterWords = [];
+                                foreach (explode(' ', $filterDefinition['value']) as $word) {
+                                    if (in_array($word, $filterWords)) {
+                                        continue;
+                                    }
+
+                                    if (empty($word)) {
+                                        continue;
+                                    }
+
+                                    $filterWords[] = $word;
+                                }
 
                                 $wheres = array();
                                 if ($col instanceof ColumnConcat) {
