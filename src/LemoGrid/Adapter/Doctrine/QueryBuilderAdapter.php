@@ -6,7 +6,9 @@ use DateTime;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Doctrine\ORM\Tools\Pagination\WhereInWalker;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
@@ -133,8 +135,22 @@ class QueryBuilderAdapter extends AbstractAdapter
             $queryBuilder->setFirstResult(null);
             $queryBuilder->setMaxResults(null);
 
+            // Add group by
+            $rootAliases = $queryBuilder->getRootAliases();
+            $rootEntities = $queryBuilder->getRootEntities();
+
+            $identifiers = $this->getQueryBuilder()
+                ->getEntityManager()
+                ->getClassMetadata($rootEntities[0])
+                ->getIdentifierFieldNames();
+
+            foreach ($identifiers as $identifier) {
+                $queryBuilder->addGroupBy($rootAliases[0] . '.' . $identifier);
+            }
+
             $countOfSummaryColumn = 0;
-            foreach($this->getGrid()->getColumns() as $indexCol => $column) {
+            foreach ($this->getGrid()->getColumns() as $indexCol => $column) {
+                $columnQuery = clone $queryBuilder;
 
                 // Sloupec je skryty, takze ho preskocime
                 if (true === $column->getAttributes()->getIsHidden()) {
@@ -149,22 +165,73 @@ class QueryBuilderAdapter extends AbstractAdapter
                 if (null !== $column->getAttributes()->getSummaryType()) {
                     $summaryType = $column->getAttributes()->getSummaryType();
 
-                    $queryBuilder->addSelect(strtoupper($summaryType) . '(' . $column->getIdentifier() . ') AS ' . $column->getName());
+                    $columnQuery->addSelect($column->getIdentifier());
 
                     $countOfSummaryColumn++;
+
+                    $values = array_map('current', $columnQuery->getQuery()->getScalarResult());
+
+                    switch ($summaryType) {
+                        case 'avg':
+                            $summary[$column->getName()] = array_sum($values) / count($values);
+                            break;
+                        case 'max':
+                            $summary[$column->getName()] = max($values);
+                            break;
+                        case 'min':
+                            $summary[$column->getName()] = min($values);
+                            break;
+                        case 'sum':
+                            $summary[$column->getName()] = array_sum($values);
+                            break;
+                    }
                 }
             }
-
-            if (0 == $countOfSummaryColumn) {
-                return $this;
-            }
-
-            $summary = $queryBuilder->getQuery()->getSingleResult();
 
             $this->getGrid()->getPlatform()->getResultSet()->setDataUser($summary);
         }
 
         return $this;
+    }
+
+    /**
+     * Appends a custom tree walker to the tree walkers hint.
+     *
+     * @param Query $query
+     * @param string $walkerClass
+     */
+    private function appendTreeWalker(Query $query, $walkerClass)
+    {
+        $hints = $query->getHint(Query::HINT_CUSTOM_TREE_WALKERS);
+
+        if ($hints === false) {
+            $hints = array();
+        }
+
+        $hints[] = $walkerClass;
+        $query->setHint(Query::HINT_CUSTOM_TREE_WALKERS, $hints);
+    }
+
+    /**
+     * Clones a query.
+     *
+     * @param Query $query The query.
+     *
+     * @return Query The cloned query.
+     */
+    private function cloneQuery(Query $query)
+    {
+        /* @var $cloneQuery Query */
+        $cloneQuery = clone $query;
+
+        $cloneQuery->setParameters(clone $query->getParameters());
+        $cloneQuery->setCacheable(false);
+
+        foreach ($query->getHints() as $name => $value) {
+            $cloneQuery->setHint($name, $value);
+        }
+
+        return $cloneQuery;
     }
 
     /**
@@ -197,83 +264,26 @@ class QueryBuilderAdapter extends AbstractAdapter
                                 $filterWords = explode(' ', $filterDefinition['value']);
 
                                 $wheres = array();
-                                if($col instanceof ColumnConcat) {
+                                if ($col instanceof ColumnConcat) {
+                                    $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
 
-                                    // Operator AND
-                                    if ('and' === $col->getAttributes()->getSearchGroupOperator()) {
-                                        $filterWordsCombination = $this->createWordsCombination($filterWords);
-
-                                        if (count($col->getOptions()->getIdentifiers()) > 1) {
-                                            $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
-                                            foreach ($filterWordsCombination as $wordsCombination) {
-                                                $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
-                                                    'operator' => '~',
-                                                    'value'    => implode('%', $wordsCombination),
-                                                ));
-                                            }
-
-                                            // Pridame WHERE do QueryBuilderu
-                                            $exp = new Expr\Orx();
-                                            $exp->addMultiple($wheres);
-
-                                            $whereColSub[] = $exp;
-                                        } else {
-                                            foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                                                foreach ($filterWordsCombination as $wordsCombination) {
-                                                    $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
-                                                        'operator' => '~',
-                                                        'value'    => implode('%', $wordsCombination),
-                                                    ));
-                                                }
-                                            }
-
-                                            // Pridame WHERE do QueryBuilderu
-                                            $exp = new Expr\Orx();
-                                            $exp->addMultiple($wheres);
-
-                                            $whereColSub[] = $exp;
-                                        }
+                                    foreach ($filterWords as $filterWord) {
+                                        $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
+                                            'operator' => '~',
+                                            'value'    => $filterWord
+                                        ));
                                     }
 
-                                    // Operator OR
-                                    if ('or' === $col->getAttributes()->getSearchGroupOperator()) {
-                                        if (count($filterWords) > 1) {
-                                            foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                                                $whereColTerm = array();
-                                                foreach ($filterWords as $filterWord) {
-                                                    $whereColTerm[] = $this->buildWhereFromFilter($col, $identifier, array(
-                                                        'operator' => '~',
-                                                        'value'    => $filterWord,
-                                                    ));
-                                                }
-
-                                                // Sloucime podminky sloupce pomoci OR (z duvodu Concat sloupce)
-                                                $exprColTerm = new Expr\Orx();
-                                                $exprColTerm->addMultiple($whereColTerm);
-
-                                                $wheres[] = $exprColTerm;
-                                            }
-
-                                            // Pridame WHERE do QueryBuilderu
-                                            $exp = new Expr\Andx();
-                                            $exp->addMultiple($wheres);
-
-                                            $whereColSub[] = $exp;
-                                        } elseif (isset($filterWords[0])) {
-                                            foreach ($col->getOptions()->getIdentifiers() as $identifier) {
-                                                $wheres[] = $this->buildWhereFromFilter($col, $identifier, array(
-                                                    'operator' => '~',
-                                                    'value'    => $filterWords[0],
-                                                ));
-                                            }
-
-                                            // Pridame WHERE do QueryBuilderu
-                                            $exp = new Expr\Orx();
-                                            $exp->addMultiple($wheres);
-
-                                            $whereColSub[] = $exp;
-                                        }
+                                    // Urcime pomoci jakeho operatoru mame skladat jednotlive vyrazi hledani sloupce
+                                    if ('and' == $col->getAttributes()->getSearchGroupOperator()) {
+                                        $exp = new Expr\Andx();
+                                        $exp->addMultiple($wheres);
+                                    } else {
+                                        $exp = new Expr\Orx();
+                                        $exp->addMultiple($wheres);
                                     }
+
+                                    $whereColSub[] = $exp;
                                 } else {
                                     foreach ($filterWords as $filterWord) {
                                         $wheres[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), array(
@@ -315,7 +325,7 @@ class QueryBuilderAdapter extends AbstractAdapter
                             }
                         }
 
-                        //
+                        // Urcime pomoci jako operatoru mame sloupcit jednotlive podminky
                         if ('and' == $filter['operator']) {
                             $exprCol = new Expr\Andx();
                             $exprCol->addMultiple($whereColSub);
@@ -524,7 +534,7 @@ class QueryBuilderAdapter extends AbstractAdapter
 
         $firstPart = null;
         foreach ($identifiers as $index => $identifier) {
-            $firstPart = "CASE WHEN  (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
+            $firstPart = $identifier;
             unset($identifiers[$index]);
             break;
         }
@@ -533,7 +543,6 @@ class QueryBuilderAdapter extends AbstractAdapter
             $secondPart = $this->buildConcat($identifiers);
         } elseif (count($identifiers) == 1) {
             $secondPart = current($identifiers);
-            $secondPart = "CASE WHEN  (" . $secondPart . " IS NULL) THEN '' ELSE " . $secondPart . " END";
         } else {
             return $firstPart;
         }
@@ -628,30 +637,6 @@ class QueryBuilderAdapter extends AbstractAdapter
     }
 
     /**
-     * @param  array $items
-     * @param  array $perms
-     * @param  array $permsBuilded
-     * @return array
-     */
-    protected function createWordsCombination($items, $perms = array(), $permsBuilded = array())
-    {
-        if (empty($items)) {
-            $permsBuilded[] = $perms;
-        } else {
-            for ($i = count($items) - 1; $i >= 0; --$i) {
-                $newitems = $items;
-                $newperms = $perms;
-                list($foo) = array_splice($newitems, $i, 1);
-                array_unshift($newperms, $foo);
-
-                $permsBuilded = $this->createWordsCombination($newitems, $newperms, $permsBuilded);
-            }
-        }
-
-        return $permsBuilded;
-    }
-
-    /**
      * @param  array $item
      * @return array
      */
@@ -669,7 +654,7 @@ class QueryBuilderAdapter extends AbstractAdapter
 //                // Jedna se o Pole
 //                if (is_array($item)) {
 //                    if (isset($item[$name])) {
-                        $item[$name] = $value;
+            $item[$name] = $value;
 //                    }
 //                }
 //            }
