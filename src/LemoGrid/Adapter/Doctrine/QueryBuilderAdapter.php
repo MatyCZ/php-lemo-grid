@@ -148,6 +148,7 @@ class QueryBuilderAdapter extends AbstractAdapter
                 $queryBuilder->addGroupBy($rootAliases[0] . '.' . $identifier);
             }
 
+            $summary = [];
             $countOfSummaryColumn = 0;
             foreach ($this->getGrid()->getColumns() as $indexCol => $column) {
                 $columnQuery = clone $queryBuilder;
@@ -188,7 +189,9 @@ class QueryBuilderAdapter extends AbstractAdapter
                 }
             }
 
-            $this->getGrid()->getPlatform()->getResultSet()->setDataUser($summary);
+            if (!empty($summary)) {
+                $this->getGrid()->getPlatform()->getResultSet()->setDataUser($summary);
+            }
         }
 
         return $this;
