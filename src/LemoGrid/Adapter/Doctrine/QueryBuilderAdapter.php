@@ -158,11 +158,6 @@ class QueryBuilderAdapter extends AbstractAdapter
                     continue;
                 }
 
-                // Sloupec je skryty, musime ho preskocit
-                if (true === $column->getAttributes()->getIsHidden()) {
-                    continue;
-                }
-
                 if (null !== $column->getAttributes()->getSummaryType()) {
                     $summaryType = $column->getAttributes()->getSummaryType();
 

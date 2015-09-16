@@ -821,14 +821,6 @@ class Grid implements
             ));
         }
 
-        // Verify if was storage set
-        if (null === $this->storage) {
-            throw new Exception\InvalidArgumentException(sprintf(
-                "Grid '%s' has no storage",
-                $this->getName()
-            ));
-        }
-
         $this->init();
         $this->setParams($this->getMvcEvent()->getRequest()->getQuery());
 
