@@ -499,26 +499,11 @@ class QueryBuilderAdapter extends AbstractAdapter
      */
     protected function buildConcat(array $identifiers)
     {
-        $expr = new Expr();
-
-        $firstPart = null;
         foreach ($identifiers as $index => $identifier) {
-            $firstPart = $identifier;
-            unset($identifiers[$index]);
-            break;
+            $parts[$index] = "CASE WHEN  (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
         }
 
-        if (count($identifiers) > 1) {
-            $secondPart = $this->buildConcat($identifiers);
-        } elseif (count($identifiers) == 1) {
-            $secondPart = current($identifiers);
-        } else {
-            return $firstPart;
-        }
-
-        $concat = $expr->concat($firstPart, $secondPart);
-
-        return $concat;
+        return new Expr\Func('CONCAT', $parts);
     }
 
     /**
