@@ -141,7 +141,7 @@ class JqGridPlatform extends AbstractPlatform
             if (is_array($value)) {
                 $rules = $value;
             } else {
-                $rules = Json\Decoder::decode(stripslashes($value), Json\Json::TYPE_ARRAY);
+                $rules = $this->stripSlashesRecursive(Json\Decoder::decode($value, Json\Json::TYPE_ARRAY));
             }
 
             if(empty($rules['groupOp'])) {
@@ -396,6 +396,21 @@ class JqGridPlatform extends AbstractPlatform
         }
 
         return $sort;
+    }
+
+    private function stripSlashesRecursive($data)
+    {
+        if (is_string($data)) {
+            return stripslashes($data);
+        }
+
+        if (is_array($data)) {
+            foreach ($data as $key => $value) {
+                $data[$key] = $this->stripSlashesRecursive($value);
+            }
+        }
+
+        return $data;
     }
 
     /**
