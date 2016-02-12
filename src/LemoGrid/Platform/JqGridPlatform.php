@@ -398,6 +398,12 @@ class JqGridPlatform extends AbstractPlatform
         return $sort;
     }
 
+    /**
+     * Strip slashes from array or string.
+     *
+     * @param  array|string $data
+     * @return array|string
+     */
     private function stripSlashesRecursive($data)
     {
         if (is_string($data)) {

@@ -495,16 +495,22 @@ class QueryBuilderAdapter extends AbstractAdapter
      * Sestavi CONCAT z predanych casti
      *
      * @param  array  $identifiers
-     * @return Expr\Func
+     * @return Expr\Func|string
      */
     protected function buildConcat(array $identifiers)
     {
-        foreach ($identifiers as $index => $identifier) {
-            $parts[$index] = "CASE WHEN  (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
+        if (count($identifiers) > 1) {
+            $parts = [];
+            foreach ($identifiers as $identifier) {
+                $parts[] = "CASE WHEN (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
+            }
+
+            return new Expr\Func('CONCAT', $parts);
         }
 
-        return new Expr\Func('CONCAT', $parts);
+        return reset($identifiers);
     }
+
 
     /**
      * @param  ColumnInterface $column
