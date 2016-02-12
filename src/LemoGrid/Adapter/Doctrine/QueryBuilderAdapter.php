@@ -216,7 +216,7 @@ class QueryBuilderAdapter extends AbstractAdapter
 
                         $whereColSub = array();
                         foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
-                            if ('~' == $filterDefinition['operator']) {
+                            if (in_array($filterDefinition['operator'], ['~', '!~'])) {
 
                                 // Odstranime duplicity a prazdne hodnoty
                                 $filterWords = [];
@@ -238,7 +238,7 @@ class QueryBuilderAdapter extends AbstractAdapter
 
                                     foreach ($filterWords as $filterWord) {
                                         $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
-                                            'operator' => '~',
+                                            'operator' => $filterDefinition['operator'],
                                             'value'    => $filterWord
                                         ));
                                     }
@@ -248,34 +248,32 @@ class QueryBuilderAdapter extends AbstractAdapter
                                         $exp = new Expr\Andx();
                                         $exp->addMultiple($wheres);
                                     } else {
-                                        $exp = new Expr\Orx();
+                                        $exp = ('~' === $filterDefinition['operator']) ? new Expr\Orx() : new Expr\Andx();
                                         $exp->addMultiple($wheres);
                                     }
 
                                     $whereColSub[] = $exp;
                                 } else {
+
                                     foreach ($filterWords as $filterWord) {
                                         $wheres[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), array(
-                                            'operator' => '~',
+                                            'operator' => $filterDefinition['operator'],
                                             'value'    => $filterWord,
                                         ));
                                     }
 
-                                    // Operator AND
-                                    if ('and' === $col->getAttributes()->getSearchGroupOperator()) {
+                                    if ('and' == $col->getAttributes()->getSearchGroupOperator()) {
                                         $exp = new Expr\Andx();
                                         $exp->addMultiple($wheres);
-                                    }
-
-                                    // Operator OR
-                                    if ('or' === $col->getAttributes()->getSearchGroupOperator()) {
-                                        $exp = new Expr\Orx();
+                                    } else {
+                                        $exp = ('~' === $filterDefinition['operator']) ? new Expr\Orx() : new Expr\Andx();
                                         $exp->addMultiple($wheres);
                                     }
 
                                     $whereColSub[] = $exp;
                                 }
                             } else {
+
                                 // Sestavime filtr pro jednu podminku sloupce
                                 $exprFilterColSub = array();
                                 if($col instanceof ColumnConcat) {
@@ -502,7 +500,7 @@ class QueryBuilderAdapter extends AbstractAdapter
         if (count($identifiers) > 1) {
             $parts = [];
             foreach ($identifiers as $identifier) {
-                $parts[] = "CASE WHEN (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
+                $parts[] = "CASE WHEN  (" . $identifier . " IS NULL) THEN '' ELSE " . $identifier . " END";
             }
 
             return new Expr\Func('CONCAT', $parts);
