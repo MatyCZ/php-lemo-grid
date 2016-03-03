@@ -2,15 +2,13 @@
 
 namespace LemoGrid;
 
-use LemoGrid\Column\Button;
-use LemoGrid\Column\ColumnInterface;
-use LemoGrid\Column\Route;
+use Interop\Container\ContainerInterface;
 use Zend\Console\Console;
 use Zend\I18n\Translator\TranslatorAwareInterface;
 use Zend\Mvc\Router\RouteMatch;
 use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\ConfigInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
+use Zend\ServiceManager\Exception\InvalidServiceException;
 use Zend\Stdlib\InitializableInterface;
 
 /**
@@ -21,18 +19,25 @@ use Zend\Stdlib\InitializableInterface;
 class GridColumnManager extends AbstractPluginManager
 {
     /**
-     * Default set of columns
+     * Plugins must be of this type.
+     *
+     * @var string
+     */
+    protected $instanceOf = Column\ColumnInterface::class;
+
+    /**
+     * Default columns aliases
      *
      * @var array
      */
-    protected $invokableClasses = array(
-        'button'       => 'LemoGrid\Column\Button',
-        'buttons'      => 'LemoGrid\Column\Buttons',
-        'concat'       => 'LemoGrid\Column\Concat',
-        'number'       => 'LemoGrid\Column\Number',
-        'route'        => 'LemoGrid\Column\Route',
-        'text'         => 'LemoGrid\Column\Text',
-    );
+    protected $invokableClasses = [
+        'button'       => Column\Button::class,
+        'buttons'      => Column\Buttons::class,
+        'concat'       => Column\Concat::class,
+        'number'       => Column\Number::class,
+        'route'        => Column\Route::class,
+        'text'         => Column\Text::class,
+    ];
 
     /**
      * @var bool
@@ -40,32 +45,44 @@ class GridColumnManager extends AbstractPluginManager
     protected $shareByDefault = false;
 
     /**
-     * @param ConfigInterface $configuration
+     * @inheritdoc
      */
-    public function __construct(ConfigInterface $configuration = null, $serviceLocator = null)
+    public function __construct($configOrContainerInstance = null, array $v3config = [])
     {
-        parent::__construct($configuration);
+        $this->initializers[] = [$this, 'injectRouteMatch'];
+        $this->initializers[] = [$this, 'injectTranslator'];
 
-        $this->addInitializer(array($this, 'injectRouter'));
-        $this->addInitializer(array($this, 'injectTranslator'));
+        parent::__construct($configOrContainerInstance, $v3config);
     }
 
     /**
-     * Inject translator to any column that implements TranslatorAwareInterface
+     * Inject a helper instance with the registered translator
      *
-     * @param  ColumnInterface $column
-     * @return void
+     * @param ContainerInterface|Column\ColumnInterface $first helper instance
+     *     under zend-servicemanager v2, ContainerInterface under v3.
+     * @param ContainerInterface|Column\ColumnInterface $second
+     *     ContainerInterface under zend-servicemanager v3, helper instance
+     *     under v2. Ignored regardless.
      */
-    public function injectRouter($column)
+    public function injectRouteMatch($first, $second)
     {
+        if ($first instanceof ContainerInterface) {
+            // v3 usage
+            $container = $first;
+            $column = $second;
+        } else {
+            // v2 usage; grab the parent container
+            $container = $second->getServiceLocator();
+            $column = $first;
+        }
+
         if ($column instanceof Column\Route || $column instanceof Column\Button || $column instanceof Column\Buttons) {
-            $locator = $this->getServiceLocator();
             $router = Console::isConsole() ? 'HttpRouter' : 'Router';
 
-            if ($locator instanceof ServiceLocatorInterface && $locator->has($router)) {
-                $column->setRouter($locator->get($router));
+            if ($container instanceof ServiceLocatorInterface && $container->has($router)) {
+                $column->setRouter($container->get($router));
 
-                $match = $locator->get('application')
+                $match = $container->get('application')
                     ->getMvcEvent()
                     ->getRouteMatch();
 
@@ -77,45 +94,92 @@ class GridColumnManager extends AbstractPluginManager
     }
 
     /**
-     * Inject translator to any column that implements TranslatorAwareInterface
+     * Inject a helper instance with the registered translator
      *
-     * @param  ColumnInterface $column
-     * @return void
+     * @param ContainerInterface|Column\ColumnInterface $first helper instance
+     *     under zend-servicemanager v2, ContainerInterface under v3.
+     * @param ContainerInterface|Column\ColumnInterface $second
+     *     ContainerInterface under zend-servicemanager v3, helper instance
+     *     under v2. Ignored regardless.
      */
-    public function injectTranslator($column)
+    public function injectTranslator($first, $second)
     {
-        if ($column instanceof TranslatorAwareInterface) {
-            $locator = $this->getServiceLocator();
+        if ($first instanceof ContainerInterface) {
+            // v3 usage
+            $container = $first;
+            $column = $second;
+        } else {
+            // v2 usage; grab the parent container
+            $container = $second->getServiceLocator();
+            $column = $first;
+        }
 
-            if ($locator && $locator->has('translator')) {
-                $column->setTranslator($locator->get('translator'));
-            }
+        if (!$column instanceof TranslatorAwareInterface) {
+            return;
+        }
+
+        if (!$container) {
+            // Under zend-navigation v2.5, the navigation PluginManager is
+            // always lazy-loaded, which means it never has a parent
+            // container.
+            return;
+        }
+
+        if ($container->has('MvcTranslator')) {
+            $column->setTranslator($container->get('MvcTranslator'));
+            return;
+        }
+
+        if ($container->has('Zend\I18n\Translator\TranslatorInterface')) {
+            $column->setTranslator($container->get('Zend\I18n\Translator\TranslatorInterface'));
+            return;
+        }
+
+        if ($container->has('Translator')) {
+            $column->setTranslator($container->get('Translator'));
+            return;
         }
     }
 
     /**
-     * Validate the plugin
+     * Validate a plugin (v3)
      *
-     * Checks that the column is an instance of ColumnInterface
-     *
-     * @param  mixed $plugin
-     * @throws Exception\InvalidColumnException
-     * @return void
+     * {@inheritDoc}
      */
-    public function validatePlugin($plugin)
+    public function validate($plugin)
     {
+        if (! $plugin instanceof $this->instanceOf) {
+            throw new InvalidServiceException(sprintf(
+                'Column of type "%s" is invalid; must implement %s',
+                (is_object($plugin) ? get_class($plugin) : gettype($plugin)),
+                $this->instanceOf
+            ));
+        }
+
+
         // Hook to perform various initialization, when the column is not created through the factory
         if ($plugin instanceof InitializableInterface) {
             $plugin->init();
         }
+    }
 
-        if ($plugin instanceof ColumnInterface) {
-            return; // we're okay
+    /**
+     * Validate a plugin (v2)
+     *
+     * {@inheritDoc}
+     *
+     * @throws Exception\InvalidColumnException
+     */
+    public function validatePlugin($plugin)
+    {
+        try {
+            $this->validate($plugin);
+        } catch (InvalidServiceException $e) {
+            throw new Exception\InvalidColumnException(
+                $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
         }
-
-        throw new Exception\InvalidColumnException(sprintf(
-            'Plugin of type %s is invalid; must implement LemoGrid\ColumnInterface',
-            (is_object($plugin) ? get_class($plugin) : gettype($plugin))
-        ));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace LemoGrid;
 
+use Interop\Container\ContainerInterface;
 use Zend\ServiceManager\AbstractFactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
@@ -22,67 +23,97 @@ class GridAbstractServiceFactory implements AbstractFactoryInterface
     /**
      * Grid factory used to create grids
      *
-     * @var Factory
+     * @var GridFactory
      */
     protected $factory;
 
     /**
-     * Can we create the requested service?
+     * Create a form (v3)
      *
-     * @param  ServiceLocatorInterface $services
-     * @param  string $name Service name (as resolved by ServiceManager)
-     * @param  string $rName Name by which service was requested
-     * @return bool
+     * @param ContainerInterface $container
+     * @param string $requestedName
+     * @param array|null $options
+     * @return GridInterface
      */
-    public function canCreateServiceWithName(ServiceLocatorInterface $services, $name, $rName)
+    public function __invoke(ContainerInterface $container, $requestedName, array $options = null)
     {
-        $config = $this->getConfig($services);
-        if (empty($config)) {
-            return false;
-        }
-
-        return (isset($config[$rName]) && is_array($config[$rName]) && !empty($config[$rName]));
-    }
-
-    /**
-     * Create a grid
-     *
-     * @param  ServiceLocatorInterface $services
-     * @param  string $name Service name (as resolved by ServiceManager)
-     * @param  string $rName Name by which service was requested
-     * @return Grid
-     */
-    public function createServiceWithName(ServiceLocatorInterface $services, $name, $rName)
-    {
-        $config  = $this->getConfig($services);
-        $config  = $config[$rName];
-        $factory = $this->getGridFactory($services);
+        $config  = $this->getConfig($container);
+        $config  = $config[$requestedName];
+        $factory = $container->get('GridFactory');
 
         return $factory->createGrid($config);
     }
 
     /**
-     * Get grids configuration, if any
+     * Can we create an instance of the given service? (v3 usage).
      *
-     * @param  ServiceLocatorInterface $services
-     * @return array
+     * @param ContainerInterface $container
+     * @param string $requestedName
+     * @return bool
      */
-    protected function getConfig(ServiceLocatorInterface $services)
+    public function canCreate(ContainerInterface $container, $requestedName)
     {
-        if ($this->config !== null) {
+        // avoid infinite loops when looking up config
+        if ($requestedName == 'config') {
+            return false;
+        }
+
+        $config = $this->getConfig($container);
+
+        if (empty($config)) {
+            return false;
+        }
+
+        $containerName = $this->normalizeContainerName($requestedName);
+        return array_key_exists($containerName, $config);
+    }
+
+    /**
+     * Can we create the requested service? (v2)
+     *
+     * @param ServiceLocatorInterface $serviceLocator
+     * @param string $name
+     * @param string $requestedName
+     * @return bool
+     */
+    public function canCreateServiceWithName(ServiceLocatorInterface $serviceLocator, $name, $requestedName)
+    {
+        return $this->canCreate($serviceLocator, $requestedName);
+    }
+
+    /**
+     * Create and return a named container (v2 usage).
+     *
+     * @param  ServiceLocatorInterface $serviceLocator
+     * @param  string                  $name
+     * @param  string                  $requestedName
+     * @return GridInterface
+     */
+    public function createServiceWithName(ServiceLocatorInterface $serviceLocator, $name, $requestedName)
+    {
+        return $this($serviceLocator, $requestedName);
+    }
+
+    /**
+     * Retrieve config from service locator, and cache for later
+     *
+     * @param  ContainerInterface $container
+     * @return false|array
+     */
+    protected function getConfig(ContainerInterface $container)
+    {
+        if (null !== $this->config) {
             return $this->config;
         }
 
-        if (!$services->has('Config')) {
-            $this->config = array();
+        if (!$container->has('config')) {
+            $this->config = [];
             return $this->config;
         }
 
-        $config = $services->get('Config');
-        if (!isset($config[$this->configKey])
-            || !is_array($config[$this->configKey])
-        ) {
-            $this->config = array();
+        $config = $container->get('config');
+        if (! isset($config[$this->configKey]) || ! is_array($config[$this->configKey])) {
+            $this->config = [];
             return $this->config;
         }
 
@@ -91,33 +122,13 @@ class GridAbstractServiceFactory implements AbstractFactoryInterface
     }
 
     /**
-     * Retrieve the grid factory, creating it if necessary
+     * Normalize the container name in order to perform a lookup
      *
-     * @param  ServiceLocatorInterface $services
-     * @return Factory
+     * @param  string $name
+     * @return string
      */
-    protected function getGridFactory(ServiceLocatorInterface $services)
+    protected function normalizeContainerName($name)
     {
-        if ($this->factory instanceof Factory) {
-            return $this->factory;
-        }
-
-        $adapterManager = null;
-        if ($services->has('GridAdapterManager')) {
-            $adapterManager = $services->get('GridAdapterManager');
-        }
-
-        $columnManager = null;
-        if ($services->has('GridColumnManager')) {
-            $columnManager = $services->get('GridColumnManager');
-        }
-
-        $platformManager = null;
-        if ($services->has('GridPlatformManager')) {
-            $platformManager = $services->get('GridPlatformManager');
-        }
-
-        $this->factory = new Factory($platformManager, $adapterManager, $columnManager);
-        return $this->factory;
+        return strtolower($name);
     }
 }

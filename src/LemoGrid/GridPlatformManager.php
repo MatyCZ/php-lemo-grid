@@ -2,9 +2,8 @@
 
 namespace LemoGrid;
 
-use LemoGrid\Platform\PlatformInterface;
 use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\ConfigInterface;
+use Zend\ServiceManager\Exception\InvalidServiceException;
 use Zend\Stdlib\InitializableInterface;
 
 /**
@@ -19,9 +18,16 @@ class GridPlatformManager extends AbstractPluginManager
      *
      * @var array
      */
-    protected $invokableClasses = array(
-        'jqgrid' => 'LemoGrid\Platform\JqGridPlatform',
-    );
+    protected $invokableClasses = [
+        'jqgrid' => Platform\JqGridPlatform::class,
+    ];
+
+    /**
+     * Plugins must be of this type.
+     *
+     * @var string
+     */
+    protected $instanceOf = Platform\PlatformInterface::class;
 
     /**
      * Don't share grid platforms by default
@@ -31,36 +37,44 @@ class GridPlatformManager extends AbstractPluginManager
     protected $shareByDefault = false;
 
     /**
-     * @param ConfigInterface $configuration
+     * Validate a plugin (v3)
+     *
+     * {@inheritDoc}
      */
-    public function __construct(ConfigInterface $configuration = null)
+    public function validate($plugin)
     {
-        parent::__construct($configuration);
-    }
+        if (! $plugin instanceof $this->instanceOf) {
+            throw new InvalidServiceException(sprintf(
+                'Column of type "%s" is invalid; must implement %s',
+                (is_object($plugin) ? get_class($plugin) : gettype($plugin)),
+                $this->instanceOf
+            ));
+        }
 
-    /**
-     * Validate the plugin
-     *
-     * Checks that the platform is an instance of PlatformInterface
-     *
-     * @param  mixed $plugin
-     * @throws Exception\InvalidPlatformException
-     * @return void
-     */
-    public function validatePlugin($plugin)
-    {
-        // Hook to perform various initialization, when the platform is not created through the factory
+
+        // Hook to perform various initialization, when the column is not created through the factory
         if ($plugin instanceof InitializableInterface) {
             $plugin->init();
         }
+    }
 
-        if ($plugin instanceof PlatformInterface) {
-            return; // we're okay
+    /**
+     * Validate a plugin (v2)
+     *
+     * {@inheritDoc}
+     *
+     * @throws Exception\InvalidPlatformException
+     */
+    public function validatePlugin($plugin)
+    {
+        try {
+            $this->validate($plugin);
+        } catch (InvalidServiceException $e) {
+            throw new Exception\InvalidPlatformException(
+                $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
         }
-
-        throw new Exception\InvalidPlatformException(sprintf(
-            'Platform of type %s is invalid; must implement LemoGrid\Platform\PlatformInterface',
-            (is_object($plugin) ? get_class($plugin) : gettype($plugin))
-        ));
     }
 }

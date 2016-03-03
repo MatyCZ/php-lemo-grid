@@ -32,14 +32,6 @@ class GridAdapterManager extends AbstractPluginManager
     protected $shareByDefault = false;
 
     /**
-     * @param ConfigInterface $configuration
-     */
-    public function __construct(ConfigInterface $configuration = null)
-    {
-        parent::__construct($configuration);
-    }
-
-    /**
      * Validate the plugin
      *
      * Checks that the adapter is an instance of AdapterInterface

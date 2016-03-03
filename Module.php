@@ -48,14 +48,14 @@ class Module implements
         $event = $moduleManager->getEvent();
         $eventManager = $moduleManager->getEventManager();
 
-        $serviceManager = $event->getParam('ServiceManager');
+        $serviceManager = clone $event->getParam('ServiceManager');
         $serviceListener = $serviceManager->get('ServiceListener');
 
         $eventManager->detach($serviceListener);
 
         // Add managers to listener
         $serviceListener->addServiceManager(
-            'ServiceManager',
+            'Zend\ServiceManager\ServiceManager',
             'grids',
             'LemoGrid\ModuleManager\Feature\GridProviderInterface',
             'getGridConfig'
@@ -88,10 +88,9 @@ class Module implements
         // Add initializer to service manager
         $serviceManager->addInitializer(function ($instance) use ($serviceManager) {
             if ($instance instanceof GridFactoryAwareInterface) {
-                $instance->setGridFactory($serviceManager->get('LemoGrid\Factory'));
+                $instance->setGridFactory($serviceManager->get('LemoGrid\GridFactory'));
             }
         });
-
         $eventManager->attach($serviceListener);
     }
 
@@ -105,23 +104,18 @@ class Module implements
                 'LemoGrid\GridAbstractServiceFactory',
             ),
             'factories' => array(
-                'GridAdapterManager'  => 'LemoGrid\Mvc\Service\GridAdapterManagerFactory',
-                'GridColumnManager'   => 'LemoGrid\Mvc\Service\GridColumnManagerFactory',
-                'GridPlatformManager' => 'LemoGrid\Mvc\Service\GridPlatformManagerFactory',
-                'GridStorageManager'  => 'LemoGrid\Mvc\Service\GridStorageManagerFactory',
-                'LemoGrid\Mvc\Service\GridColumnManagerFactory' => function ($sm) {
-                    $instance = new GridColumnManager();
-                    $instance->setServiceLocator($sm);
-                    return $instance;
+                'GridAdapterManager'  => 'LemoGrid\GridAdapterManagerFactory',
+                'GridColumnManager'   => 'LemoGrid\GridColumnManagerFactory',
+                'GridFactory' => function ($serviceManager) {
+                    return new GridFactory(
+                        $serviceManager->get('GridAdapterManager'),
+                        $serviceManager->get('GridColumnManager'),
+                        $serviceManager->get('GridPlatformManager'),
+                        $serviceManager->get('GridStorageManager')
+                    );
                 },
-                'LemoGrid\Factory'    => function ($sm) {
-                    $instance = new Factory();
-                    $instance->setGridAdapterManager($sm->get('GridAdapterManager'));
-                    $instance->setGridColumnManager($sm->get('GridColumnManager'));
-                    $instance->setGridPlatformManager($sm->get('GridPlatformManager'));
-                    $instance->setGridStorageManager($sm->get('GridStorageManager'));
-                    return $instance;
-                },
+                'GridPlatformManager' => 'LemoGrid\GridPlatformManagerFactory',
+                'GridStorageManager'  => 'LemoGrid\GridStorageManagerFactory',
             ),
         );
     }

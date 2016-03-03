@@ -2,22 +2,23 @@
 
 namespace LemoGrid;
 
-use \LemoGrid\Factory;
+use \LemoGrid\GridFactory;
 
 trait GridFactoryAwareTrait
 {
     /**
-     * @var Factory
+     * @var GridFactory
      */
     protected $factory = null;
 
     /**
      * Compose a grid factory into the object
-     *
-     * @param Factory $factory
+     
+     * 
+*@param GridFactory $factory
      * @return mixed
      */
-    public function setGridFactory(Factory $factory)
+    public function setGridFactory(GridFactory $factory)
     {
         $this->factory = $factory;
 

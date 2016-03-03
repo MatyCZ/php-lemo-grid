@@ -7,6 +7,7 @@ use ArrayIterator;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\ColumnPrepareAwareInterface;
+use LemoGrid\Exception\InvalidArgumentException;
 use LemoGrid\Platform\PlatformInterface;
 use LemoGrid\Storage\StorageInterface;
 use LemoGrid\Style\ColumnStyle;
@@ -55,7 +56,7 @@ class Grid implements
     protected $eventManager;
 
     /**
-     * @var Factory
+     * @var GridFactory
      */
     protected $factory;
 
@@ -161,10 +162,19 @@ class Grid implements
      */
     public function add($column, array $flags = array())
     {
-        if (is_array($column)
-        || ($column instanceof Traversable && !$column instanceof ColumnInterface)
+        if (
+            is_array($column) ||
+            ($column instanceof Traversable && !$column instanceof ColumnInterface)
         ) {
-            $factory = $this->getGridFactory();
+            $factory = $this->factory;
+
+            if (!$factory instanceof GridFactory) {
+                throw new InvalidArgumentException(sprintf(
+                    "Grid '%s' has no GridFactory instance given",
+                    $this->getName()
+                ));
+            }
+
             $column = $factory->createColumn($column);
         }
 
@@ -357,10 +367,10 @@ class Grid implements
     /**
      * Compose a grid factory to use when calling add() with a non-element
      *
-     * @param  Factory $factory
+     * @param  GridFactory $factory
      * @return Grid
      */
-    public function setGridFactory(Factory $factory)
+    public function setGridFactory(GridFactory $factory)
     {
         $this->factory = $factory;
 
@@ -369,15 +379,14 @@ class Grid implements
 
     /**
      * Retrieve composed grid factory
-     *
      * Lazy-loads one if none present.
      *
-     * @return Factory
+     * @return GridFactory
      */
     public function getGridFactory()
     {
         if (null === $this->factory) {
-            $this->setGridFactory(new Factory());
+            $this->setGridFactory(new GridFactory());
         }
 
         return $this->factory;

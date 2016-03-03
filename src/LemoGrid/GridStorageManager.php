@@ -2,9 +2,8 @@
 
 namespace LemoGrid;
 
-use LemoGrid\Storage\StorageInterface;
 use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\ConfigInterface;
+use Zend\ServiceManager\Exception\InvalidServiceException;
 use Zend\Stdlib\InitializableInterface;
 
 /**
@@ -20,9 +19,16 @@ class GridStorageManager extends AbstractPluginManager
      * @var array
      */
     protected $invokableClasses = array(
-        'doctrine_entity' => 'LemoGrid\Storage\Doctrine\EntityStorage',
-        'php_session    ' => 'LemoGrid\Storage\Php\SessionStorage',
+        'doctrine_entity' => Storage\Doctrine\EntityStorage::class,
+        'php_session    ' => Storage\Php\SessionStorage::class,
     );
+
+    /**
+     * Plugins must be of this type.
+     *
+     * @var string
+     */
+    protected $instanceOf = Storage\StorageInterface::class;
 
     /**
      * Don't share grid storages by default
@@ -32,36 +38,44 @@ class GridStorageManager extends AbstractPluginManager
     protected $shareByDefault = false;
 
     /**
-     * @param ConfigInterface $configuration
+     * Validate a plugin (v3)
+     *
+     * {@inheritDoc}
      */
-    public function __construct(ConfigInterface $configuration = null)
+    public function validate($plugin)
     {
-        parent::__construct($configuration);
-    }
+        if (! $plugin instanceof $this->instanceOf) {
+            throw new InvalidServiceException(sprintf(
+                'Column of type "%s" is invalid; must implement %s',
+                (is_object($plugin) ? get_class($plugin) : gettype($plugin)),
+                $this->instanceOf
+            ));
+        }
 
-    /**
-     * Validate the plugin
-     *
-     * Checks that the storage is an instance of StorageInterface
-     *
-     * @param  mixed $plugin
-     * @throws Exception\InvalidStorageException
-     * @return void
-     */
-    public function validatePlugin($plugin)
-    {
-        // Hook to perform various initialization, when the storage is not created through the factory
+
+        // Hook to perform various initialization, when the column is not created through the factory
         if ($plugin instanceof InitializableInterface) {
             $plugin->init();
         }
+    }
 
-        if ($plugin instanceof StorageInterface) {
-            return; // we're okay
+    /**
+     * Validate a plugin (v2)
+     *
+     * {@inheritDoc}
+     *
+     * @throws Exception\InvalidStorageException
+     */
+    public function validatePlugin($plugin)
+    {
+        try {
+            $this->validate($plugin);
+        } catch (Exception\InvalidStorageException $e) {
+            throw new Exception\InvalidPlatformException(
+                $e->getMessage(),
+                $e->getCode(),
+                $e
+            );
         }
-
-        throw new Exception\InvalidStorageException(sprintf(
-            'Storage of type %s is invalid; must implement LemoGrid\Storage\StorageInterface',
-            (is_object($plugin) ? get_class($plugin) : gettype($plugin))
-        ));
     }
 }

@@ -6,15 +6,17 @@ interface GridFactoryAwareInterface
 {
     /**
      * Compose a grid factory into the object
-     *
-     * @param Factory $factory
+     
+     * 
+*@param GridFactory $factory
      */
-    public function setGridFactory(Factory $factory);
+    public function setGridFactory(GridFactory $factory);
 
     /**
      * Retrive grid factory
-     *
-     * @return Factory
+     
+     * 
+*@return GridFactory
      */
     public function getGridFactory();
 }
