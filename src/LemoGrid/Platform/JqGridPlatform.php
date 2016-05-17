@@ -353,16 +353,16 @@ class JqGridPlatform extends AbstractPlatform
 
         // Nacteme razeni z parametru z Requestu
         if ($this->getGrid()->hasParam('sidx')) {
-            $sidx = strtolower($this->getGrid()->getParam('sidx'));
+            $sidx = $this->getGrid()->getParam('sidx');
             if (!empty($sidx)) {
                 $column = $sidx;
             }
         }
         if ($this->getGrid()->hasParam('sord')) {
-            $sord = strtolower($this->getGrid()->getParam('sord'));
+            $sord = $this->getGrid()->getParam('sord');
             if (!empty($sord)) {
-                if($sord != 'asc' && $sord != 'desc') {
-                    throw new Exception\UnexpectedValueException('Sort direct must be ' . 'asc' . ' or ' . 'desc' . '!');
+                if (strtolower($sord) != 'asc' && strtolower($sord) != 'desc') {
+                    throw new Exception\UnexpectedValueException('Sort direct must be ' . 'ASC' . ' or ' . 'DESC' . '!');
                 }
 
                 $direct = $sord;

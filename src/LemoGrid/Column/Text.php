@@ -61,6 +61,12 @@ class Text extends AbstractColumn
      */
     public function renderValue(AdapterInterface $adapter, array $item)
     {
-        return $this->getValue();
+        $textToReplace = $this->getOptions()->getTextToReplace();
+
+        if (!empty($textToReplace)) {
+            return str_replace(array_keys($textToReplace), array_values($textToReplace), $this->getValue());
+        } else {
+            return $this->getValue();
+        }
     }
 }

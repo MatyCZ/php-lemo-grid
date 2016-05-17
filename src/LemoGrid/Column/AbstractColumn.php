@@ -5,9 +5,9 @@ namespace LemoGrid\Column;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\GridInterface;
-use Zend\Stdlib\ArrayUtils;
 use LemoGrid\Exception;
 use Traversable;
+use Zend\Stdlib\ArrayUtils;
 use Zend\Stdlib\InitializableInterface;
 
 abstract class AbstractColumn implements
