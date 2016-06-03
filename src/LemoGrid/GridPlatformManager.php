@@ -18,9 +18,23 @@ class GridPlatformManager extends AbstractPluginManager
      *
      * @var array
      */
-    protected $invokableClasses = [
+    protected $aliases = [
         'jqgrid' => Platform\JqGridPlatform::class,
     ];
+
+    /**
+     * Don't share form elements by default (v3)
+     *
+     * @var bool
+     */
+    protected $sharedByDefault = false;
+
+    /**
+     * Don't share form elements by default (v2)
+     *
+     * @var bool
+     */
+    protected $shareByDefault = false;
 
     /**
      * Plugins must be of this type.
@@ -28,13 +42,6 @@ class GridPlatformManager extends AbstractPluginManager
      * @var string
      */
     protected $instanceOf = Platform\PlatformInterface::class;
-
-    /**
-     * Don't share grid platforms by default
-     *
-     * @var bool
-     */
-    protected $shareByDefault = false;
 
     /**
      * Validate a plugin (v3)

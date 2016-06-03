@@ -2,27 +2,33 @@
 
 namespace LemoGrid;
 
-use LemoGrid\Storage\StorageInterface;
+use Interop\Container\ContainerInterface;
 use Zend\Mvc\Exception;
 use Zend\Mvc\Service\AbstractPluginManagerFactory;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
 class GridStorageManagerFactory extends AbstractPluginManagerFactory
 {
-    const PLUGIN_MANAGER_CLASS = 'LemoGrid\GridStorageManager';
+    /**
+     * {@inheritDoc}
+     *
+     * @return GridStorageManager
+     */
+    public function __invoke(ContainerInterface $container, $name, array $options = null)
+    {
+        return new GridStorageManager($container);
+    }
 
     /**
-     * Create and return the view helper manager
+     * Create and return AbstractPluginManager instance
      *
-     * @param  ServiceLocatorInterface $serviceLocator
-     * @return StorageInterface
-     * @throws Exception\RuntimeException
+     * For use with zend-servicemanager v2; proxies to __invoke().
+     *
+     * @param  ServiceLocatorInterface $container
+     * @return GridStorageManager
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function createService(ServiceLocatorInterface $container)
     {
-        $plugins = parent::createService($serviceLocator);
-        $plugins->setServiceLocator($serviceLocator);
-
-        return $plugins;
+        return $this($container, GridColumnManager::class);
     }
 }

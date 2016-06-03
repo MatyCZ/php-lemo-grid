@@ -2,48 +2,34 @@
 
 namespace LemoGrid;
 
+use Interop\Container\ContainerInterface;
 use LemoGrid\Column;
-use LemoGrid\Column\ColumnInterface;
-use Zend\Console\Console;
 use Zend\Mvc\Exception;
-use Zend\Mvc\Router\RouteMatch;
-use Zend\Mvc\Service\AbstractPluginManagerFactory;
+use Zend\ServiceManager\FactoryInterface;
 use Zend\ServiceManager\ServiceLocatorInterface;
 
-class GridColumnManagerFactory extends AbstractPluginManagerFactory
+class GridColumnManagerFactory implements FactoryInterface
 {
-    const PLUGIN_MANAGER_CLASS = 'LemoGrid\GridColumnManager';
+    /**
+     * {@inheritDoc}
+     *
+     * @return GridColumnManager
+     */
+    public function __invoke(ContainerInterface $container, $name, array $options = null)
+    {
+        return new GridColumnManager($container);
+    }
 
     /**
-     * Create and return the view helper manager
+     * Create and return AbstractPluginManager instance
      *
-     * @param  ServiceLocatorInterface $serviceLocator
-     * @return ColumnInterface
-     * @throws Exception\RuntimeException
+     * For use with zend-servicemanager v2; proxies to __invoke().
+     *
+     * @param  ServiceLocatorInterface $container
+     * @return GridColumnManager
      */
-    public function createService(ServiceLocatorInterface $serviceLocator)
+    public function createService(ServiceLocatorInterface $container)
     {
-        $plugins = parent::createService($serviceLocator);
-        $plugins->setServiceLocator($serviceLocator);
-
-        // Configure Route column with router
-//        $plugins->setFactory('route', function ($serviceLocator) use($serviceLocator) {
-//            $router = Console::isConsole() ? 'HttpRouter' : 'Router';
-//
-//            $column = new Column\Route;
-//            $column->setRouter($serviceLocator->get($router));
-//
-//            $match = $serviceLocator->get('application')
-//                ->getMvcEvent()
-//                ->getRouteMatch();
-//
-//            if ($match instanceof RouteMatch) {
-//                $column->setRouteMatch($match);
-//            }
-//
-//            return $column;
-//        });
-
-        return $plugins;
+        return $this($container, GridColumnManager::class);
     }
 }

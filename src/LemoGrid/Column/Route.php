@@ -115,13 +115,13 @@ class Route extends AbstractColumn
 
         $options['name'] = $name;
 
-        $link = $this->router->assemble($params, $options);
+        $link = urldecode($this->router->assemble($params, $options));
 
-        return urldecode(sprintf(
+        return sprintf(
             $this->getOptions()->getTemplate(),
             $link,
             $this->getOptions()->getText()
-        ));
+        );
     }
 
     /**

@@ -19,30 +19,58 @@ use Zend\Stdlib\InitializableInterface;
 class GridColumnManager extends AbstractPluginManager
 {
     /**
+     * Aliases for default set of helpers
+     *
+     * @var array
+     */
+    protected $aliases = [
+        'button'       => Column\Button::class,
+        'Button'       => Column\Button::class,
+        'buttons'      => Column\Buttons::class,
+        'Buttons'      => Column\Buttons::class,
+        'concat'       => Column\Concat::class,
+        'Concat'       => Column\Concat::class,
+        'number'       => Column\Number::class,
+        'Number'       => Column\Number::class,
+        'route'        => Column\Route::class,
+        'Route'        => Column\Route::class,
+        'text'         => Column\Text::class,
+        'Text'         => Column\Text::class,
+    ];
+    /**
+     * Aliases for default set of helpers
+     *
+     * @var array
+     */
+    protected $factories = [
+        Column\Button::class  => Column\ColumnFactory::class,
+        Column\Buttons::class => Column\ColumnFactory::class,
+        Column\Concat::class  => Column\ColumnFactory::class,
+        Column\Number::class  => Column\ColumnFactory::class,
+        Column\Route::class   => Column\ColumnFactory::class,
+        Column\Text::class    => Column\ColumnFactory::class,
+    ];
+
+    /**
+     * Don't share form elements by default (v3)
+     *
+     * @var bool
+     */
+    protected $sharedByDefault = false;
+
+    /**
+     * Don't share form elements by default (v2)
+     *
+     * @var bool
+     */
+    protected $shareByDefault = false;
+
+    /**
      * Plugins must be of this type.
      *
      * @var string
      */
     protected $instanceOf = Column\ColumnInterface::class;
-
-    /**
-     * Default columns aliases
-     *
-     * @var array
-     */
-    protected $invokableClasses = [
-        'button'       => Column\Button::class,
-        'buttons'      => Column\Buttons::class,
-        'concat'       => Column\Concat::class,
-        'number'       => Column\Number::class,
-        'route'        => Column\Route::class,
-        'text'         => Column\Text::class,
-    ];
-
-    /**
-     * @var bool
-     */
-    protected $shareByDefault = false;
 
     /**
      * @inheritdoc

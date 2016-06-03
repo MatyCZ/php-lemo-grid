@@ -53,7 +53,7 @@ class SelectAdapter extends AbstractAdapter
 
 
 //        $sql = new Sql($this->getAdapter());
-//        \Zend\Debug\Debug::dump($sql->getSqlStringForSqlObject($this->getSelect()));
+//        \Zend\Debug\Debug::dump($sql->buildSqlString($this->getSelect()));
 //        exit;
 
         $paginatorAdapter = new DbSelect($this->getSelect(), $this->getAdapter());
@@ -210,7 +210,7 @@ class SelectAdapter extends AbstractAdapter
 
         // WHERE
         if (!empty($filter['rules'])) {
-
+            $havingCol = array();
             $whereCol = array();
             foreach($columns as $indexCol => $col) {
                 if (true === $col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
@@ -314,10 +314,35 @@ class SelectAdapter extends AbstractAdapter
                                 }
                             }
 
-                            $whereCol[] = $predicateCol;
+                            switch ($col->getAttributes()->getSearchType()) {
+                                case 'having':
+                                    $havingCol[] = $predicateCol;
+                                    break;
+                                case 'where':
+                                    $whereCol[] = $predicateCol;
+                                    break;
+                            }
                         }
                     }
                 }
+            }
+
+            // Pridame k vychozimu HAVING i HAVING z filtrace sloupcu
+            if (!empty($havingCol)) {
+                if (count($havingCol) == 1) {
+                    $predicate = $havingCol[0];
+                } else {
+                    $predicate = new Predicate();
+                    foreach ($havingCol as $w) {
+                        if ('and' == $filter['operator']) {
+                            $predicate->andPredicate($w);
+                        } else {
+                            $predicate->orPredicate($w);
+                        }
+                    }
+                }
+
+                $this->getSelect()->having($predicate);
             }
 
             // Pridame k vychozimu WHERE i WHERE z filtrace sloupcu
@@ -416,18 +441,6 @@ class SelectAdapter extends AbstractAdapter
      */
     public function findValue($identifier, array $item, $depth = 0)
     {
-        // Determinate column name and alias name
-        $identifier = str_replace('_', '.', $identifier);
-
-        if (false !== strpos($identifier, '.')) {
-            $identifier = substr($identifier, strpos($identifier, '.') +1);
-        }
-
-        $parts = explode('.', $identifier);
-        if (isset($item[$parts[0]]) && count($parts) > 1) {
-            return $this->findValue($identifier, $item[$parts[0]], $depth+1);
-        }
-
         if (isset($item[$identifier])) {
             return $item[$identifier];
         } else {

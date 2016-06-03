@@ -46,12 +46,9 @@ class Module implements
     public function init(ModuleManagerInterface $moduleManager)
     {
         $event = $moduleManager->getEvent();
-        $eventManager = $moduleManager->getEventManager();
 
         $serviceManager = clone $event->getParam('ServiceManager');
         $serviceListener = $serviceManager->get('ServiceListener');
-
-        $eventManager->detach($serviceListener);
 
         // Add managers to listener
         $serviceListener->addServiceManager(
@@ -91,7 +88,6 @@ class Module implements
                 $instance->setGridFactory($serviceManager->get('LemoGrid\GridFactory'));
             }
         });
-        $eventManager->attach($serviceListener);
     }
 
     /**

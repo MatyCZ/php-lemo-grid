@@ -204,6 +204,13 @@ class ColumnAttributes extends AbstractOptions
     protected $searchUrl;
 
     /**
+     * Determines the type of the element when searching. Possible values: text and select.
+     *
+     * @var string
+     */
+    protected $searchType = 'where';
+
+    /**
      * If this option is false the title is not displayed in that column when we hover a cell with the mouse
      *
      * @var bool
@@ -701,6 +708,7 @@ class ColumnAttributes extends AbstractOptions
      *
      * @param  string $operator
      * @return ColumnAttributes
+     * @throws \Exception
      */
     public function setSearchGroupOperator($operator)
     {
@@ -784,6 +792,35 @@ class ColumnAttributes extends AbstractOptions
     public function getSearchValue()
     {
         return $this->searchOptions['value'];
+    }
+
+    /**
+     * Set search type
+     *
+     * @param  string $type
+     * @return ColumnAttributes
+     * @throws \Exception
+     */
+    public function setSearchType($type)
+    {
+        $type = strtolower($type);
+
+        if (!in_array($type, array('where', 'having'))) {
+            throw new \Exception("Allowed search types are 'where' and 'having'");
+        }
+
+        $this->searchType = $type;
+        return $this;
+    }
+
+    /**
+     * Get search type
+     *
+     * @return string
+     */
+    public function getSearchType()
+    {
+        return $this->searchType;
     }
 
     /**

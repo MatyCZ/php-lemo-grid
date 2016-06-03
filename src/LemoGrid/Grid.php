@@ -409,7 +409,7 @@ class Grid implements
     public function getEventManager()
     {
         if (null === $this->eventManager) {
-            $this->eventManager = new EventManager(get_called_class());
+            $this->eventManager = new EventManager();
         }
 
         return $this->eventManager;
