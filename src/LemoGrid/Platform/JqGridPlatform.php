@@ -144,7 +144,7 @@ class JqGridPlatform extends AbstractPlatform
                 $rules = $this->stripSlashesRecursive(Json\Decoder::decode($value, Json\Json::TYPE_ARRAY));
             }
 
-            if(empty($rules['groupOp'])) {
+            if (empty($rules['groupOp'])) {
                 return $value;
             }
 

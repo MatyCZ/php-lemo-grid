@@ -80,6 +80,7 @@ class JqGrid extends AbstractHelper
         'header_titles'                      => 'headertitles',
         'height'                             => 'height',
         'hover_rows'                         => 'hoverrows',
+        'icon_set'                           => 'iconSet',
         'load_once'                          => 'loadonce',
         'load_type'                          => 'loadui',
         'multi_select'                       => 'multiselect',
@@ -222,7 +223,6 @@ class JqGrid extends AbstractHelper
         $grid = $this->getGrid();
         $filters = $grid->getParam('filters');
 
-        $colNames = array();
         foreach ($grid->getColumns() as $column) {
             $label = $column->getAttributes()->getLabel();
 
@@ -243,9 +243,16 @@ class JqGrid extends AbstractHelper
                 $searchOptions = $column->getAttributes()->getSearchOptions();
 
                 if (isset($searchOptions['defaultValue'])) {
+                    $searchOperatos = $column->getAttributes()->getSearchOperators();
+
+                    $searchOperator = 'cn';
+                    if (!empty($searchOperatos)) {
+                        $searchOperator = current($searchOperatos);
+                    }
+
                     $rules[] = array(
                         'field' => $column->getName(),
-                        'op'    => 'cn',
+                        'op'    => $searchOperator,
                         'data'  => $searchOptions['defaultValue'],
                     );
                 }
@@ -262,8 +269,13 @@ class JqGrid extends AbstractHelper
             }
         }
 
+        $groupOp = strtoupper($filters['operator']);
+        if (!in_array($filters['operator'], ['AND', 'OR'])) {
+            $groupOp = 'AND';
+        }
+
         if (!empty($rules)) {
-            $script[] = '        postData: {"filters":\'{"groupOp": "' . strtoupper($filters['operator']) . '","rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
+            $script[] = '        postData: {"filters":\'{"groupOp": "' . $groupOp . '", "rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
         }
 
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';

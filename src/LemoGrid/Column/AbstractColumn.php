@@ -468,7 +468,7 @@ abstract class AbstractColumn implements
         $conditions = $this->getConditions();
         $isValid = true;
 
-        if(!empty($conditions)) {
+        if (!empty($conditions)) {
             foreach ($conditions as $condition) {
                 $value = $adapter->findValue($condition->getColumn(), $item);
 
@@ -479,6 +479,7 @@ abstract class AbstractColumn implements
                         }
                         break;
                     case '=':
+                    case '==':
                         if ($value != $condition->getValue()) {
                             $isValid = false;
                         }

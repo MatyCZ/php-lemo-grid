@@ -934,9 +934,8 @@ class JqGridPlatformOptions extends AbstractOptions
 
     /**
      * Set filter toolbar enable clear
-
      *
-*@param  bool $enableClear
+     * @param  bool $enableClear
      * @return JqGridPlatformOptions
      */
     public function setFilterToolbarEnableClear($enableClear)
@@ -957,9 +956,8 @@ class JqGridPlatformOptions extends AbstractOptions
 
     /**
      * Set if filter toolbar search only on Enter
-
      *
-*@param  bool $searchOnEnter
+     * @param  bool $searchOnEnter
      * @return JqGridPlatformOptions
      */
     public function setFilterToolbarSearchOnEnter($searchOnEnter)
@@ -980,9 +978,8 @@ class JqGridPlatformOptions extends AbstractOptions
 
     /**
      * Set if filter toolbar show operators
-
      *
-*@param  bool $showOperators
+     * @param  bool $showOperators
      * @return JqGridPlatformOptions
      */
     public function setFilterToolbarShowOperators($showOperators)
@@ -1003,9 +1000,8 @@ class JqGridPlatformOptions extends AbstractOptions
 
     /**
      * Set if filter toolbar is enabled
-
      *
-*@param  bool $filterToolbarEnabled
+     * @param  bool $filterToolbarEnabled
      * @return JqGridPlatformOptions
      */
     public function setFilterToolbarEnabled($filterToolbarEnabled)

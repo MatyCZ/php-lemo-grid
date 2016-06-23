@@ -51,11 +51,6 @@ class SelectAdapter extends AbstractAdapter
         $this->applyPagination();
         $this->applySortings();
 
-
-//        $sql = new Sql($this->getAdapter());
-//        \Zend\Debug\Debug::dump($sql->buildSqlString($this->getSelect()));
-//        exit;
-
         $paginatorAdapter = new DbSelect($this->getSelect(), $this->getAdapter());
         $paginator = new Paginator($paginatorAdapter);
         $paginator->setCurrentPageNumber($this->getGrid()->getPlatform()->getNumberOfCurrentPage());
@@ -526,9 +521,15 @@ class SelectAdapter extends AbstractAdapter
                 $where = $predicate->notLike($identifier, $value . "%");
                 break;
             case AbstractPlatform::OPERATOR_IN:
+                if (!is_array($value) && false !== strpos($value, ',')) {
+                    $value = explode(',', $value);
+                }
                 $where = $predicate->in($identifier, $value);
                 break;
             case AbstractPlatform::OPERATOR_NOT_IN:
+                if (!is_array($value) && false !== strpos($value, ',')) {
+                    $value = explode(',', $value);
+                }
                 $where = $predicate->notIn($identifier, $value);
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
