@@ -5,7 +5,7 @@ namespace LemoGrid;
 use Interop\Container\ContainerInterface;
 use Zend\Console\Console;
 use Zend\I18n\Translator\TranslatorAwareInterface;
-use Zend\Mvc\Router\RouteMatch;
+use Zend\Router\RouteMatch;
 use Zend\ServiceManager\AbstractPluginManager;
 use Zend\ServiceManager\ServiceLocatorInterface;
 use Zend\ServiceManager\Exception\InvalidServiceException;

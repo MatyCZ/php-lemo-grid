@@ -5,9 +5,9 @@ namespace LemoGrid\Column;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
-use Zend\Mvc\Router\RouteInterface;
-use Zend\Mvc\Router\RouteMatch;
-use Zend\Mvc\Router\RouteStackInterface;
+use Zend\Router\RouteInterface;
+use Zend\Router\RouteMatch;
+use Zend\Router\RouteStackInterface;
 
 class Buttons extends AbstractColumn
 {

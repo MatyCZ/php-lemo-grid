@@ -17,12 +17,12 @@
     ],
     "require": {
         "php": "^5.5 || ^7.0",
-        "zendframework/zend-eventmanager": "2.* || 3.*",
+        "zendframework/zend-eventmanager": "3.*",
         "zendframework/zend-i18n": "2.* || 3.*",
-        "zendframework/zend-json": "2.* || 3.*",
-        "zendframework/zend-mvc": "2.* || 3.*",
-        "zendframework/zend-servicemanager": "2.* || 3.*",
-        "zendframework/zend-stdlib": "2.* || 3.*"
+        "zendframework/zend-json": "3.*",
+        "zendframework/zend-mvc": "3.*",
+        "zendframework/zend-servicemanager": "3.*",
+        "zendframework/zend-stdlib": "3.*"
     },
     "suggest": {
         "doctrine/orm": "2.*",
