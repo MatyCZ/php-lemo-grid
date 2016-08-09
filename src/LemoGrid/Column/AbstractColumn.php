@@ -197,7 +197,7 @@ abstract class AbstractColumn implements
         $name = $this->getName();
 
         if (!empty($filters['rules'][$name])) {
-            foreach ($filters['rules'][$name] as $filterDefinition) {
+            foreach ($filters['rules'][$name] as $index => $filterDefinition) {
                 $operator = $filterDefinition['operator'];
                 $operatorOutput = $grid->getPlatform()->getFilterOperatorOutput($operator);
                 $value = $filterDefinition['value'];

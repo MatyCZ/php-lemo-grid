@@ -238,26 +238,7 @@ class JqGrid extends AbstractHelper
 
         // Vychozi filtry a ulozene filtry
         $rules = array();
-        if (empty($filters['rules']) || empty($filters['operator'])) {
-            foreach ($grid->getColumns() as $column) {
-                $searchOptions = $column->getAttributes()->getSearchOptions();
-
-                if (isset($searchOptions['defaultValue'])) {
-                    $searchOperatos = $column->getAttributes()->getSearchOperators();
-
-                    $searchOperator = 'cn';
-                    if (!empty($searchOperatos)) {
-                        $searchOperator = current($searchOperatos);
-                    }
-
-                    $rules[] = array(
-                        'field' => $column->getName(),
-                        'op'    => $searchOperator,
-                        'data'  => $searchOptions['defaultValue'],
-                    );
-                }
-            }
-        } else {
+        if (!empty($filters['rules'])) {
             foreach ($filters['rules'] as $field => $rule) {
                 foreach ($rule as $filterDefinition) {
                     $rules[] = array(
@@ -269,13 +250,8 @@ class JqGrid extends AbstractHelper
             }
         }
 
-        $groupOp = strtoupper($filters['operator']);
-        if (!in_array($filters['operator'], ['AND', 'OR'])) {
-            $groupOp = 'AND';
-        }
-
         if (!empty($rules)) {
-            $script[] = '        postData: {"filters":\'{"groupOp": "' . $groupOp . '", "rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
+            $script[] = '        postData: {"filters":\'{"groupOp": "' . strtoupper($filters['operator']) . '", "rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
         }
 
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
@@ -559,9 +535,8 @@ class JqGrid extends AbstractHelper
 
     /**
      * Modify grid attributes before rendering
-
-*
-*@param  JqGridPlatformOptions $attributes
+     *
+     * @param  JqGridPlatformOptions $attributes
      * @return JqGridPlatformOptions
      */
     protected function gridModifyAttributes(JqGridPlatformOptions $attributes)
@@ -640,7 +615,7 @@ class JqGrid extends AbstractHelper
         // Build condition string
         $conditions = array();
         foreach ($style->getConditions() as $condition) {
-            $conditions[] = "$(this).getCell(rows[i], 'grid_" . $condition->getColumn() . "') " . $condition->getExpression() . " " . $condition->getValue();
+            $conditions[] = "$(this).getCell(rows[i], '" . $condition->getColumn() . "') " . $condition->getExpression() . " '" . $condition->getValue() . "'";
         }
         $conditions = implode(' && ', $conditions);
 
@@ -660,7 +635,7 @@ class JqGrid extends AbstractHelper
 
         // Properties
         if ($style instanceof ColumnStyle) {
-            $script[] = "                    $(this).jqGrid('setCell', rows[i], colIndexes['grid_" . $style->getColumn() . "'], '', {" . $properties . "});";
+            $script[] = "                    $(this).jqGrid('setCell', rows[i], colIndexes['" . $style->getColumn() . "'], '', {" . $properties . "});";
         } else {
             $script[] = "                    $(this).jqGrid('setRowData', rows[i], false, {" . $properties . "});";
         }

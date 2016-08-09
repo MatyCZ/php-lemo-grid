@@ -468,7 +468,7 @@ class Grid implements
     {
         $content = $this->getStorage()->read($this->getName());
 
-        if (!($content instanceof Traversable)) {
+        if (!$content instanceof Traversable) {
             $content = new ArrayIterator();
         }
 
@@ -502,15 +502,9 @@ class Grid implements
 
         // Set params to storage
         if ($this->getPlatform()->canUseParams($this, $params)) {
-            // Create new storage
-            $content = new ArrayIterator();
-
             foreach ($params as $key => $value) {
-                $content->offsetSet($key, $this->getPlatform()->modifyParam($key, $value));
+                $this->setParam($key, $value);
             }
-
-            // Save params to storage
-            $this->getStorage()->write($this->getName(), $content);
         }
 
         return $this;
@@ -831,7 +825,6 @@ class Grid implements
         }
 
         $this->init();
-        $this->setParams($this->getMvcEvent()->getRequest()->getQuery());
 
         $name = $this->getName();
         if ((null === $name || '' === $name)) {
@@ -841,6 +834,11 @@ class Grid implements
             ));
         }
 
+        $this->setParams($this->getMvcEvent()->getRequest()->getQuery());
+
+        // Create default filters collection
+        $this->prepareDefaultFilters();
+
         // If the user wants to, elements names can be wrapped by the form's name
         foreach ($this->getColumns() as $column) {
             if ($column instanceof ColumnPrepareAwareInterface) {
@@ -849,6 +847,46 @@ class Grid implements
         }
 
         $this->isPrepared = true;
+
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    protected function prepareDefaultFilters()
+    {
+        $filters = $this->getParam('filters');
+
+        foreach ($this->getColumns() as $column) {
+            $defaultValue = $column->getAttributes()->getSearchDefaultValue();
+            $operators = $column->getAttributes()->getSearchOperators();
+
+            if (null !== $defaultValue && empty($filters['rules'][$column->getName()])) {
+                $operator = reset($operators);
+
+                if (empty($operator)) {
+                    $operator = 'cn';
+                }
+
+                $filters['rules'][$column->getName()][0] = [
+                    'operator' => $this->getPlatform()->getFilterOperator($operator),
+                    'value' => $defaultValue
+                ];
+            }
+        }
+
+        // Operator neexistuje, nastavime vychozi
+        if (empty($filters['operator'])) {
+            $filters['operator'] = 'and';
+        }
+
+        // Operator existuje, ale neni nastaven spravny
+        if (!in_array(strtolower($filters['operator']), ['and', 'or'])) {
+            $filters['operator'] = 'and';
+        }
+
+        $this->setParam('filters', $filters);
 
         return $this;
     }
