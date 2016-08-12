@@ -304,12 +304,18 @@ class JqGrid extends AbstractHelper
         $script[] = '    });';
         $script[] = '    $(\'#' . $grid->getName() . '_pager option[value=-1]\').text(\'' . $this->getView()->translate('All') . '\');' . PHP_EOL;
 
+        // Enable Advance search
+        $buttonSearch = 'false';
+        if ($grid->getPlatform()->getOptions()->getAdvancedSearch()) {
+            $buttonSearch = 'true';
+        }
+
         // Can render toolbar?
-        if($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
+        if ($grid->getPlatform()->getOptions()->getFilterToolbarEnabled()) {
             $script[] = '    $(\'#' . $grid->getName() . '\').jqGrid(' . $this->buildScriptAttributes('filterToolbar', $grid->getPlatform()->getOptions()->getFilterToolbar()) . ');' . PHP_EOL;
         }
 
-        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:false, refresh:false});";
+        $script[] = "    $('#" . $grid->getName() . "').jqGrid('navGrid', '#" . $grid->getPlatform()->getOptions()->getPagerElementId() . "', {del:false, add:false, edit:false, search:" . $buttonSearch . ", refresh:false},{},{},{},{multipleSearch:" . $buttonSearch . "});";
 
         $buttons = $grid->getPlatform()->getButtons();
         if (!empty($buttons)) {

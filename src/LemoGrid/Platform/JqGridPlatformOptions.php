@@ -30,6 +30,13 @@ class JqGridPlatformOptions extends AbstractOptions
     const SORT_ORDER_DESC = 'desc';
 
     /**
+     * Is advanced search enabled?
+     *
+     * @var bool
+     */
+    protected $advancedSearch = false;
+
+    /**
      * Set a zebra-striped grid.
      *
      * @var bool
@@ -596,6 +603,24 @@ class JqGridPlatformOptions extends AbstractOptions
      * @var int
      */
     protected $width;
+
+    /**
+     * @param  boolean $advancedSearch
+     * @return JqGridPlatformOptions
+     */
+    public function setAdvancedSearch($advancedSearch)
+    {
+        $this->advancedSearch = $advancedSearch;
+        return $this;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getAdvancedSearch()
+    {
+        return $this->advancedSearch;
+    }
 
     /**
      * @param boolean $alternativeRows
