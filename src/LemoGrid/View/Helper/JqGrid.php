@@ -238,7 +238,32 @@ class JqGrid extends AbstractHelper
 
         // Vychozi filtry a ulozene filtry
         $rules = array();
-        if (!empty($filters['rules'])) {
+        if (empty($filters['rules']) || empty($filters['operator'])) {
+            foreach ($grid->getColumns() as $column) {
+                $searchOptions = $column->getAttributes()->getSearchOptions();
+
+                if (isset($searchOptions['defaultValue'])) {
+                    $searchOperatos = $column->getAttributes()->getSearchOperators();
+
+                    $searchOperator = 'cn';
+                    if (!empty($searchOperatos)) {
+                        $searchOperator = current($searchOperatos);
+                    }
+                    $searchOperatorMark = $grid->getPlatform()->getFilterOperator($searchOperator);
+
+                    $rules[] = array(
+                        'field' => $column->getName(),
+                        'op'    => $searchOperator,
+                        'data'  => $searchOptions['defaultValue'],
+                    );
+
+                    $column->getAttributes()->setSearchDataInit("function(elem) {
+                        $(elem).val('{$searchOptions['defaultValue']}');
+                        $(elem).parents('tr').find(\"[colname = '{$column->getName()}']\").attr('soper', '{$searchOperator}').text('{$searchOperatorMark}');
+                    }");
+                }
+            }
+        } else {
             foreach ($filters['rules'] as $field => $rule) {
                 foreach ($rule as $filterDefinition) {
                     $rules[] = array(
@@ -250,8 +275,13 @@ class JqGrid extends AbstractHelper
             }
         }
 
+        $groupOp = strtoupper($filters['operator']);
+        if (!in_array($filters['operator'], ['AND', 'OR'])) {
+            $groupOp = 'AND';
+        }
+
         if (!empty($rules)) {
-            $script[] = '        postData: {"filters":\'{"groupOp": "' . strtoupper($filters['operator']) . '", "rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
+            $script[] = '        postData: {"filters":\'{"groupOp": "' . $groupOp . '", "rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
         }
 
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
@@ -385,7 +415,7 @@ class JqGrid extends AbstractHelper
                 $separator = ', ' . PHP_EOL;
             }
             if ('column' == $type) {
-                if(!array_key_exists($key, $this->columnAttributes)) {
+                if (!array_key_exists($key, $this->columnAttributes)) {
                     continue;
                 }
 
@@ -418,7 +448,7 @@ class JqGrid extends AbstractHelper
             }
         }
 
-        if(is_array($value)) {
+        if (is_array($value)) {
             if(empty($value)) {
                 return null;
             }
