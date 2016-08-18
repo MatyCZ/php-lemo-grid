@@ -7,6 +7,13 @@ use LemoGrid\GridInterface;
 interface AdapterInterface
 {
     /**
+     * Prepare adapter
+     *
+     * @return AdapterInterface
+     */
+    public function prepareAdapter();
+
+    /**
      * Set grid instance
      *
      * @param  GridInterface $grid

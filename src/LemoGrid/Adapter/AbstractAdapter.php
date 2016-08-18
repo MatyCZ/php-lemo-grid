@@ -25,6 +25,13 @@ abstract class AbstractAdapter implements AdapterInterface
     protected $countItemsTotal = 0;
 
     /**
+     * Is the grid prepared?
+     *
+     * @var bool
+     */
+    protected $isPrepared = false;
+
+    /**
      * @var ResultSetInterface
      */
     protected $resultSet;
@@ -190,5 +197,15 @@ abstract class AbstractAdapter implements AdapterInterface
     public function getGrid()
     {
         return $this->grid;
+    }
+
+    /**
+     * Check if is prepared
+     *
+     * @return bool
+     */
+    public function isPrepared()
+    {
+        return $this->isPrepared;
     }
 }

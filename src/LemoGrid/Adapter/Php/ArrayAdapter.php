@@ -8,6 +8,7 @@ use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Exception;
 use LemoGrid\Event\AdapterEvent;
+use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
 
@@ -38,6 +39,24 @@ class ArrayAdapter extends AbstractAdapter
     {
         $this->dataSource = $dataSource;
         $this->relations = $relations;
+    }
+
+    /**
+     * @return $this
+     */
+    public function prepareAdapter()
+    {
+        if ($this->isPrepared) {
+            return $this;
+        }
+
+        if (!$this->getGrid() instanceof GridInterface) {
+            throw new Exception\UnexpectedValueException("No Grid instance given");
+        }
+
+        $this->isPrepared = true;
+
+        return $this;
     }
 
     /**

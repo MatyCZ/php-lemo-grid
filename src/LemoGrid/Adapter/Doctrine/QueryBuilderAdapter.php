@@ -10,6 +10,7 @@ use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\ORM\Tools\Pagination\WhereInWalker;
 use LemoGrid\Adapter\AbstractAdapter;
+use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Event\AdapterEvent;
@@ -31,14 +32,20 @@ class QueryBuilderAdapter extends AbstractAdapter
     protected $queryBuilder = null;
 
     /**
-     * @throws Exception\UnexpectedValueException
-     * @return QueryBuilderAdapter
+     * Prepare adapter
+     *
+     * @return $this
      */
-    public function fetchData()
+    public function prepareAdapter()
     {
+        if ($this->isPrepared) {
+            return $this;
+        }
+
         if (!$this->getGrid() instanceof GridInterface) {
             throw new Exception\UnexpectedValueException("No Grid instance given");
         }
+
         if (!$this->getQueryBuilder() instanceof DoctrineQueryBuilder) {
             throw new Exception\UnexpectedValueException("No QueryBuilder instance given");
         }
@@ -51,6 +58,17 @@ class QueryBuilderAdapter extends AbstractAdapter
         $this->applyPagination();
         $this->applySortings();
 
+        $this->isPrepared = true;
+
+        return $this;
+    }
+
+    /**
+     * @throws Exception\UnexpectedValueException
+     * @return QueryBuilderAdapter
+     */
+    public function fetchData()
+    {
         $columns = $this->getGrid()->getIterator()->toArray();
         $paginator = new Paginator($this->getQueryBuilder()->getQuery()->setHydrationMode(Query::HYDRATE_ARRAY));
         $rows = $paginator->getIterator();

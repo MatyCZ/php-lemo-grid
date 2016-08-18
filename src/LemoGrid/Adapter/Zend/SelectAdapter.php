@@ -34,11 +34,14 @@ class SelectAdapter extends AbstractAdapter
     protected $select = null;
 
     /**
-     * @throws Exception\UnexpectedValueException
      * @return $this
      */
-    public function fetchData()
+    public function prepareAdapter()
     {
+        if ($this->isPrepared) {
+            return $this;
+        }
+
         if (!$this->getGrid() instanceof GridInterface) {
             throw new Exception\UnexpectedValueException("No Grid instance given");
         }
@@ -46,11 +49,21 @@ class SelectAdapter extends AbstractAdapter
             throw new Exception\UnexpectedValueException(sprintf("No '%s' instance given", Select::class));
         }
 
-        // Modify DQL
         $this->applyFilters();
         $this->applyPagination();
         $this->applySortings();
 
+        $this->isPrepared = true;
+
+        return $this;
+    }
+
+    /**
+     * @throws Exception\UnexpectedValueException
+     * @return $this
+     */
+    public function fetchData()
+    {
         $paginatorAdapter = new DbSelect($this->getSelect(), $this->getAdapter());
         $paginator = new Paginator($paginatorAdapter);
         $paginator->setCurrentPageNumber($this->getGrid()->getPlatform()->getNumberOfCurrentPage());
@@ -211,7 +224,7 @@ class SelectAdapter extends AbstractAdapter
                 if (true === $col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
 
                     // Jsou definovane filtry pro sloupec
-                    if(!empty($filter['rules'][$col->getName()])) {
+                    if (!empty($filter['rules'][$col->getName()])) {
 
                         $whereColSub = array();
                         foreach ($filter['rules'][$col->getName()] as $filterDefinition) {

@@ -843,6 +843,8 @@ class Grid implements
             }
         }
 
+        $this->getAdapter()->prepareAdapter();
+
         $this->isPrepared = true;
 
         return $this;
