@@ -534,16 +534,20 @@ class SelectAdapter extends AbstractAdapter
                 $where = $predicate->notLike($identifier, $value . "%");
                 break;
             case AbstractPlatform::OPERATOR_IN:
-                if (!is_array($value) && false !== strpos($value, ',')) {
+                if (!is_array($value)) {
                     $value = explode(',', $value);
                 }
-                $where = $predicate->in($identifier, $value);
+                if (!empty($value)) {
+                    $where = $predicate->in($identifier, $value);
+                }
                 break;
             case AbstractPlatform::OPERATOR_NOT_IN:
-                if (!is_array($value) && false !== strpos($value, ',')) {
+                if (!is_array($value)) {
                     $value = explode(',', $value);
                 }
-                $where = $predicate->notIn($identifier, $value);
+                if (!empty($value)) {
+                    $where = $predicate->notIn($identifier, $value);
+                }
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
                 $where = $predicate->like($identifier, "%" . $value);
