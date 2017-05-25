@@ -237,7 +237,7 @@ class SelectAdapter extends AbstractAdapter
                                         continue;
                                     }
 
-                                    if (empty($word)) {
+                                    if ('' == $word) {
                                         continue;
                                     }
 
