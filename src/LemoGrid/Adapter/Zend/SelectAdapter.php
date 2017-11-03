@@ -244,6 +244,10 @@ class SelectAdapter extends AbstractAdapter
                                     $filterWords[] = $word;
                                 }
 
+                                if (empty($filterWords)) {
+                                    continue;
+                                }
+
                                 if ($col instanceof ColumnConcat) {
 
                                     $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
