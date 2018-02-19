@@ -6,11 +6,8 @@ use DateTime;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
-use Doctrine\ORM\QueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
-use Doctrine\ORM\Tools\Pagination\WhereInWalker;
 use LemoGrid\Adapter\AbstractAdapter;
-use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
 use LemoGrid\Event\AdapterEvent;
@@ -24,7 +21,7 @@ class QueryBuilderAdapter extends AbstractAdapter
     /**
      * @var array
      */
-    protected $aliases = array();
+    protected $aliases = [];
 
     /**
      * @var DoctrineQueryBuilder
@@ -48,6 +45,10 @@ class QueryBuilderAdapter extends AbstractAdapter
 
         if (!$this->getQueryBuilder() instanceof DoctrineQueryBuilder) {
             throw new Exception\UnexpectedValueException("No QueryBuilder instance given");
+        }
+
+        if (empty($this->getQueryBuilder()->getDQLPart('select'))) {
+            return $this;
         }
 
         // Find join aliases in DQL
@@ -255,10 +256,10 @@ class QueryBuilderAdapter extends AbstractAdapter
                                     $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
 
                                     foreach ($filterWords as $filterWord) {
-                                        $wheres[] = $this->buildWhereFromFilter($col, $concat, array(
+                                        $wheres[] = $this->buildWhereFromFilter($col, $concat, [
                                             'operator' => $filterDefinition['operator'],
-                                            'value'    => $filterWord
-                                        ));
+                                            'value'    => $filterWord,
+                                        ]);
                                     }
 
                                     // Urcime pomoci jakeho operatoru mame skladat jednotlive vyrazi hledani sloupce
@@ -274,10 +275,10 @@ class QueryBuilderAdapter extends AbstractAdapter
                                 } else {
 
                                     foreach ($filterWords as $filterWord) {
-                                        $wheres[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), array(
+                                        $wheres[] = $this->buildWhereFromFilter($col, $col->getIdentifier(), [
                                             'operator' => $filterDefinition['operator'],
                                             'value'    => $filterWord,
-                                        ));
+                                        ]);
                                     }
 
                                     if ('and' == $col->getAttributes()->getSearchGroupOperator()) {
@@ -426,9 +427,14 @@ class QueryBuilderAdapter extends AbstractAdapter
     {
         $from = $this->getQueryBuilder()->getDqlPart('from');
         $join = $this->getQueryBuilder()->getDqlPart('join');
+
+        if (empty($from)) {
+            return $this;
+        }
+
         $root = $from[0]->getAlias();
 
-        $this->aliases = array();
+        $this->aliases = [];
 
         if(!empty($join[$root])) {
             foreach($join[$root] as $j) {
@@ -471,7 +477,7 @@ class QueryBuilderAdapter extends AbstractAdapter
         } else {
             if (isset($item[0])) {
 
-                $return = array();
+                $return = [];
                 foreach ($item as $it) {
                     if (isset($it[$identifierNext])) {
                         $return[] = $it[$identifierNext];
