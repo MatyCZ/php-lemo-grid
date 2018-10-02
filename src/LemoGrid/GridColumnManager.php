@@ -30,6 +30,8 @@ class GridColumnManager extends AbstractPluginManager
         'Buttons'      => Column\Buttons::class,
         'concat'       => Column\Concat::class,
         'Concat'       => Column\Concat::class,
+        'link'         => Column\Link::class,
+        'Link'         => Column\Link::class,
         'number'       => Column\Number::class,
         'Number'       => Column\Number::class,
         'route'        => Column\Route::class,
@@ -46,6 +48,7 @@ class GridColumnManager extends AbstractPluginManager
         Column\Button::class  => Column\ColumnFactory::class,
         Column\Buttons::class => Column\ColumnFactory::class,
         Column\Concat::class  => Column\ColumnFactory::class,
+        Column\Link::class    => Column\ColumnFactory::class,
         Column\Number::class  => Column\ColumnFactory::class,
         Column\Route::class   => Column\ColumnFactory::class,
         Column\Text::class    => Column\ColumnFactory::class,
@@ -104,7 +107,12 @@ class GridColumnManager extends AbstractPluginManager
             $column = $first;
         }
 
-        if ($column instanceof Column\Route || $column instanceof Column\Button || $column instanceof Column\Buttons) {
+        if (
+            $column instanceof Column\Button
+            || $column instanceof Column\Buttons
+            || $column instanceof Column\Link
+            || $column instanceof Column\Route
+        ) {
             $router = Console::isConsole() ? 'HttpRouter' : 'Router';
 
             if ($container instanceof ServiceLocatorInterface && $container->has($router)) {
