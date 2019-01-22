@@ -9,7 +9,6 @@ use LemoGrid\Platform\PlatformInterface;
 use LemoGrid\Storage\StorageInterface;
 use Traversable;
 use Zend\Stdlib\ArrayUtils;
-use Zend\Stdlib\Hydrator;
 
 class GridFactory
 {

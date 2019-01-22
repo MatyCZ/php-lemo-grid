@@ -112,7 +112,6 @@ class Grid implements
      * @param  null|MvcEvent          $mvcEvent
      * @param  null|PlatformInterface $platform
      * @param  null|StorageInterface  $storage
-     * @return Grid
      */
     public function __construct($name = null, $adapter = null, $mvcEvent = null, $platform = null, $storage = null)
     {

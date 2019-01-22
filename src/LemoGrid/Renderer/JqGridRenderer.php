@@ -37,8 +37,13 @@ class JqGridRenderer extends AbstractRenderer
         );
 
         for ($indexRow = 0; $indexRow < $dataCount; $indexRow++) {
+            if (!empty($data[$indexRow]['rowId'])) {
+                $rowId = $data[$indexRow]['rowId'];
+            } else {
+                $rowId = $indexRow + 1;
+            }
             $json['rows'][] = array(
-                'id'   => $indexRow +1,
+                'id'   => $rowId,
                 'cell' => $data[$indexRow]
             );
         }

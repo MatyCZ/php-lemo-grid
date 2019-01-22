@@ -87,6 +87,14 @@ class QueryBuilderAdapter extends AbstractAdapter
                 $item = $this->mergeSubqueryItem($item);
             }
 
+            if (
+                true === $this->getGrid()->hasParam('rowIdColumn')
+                &&
+                !empty($item[$this->getGrid()->getParam('rowIdColumn')])
+            ) {
+                $data[$indexRow]['rowId'] = $item[$this->getGrid()->getParam('rowIdColumn')];
+            }
+
             foreach ($columns as $indexCol => $column) {
                 $colIdentifier = $column->getIdentifier();
                 $colName = $column->getName();
