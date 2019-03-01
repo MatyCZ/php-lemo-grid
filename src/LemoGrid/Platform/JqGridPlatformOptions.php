@@ -434,6 +434,13 @@ class JqGridPlatformOptions extends AbstractOptions
     protected $recordsPerPageList = array(5, 15, 25, 50);
 
     /**
+     * Column name to be used as rowId instead of row index ('id', 'uuid' etc.)
+     *
+     * @var string
+     */
+    protected $rowIdColumn;
+
+    /**
      * Creates dynamic scrolling grids. When enabled, the pager elements are disabled and we can use the vertical
      * scrollbar to load data. When set to true the grid will always hold all the items from the start through to the
      * latest point ever visited. When scroll is set to value (eg 1), the grid will just hold the visible lines. This
@@ -1479,6 +1486,25 @@ class JqGridPlatformOptions extends AbstractOptions
     public function getRecordsPerPageList()
     {
         return $this->recordsPerPageList;
+    }
+
+    /**
+     * @return string
+     */
+    public function getRowIdColumn()
+    {
+        return $this->rowIdColumn;
+    }
+
+    /**
+     * @param  string $rowIdColumn
+     * @return $this
+     */
+    public function setRowIdColumn($rowIdColumn)
+    {
+        $this->rowIdColumn = $rowIdColumn;
+
+        return $this;
     }
 
     /**

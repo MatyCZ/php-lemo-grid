@@ -15,6 +15,7 @@ use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
+use LemoGrid\Platform\JqGridPlatformOptions;
 
 class QueryBuilderAdapter extends AbstractAdapter
 {
@@ -79,6 +80,10 @@ class QueryBuilderAdapter extends AbstractAdapter
         $this->countItems = $rowsCount;
         $this->countItemsTotal = $paginator->count();
 
+        /** @var JqGridPlatformOptions $platformOptions */
+        $platformOptions = $this->getGrid()->getPlatform()->getOptions();
+        $rowIdColumn = $platformOptions->getRowIdColumn();
+
         $data = array();
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
@@ -87,12 +92,8 @@ class QueryBuilderAdapter extends AbstractAdapter
                 $item = $this->mergeSubqueryItem($item);
             }
 
-            if (
-                true === $this->getGrid()->hasParam('rowIdColumn')
-                &&
-                !empty($item[$this->getGrid()->getParam('rowIdColumn')])
-            ) {
-                $data[$indexRow]['rowId'] = $item[$this->getGrid()->getParam('rowIdColumn')];
+            if (null !== $rowIdColumn && !empty($item[$rowIdColumn])) {
+                $data[$indexRow]['rowId'] = $item[$rowIdColumn];
             }
 
             foreach ($columns as $indexCol => $column) {

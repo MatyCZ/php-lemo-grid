@@ -11,6 +11,7 @@ use LemoGrid\Event\AdapterEvent;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
+use LemoGrid\Platform\JqGridPlatformOptions;
 
 class ArrayAdapter extends AbstractAdapter
 {
@@ -70,17 +71,17 @@ class ArrayAdapter extends AbstractAdapter
         $rowsCount = count($rows);
         $columns = $this->getGrid()->getIterator()->toArray();
 
+        /** @var JqGridPlatformOptions $platformOptions */
+        $platformOptions = $this->getGrid()->getPlatform()->getOptions();
+        $rowIdColumn = $platformOptions->getRowIdColumn();
+
         // Nacteme si kolekci dat
         $data = array();
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
 
-            if (
-                true === $this->getGrid()->hasParam('rowIdColumn')
-                &&
-                !empty($item[$this->getGrid()->getParam('rowIdColumn')])
-            ) {
-                $data[$indexRow]['rowId'] = $item[$this->getGrid()->getParam('rowIdColumn')];
+            if (null !== $rowIdColumn && !empty($item[$rowIdColumn])) {
+                $data[$indexRow]['rowId'] = $item[$rowIdColumn];
             }
 
             foreach($columns as $indexCol => $column) {
