@@ -31,7 +31,7 @@ interface GridInterface extends
      * @param  array $flags
      * @return GridInterface
      */
-    public function add($column, array $flags = array());
+    public function add($column, array $flags = []);
 
     /**
      * Does the grid have an column by the given name?

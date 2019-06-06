@@ -9,7 +9,7 @@ class ConcatOptions extends AbstractOptions
     /**
      * @var array
      */
-    protected $identifiers = array();
+    protected $identifiers = [];
 
     /**
      * @var string

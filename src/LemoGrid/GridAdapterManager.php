@@ -19,10 +19,10 @@ class GridAdapterManager extends AbstractPluginManager
      *
      * @var array
      */
-    protected $invokableClasses = array(
+    protected $invokableClasses = [
         'doctrine_querybuilder' => 'LemoGrid\Adapter\Doctrine\QueryBuilderAdapter',
         'php_array'             => 'LemoGrid\Adapter\Php\ArrayAdapter',
-    );
+    ];
 
     /**
      * Don't share grid adapters by default

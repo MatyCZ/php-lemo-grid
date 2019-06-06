@@ -29,12 +29,12 @@ class JqGridRenderer extends AbstractRenderer
         $this->getGrid()->setAdapter($event->getAdapter());
         $this->getGrid()->getPlatform()->setResultSet($event->getResultSet());
 
-        $json = array(
+        $json = [
             'page'    => $this->getGrid()->getPlatform()->getNumberOfCurrentPage(),
             'total'   => $this->getGrid()->getAdapter()->getNumberOfPages(),
             'records' => $this->getGrid()->getAdapter()->getCountOfItemsTotal(),
-            'rows'    => array(),
-        );
+            'rows'    => [],
+        ];
 
         for ($indexRow = 0; $indexRow < $dataCount; $indexRow++) {
             if (!empty($data[$indexRow]['rowId'])) {
@@ -42,10 +42,10 @@ class JqGridRenderer extends AbstractRenderer
             } else {
                 $rowId = $indexRow + 1;
             }
-            $json['rows'][] = array(
+            $json['rows'][] = [
                 'id'   => $rowId,
                 'cell' => $data[$indexRow]
-            );
+            ];
         }
 
         $userData = $this->getGrid()->getPlatform()->getResultSet()->getDataUser();

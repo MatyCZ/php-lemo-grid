@@ -190,10 +190,10 @@ class ColumnAttributes extends AbstractOptions
      *
      * @var array
      */
-    protected $searchOptions = array(
+    protected $searchOptions = [
         'sopt' => null,
         'value' => null,
-    );
+    ];
 
     /**
      * Valid only in Custom Searching and edittype : 'select' and describes the url from where we can get
@@ -714,7 +714,7 @@ class ColumnAttributes extends AbstractOptions
     {
         $operator = strtolower($operator);
 
-        if (!in_array($operator, array('and', 'or'))) {
+        if (!in_array($operator, ['and', 'or'])) {
             throw new \Exception("Allowed search group operator is 'and' and 'or'");
         }
 
@@ -805,7 +805,7 @@ class ColumnAttributes extends AbstractOptions
     {
         $type = strtolower($type);
 
-        if (!in_array($type, array('where', 'having'))) {
+        if (!in_array($type, ['where', 'having'])) {
             throw new \Exception("Allowed search types are 'where' and 'having'");
         }
 

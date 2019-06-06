@@ -78,7 +78,7 @@ class Buttons extends AbstractColumn
      */
     public function renderValue(AdapterInterface $adapter, array $item)
     {
-        $parts = array();
+        $parts = [];
         foreach ($this->getOptions()->getButtons() as $button) {
             if ($button->isValid($adapter, $item)) {
                 if ($button instanceof Route && $this->router instanceof RouteInterface) {

@@ -19,7 +19,7 @@ class JqGrid extends AbstractHelper
      *
      * @var array
      */
-    protected $columnAttributes = array(
+    protected $columnAttributes = [
         'align'                => 'align',
         'column_attributes'    => 'cellattr',
         'class'                => 'classes',
@@ -49,14 +49,14 @@ class JqGrid extends AbstractHelper
         'summary_tpl'          => 'summaryTpl',
         'summary_type'         => 'summaryType',
         'width'                => 'width',
-    );
+    ];
 
     /**
      * List of valid grid attributes with jqGrid attribute name
      *
      * @var array
      */
-    protected $gridAttributes = array(
+    protected $gridAttributes = [
         'alternative_rows'                   => 'altRows',
         'alternative_rows_class'             => 'altclass',
         'auto_encode_incoming_and_post_data' => 'autoencode',
@@ -116,7 +116,7 @@ class JqGrid extends AbstractHelper
         'user_data'                          => 'userData',
         'user_data_on_footer'                => 'userDataOnFooter',
         'width'                              => 'width',
-    );
+    ];
 
     /**
      * Invoke helper as function
@@ -206,7 +206,7 @@ class JqGrid extends AbstractHelper
     {
         $grid = $this->getGrid();
 
-        $html = array();
+        $html = [];
         $html[] = '<table id="' . $grid->getName() . '"></table>';
         $html[] = '<div id="' . $grid->getPlatform()->getOptions()->getPagerElementId() . '"></div>';
 
@@ -237,7 +237,7 @@ class JqGrid extends AbstractHelper
         $script[] = '        ' . $this->buildScript('grid', $grid->getPlatform()->getOptions()) . ', ' . PHP_EOL;
 
         // Vychozi filtry a ulozene filtry
-        $rules = array();
+        $rules = [];
         if (empty($filters['rules']) || empty($filters['operator'])) {
             foreach ($grid->getColumns() as $column) {
                 $searchOptions = $column->getAttributes()->getSearchOptions();
@@ -251,11 +251,11 @@ class JqGrid extends AbstractHelper
                     }
                     $searchOperatorMark = $grid->getPlatform()->getFilterOperator($searchOperator);
 
-                    $rules[] = array(
+                    $rules[] = [
                         'field' => $column->getName(),
                         'op'    => $searchOperator,
                         'data'  => $searchOptions['defaultValue'],
-                    );
+                    ];
 
                     $column->getAttributes()->setSearchDataInit("function(elem) {
                         $(elem).val('{$searchOptions['defaultValue']}');
@@ -266,11 +266,11 @@ class JqGrid extends AbstractHelper
         } else {
             foreach ($filters['rules'] as $field => $rule) {
                 foreach ($rule as $filterDefinition) {
-                    $rules[] = array(
+                    $rules[] = [
                         'field' => $field,
                         'op'    => $grid->getPlatform()->getFilterOperatorOutput($filterDefinition['operator']),
                         'data'  => $filterDefinition['value'],
-                    );
+                    ];
                 }
             }
         }
@@ -379,7 +379,7 @@ class JqGrid extends AbstractHelper
     {
         $grid = $this->getGrid();
 
-        $script = array();
+        $script = [];
         $script[] = '    $(window).bind(\'resize\', function() {';
         $script[] = '        $(\'#' . $grid->getName() . '\').setGridWidth($(\'#gbox_' . $grid->getName() . '\').parent().width());';
         $script[] = '    }).trigger(\'resize\');';
@@ -396,7 +396,7 @@ class JqGrid extends AbstractHelper
      */
     protected function buildScript($type, AbstractOptions $attributes)
     {
-        $script = array();
+        $script = [];
 
         // Convert attributes to array
         $attributes = $attributes->toArray();
@@ -454,7 +454,7 @@ class JqGrid extends AbstractHelper
             }
 
             if ($key == 'value') {
-                $values = array();
+                $values = [];
                 foreach($value as $k => $val) {
                     $values[] = $k . ':' . $val;
                 }
@@ -462,7 +462,7 @@ class JqGrid extends AbstractHelper
                 return 'value: "' . implode(';', $values) . '"';
             }
 
-            $values = array();
+            $values = [];
             foreach($value as $k => $val) {
                 if ('defaultValue' === $k && 'searchoptions' == $key) {
                     continue;
@@ -483,14 +483,14 @@ class JqGrid extends AbstractHelper
                 }
             }
 
-            if (in_array($key, array('filterToolbar'))) {
+            if (in_array($key, ['filterToolbar'])) {
                 $r = '\'' . $key . '\', {' . implode(', ', array_values($values)) . '}';
-            } elseif (in_array($key, array('editoptions', 'formatoptions', 'groupingView', 'searchoptions', 'treeicons'))) {
+            } elseif (in_array($key, ['editoptions', 'formatoptions', 'groupingView', 'searchoptions', 'treeicons'])) {
                 $r = $key . ': {' . implode(', ', $values) . '}';
             } else {
                 $r = $key . ': [' . implode(', ', $values) . ']';
             }
-        } elseif (in_array($key, array('groupSummary'), true)) {
+        } elseif (in_array($key, ['groupSummary'], true)) {
             $r = $key . ': [' . $value . ']';
         } elseif (is_numeric($key)) {
             if(is_bool($value)) {
@@ -514,7 +514,7 @@ class JqGrid extends AbstractHelper
                 $value = 'false';
             }
             $r = $key . ': ' . $value;
-        } elseif (in_array($key, array('dataInit'))) {
+        } elseif (in_array($key, ['dataInit'])) {
             $r = $key . ': ' . $value;
         } else {
             $r = $key . ': \'' . $value . '\'';
@@ -632,7 +632,7 @@ class JqGrid extends AbstractHelper
         }
         $url = parse_url($url);
 
-        $queryParams = array();
+        $queryParams = [];
         if (isset($url['query'])) {
             parse_str($url['query'], $queryParams);
         }
@@ -649,20 +649,20 @@ class JqGrid extends AbstractHelper
     protected function buildStyle($style)
     {
         // Build condition string
-        $conditions = array();
+        $conditions = [];
         foreach ($style->getConditions() as $condition) {
             $conditions[] = "$(this).getCell(rows[i], '" . $condition->getColumn() . "') " . $condition->getExpression() . " '" . $condition->getValue() . "'";
         }
         $conditions = implode(' && ', $conditions);
 
         // Build properties string
-        $properties = array();
+        $properties = [];
         foreach ($style->getProperties() as $property) {
             $properties[] = "'" . $property->getName() . "': '" . $property->getValue() . "'";
         }
         $properties = implode(', ', $properties);
 
-        $script = array();
+        $script = [];
 
         // Condition - Start
         if (!empty($style->getConditions())) {

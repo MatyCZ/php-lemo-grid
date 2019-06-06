@@ -165,7 +165,7 @@ class EntityStorage implements StorageInterface
         if (null === $this->entity) {
 
             // Preprare createria for findOne method
-            $criteria = array($this->fieldNameKey => $key);
+            $criteria = [$this->fieldNameKey => $key];
             if (null !== $this->fieldNameIdentity) {
 
                 // Load identity entity

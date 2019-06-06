@@ -9,7 +9,7 @@ class ButtonOptions extends AbstractOptions
     /**
      * @var array
      */
-    protected $attributes = array();
+    protected $attributes = [];
 
     /**
      * @var string

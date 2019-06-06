@@ -38,17 +38,17 @@ class Grid implements
     /**
      * @var array
      */
-    protected $byName = array();
+    protected $byName = [];
 
     /**
      * @var array
      */
-    protected $columns = array();
+    protected $columns = [];
 
     /**
      * @var array|ColumnStyle[]
      */
-    protected $columnStyles = array();
+    protected $columnStyles = [];
 
     /**
      * @var EventManagerInterface
@@ -95,7 +95,7 @@ class Grid implements
     /**
      * @var array|RowStyle[]
      */
-    protected $rowStyles = array();
+    protected $rowStyles = [];
 
     /**
      * Persistent storage handler
@@ -159,7 +159,7 @@ class Grid implements
      * @throws Exception\InvalidArgumentException
      * @return Grid
      */
-    public function add($column, array $flags = array())
+    public function add($column, array $flags = [])
     {
         if (
             is_array($column) ||
@@ -295,8 +295,8 @@ class Grid implements
      */
     public function clear()
     {
-        $this->byName = array();
-        $this->columns = array();
+        $this->byName = [];
+        $this->columns = [];
         $this->iterator = new PriorityQueue();
 
         return $this;
@@ -333,7 +333,7 @@ class Grid implements
     {
         $column = $this->get($column);
         $this->remove($column);
-        $this->add($column, array('priority' => $priority));
+        $this->add($column, ['priority' => $priority]);
 
         return $this;
     }
@@ -665,7 +665,7 @@ class Grid implements
      */
     public function clearColumnStyles()
     {
-        $this->columnStyles = array();
+        $this->columnStyles = [];
 
         return $this;
     }
@@ -722,7 +722,7 @@ class Grid implements
      */
     public function clearRowStyles()
     {
-        $this->rowStyles = array();
+        $this->rowStyles = [];
 
         return $this;
     }
@@ -737,8 +737,8 @@ class Grid implements
         $items = $this->getIterator()->toArray(PriorityQueue::EXTR_BOTH);
 
         $this->adapter = null;
-        $this->byName = array();
-        $this->columns = array();
+        $this->byName = [];
+        $this->columns = [];
         $this->container = null;
         $this->iterator = new PriorityQueue();
         $this->namespace = self::NAMESPACE_DEFAULT;

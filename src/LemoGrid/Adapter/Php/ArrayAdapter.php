@@ -3,32 +3,34 @@
 namespace LemoGrid\Adapter\Php;
 
 use DateTime;
+use Generator;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
-use LemoGrid\Exception;
 use LemoGrid\Event\AdapterEvent;
+use LemoGrid\Exception;
 use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
 use LemoGrid\Platform\JqGridPlatformOptions;
+use Throwable;
 
 class ArrayAdapter extends AbstractAdapter
 {
     /**
      * @var array
      */
-    protected $dataFiltered = array();
+    protected $dataFiltered = [];
 
     /**
      * @var array
      */
-    protected $dataSource = array();
+    protected $dataSource = [];
 
     /**
      * @var array
      */
-    protected $relations = array();
+    protected $relations = [];
 
     /**
      * Constuctor
@@ -36,10 +38,75 @@ class ArrayAdapter extends AbstractAdapter
      * @param array $dataSource Data as key => value or only values
      * @param array $relations Relation as relation alias => array field
      */
-    public function __construct(array $dataSource = array(), array $relations = array())
+    public function __construct(array $dataSource = [], array $relations = [])
     {
         $this->dataSource = $dataSource;
         $this->relations = $relations;
+    }
+
+    /**
+     * @param  array $selectedRows
+     * @return Generator
+     */
+    public function getExportGenerator(array $selectedRows = []): Generator
+    {
+        try {
+
+            $rows = $this->getDataSource();
+            $columns = $this->getGrid()->getIterator()->toArray();
+
+            /** @var JqGridPlatformOptions $platformOptions */
+            $platformOptions = $this->getGrid()->getPlatform()->getOptions();
+            $rowIdColumn = $platformOptions->getRowIdColumn();
+
+            if (empty($rows)) {
+                yield 0;
+            } else {
+                yield count($rows);
+            }
+
+            foreach ($rows as $item) {
+
+                $result = [];
+                if (null !== $rowIdColumn && !empty($item[$rowIdColumn])) {
+                    if (
+                        !empty($selectedRows)
+                        && !in_array($item[$rowIdColumn], $selectedRows)
+                    ) {
+                        continue;
+                    }
+
+                    $result['rowId'] = $item[$rowIdColumn];
+                }
+
+                foreach ($columns as $indexCol => $column) {
+
+                    $colIdentifier    = $column->getIdentifier();
+                    $colName          = $column->getName();
+                    $result[$colName] = null;
+
+                    if (true === $column->isValid($this, $item)) {
+
+                        $value = $this->findValue($colIdentifier, $item);
+
+                        // COLUMN - DateTime
+                        if ($value instanceof DateTime) {
+                            $value = $value->format('Y-m-d H:i:s');
+                        }
+
+                        $column->setValue($value);
+                        $value = $column->renderValue($this, $item);
+
+                        $result[$colName] = $value;
+                    }
+                }
+
+                yield $result;
+            }
+
+        } catch (Throwable $throwable) {
+            yield $throwable;
+        }
     }
 
     /**
@@ -63,7 +130,7 @@ class ArrayAdapter extends AbstractAdapter
     /**
      * Load data
      *
-     * @return array
+     * @return self
      */
     public function fetchData()
     {
@@ -76,7 +143,7 @@ class ArrayAdapter extends AbstractAdapter
         $rowIdColumn = $platformOptions->getRowIdColumn();
 
         // Nacteme si kolekci dat
-        $data = array();
+        $data = [];
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
 
@@ -160,7 +227,7 @@ class ArrayAdapter extends AbstractAdapter
             $itemsCount = count($items);
 
             // Find columns data for summary
-            $columnsValues = array();
+            $columnsValues = [];
             for ($indexItem = 0; $indexItem < $itemsCount; $indexItem++) {
                 $item = $items[$indexItem];
 
@@ -175,7 +242,7 @@ class ArrayAdapter extends AbstractAdapter
             }
 
             // Calculate user data (SummaryRow)
-            $dataUser = array();
+            $dataUser = [];
             foreach ($this->getGrid()->getColumns() as $indexCol => $column) {
 
                 // Sloupec je skryty, takze ho preskocime
@@ -299,12 +366,12 @@ class ArrayAdapter extends AbstractAdapter
             return $rows;
         }
 
-        $arguments = array();
+        $arguments = [];
         foreach ($sort as $sortColumn => $sortDirect) {
             if ($grid->has($sortColumn)) {
                 if (false !== $grid->get($sortColumn)->getAttributes()->getIsSortable() && true !== $grid->get($sortColumn)->getAttributes()->getIsHidden()) {
 
-                    $columnValues = array();
+                    $columnValues = [];
                     foreach ($rows as $indexRow => $rowValues) {
                         $columnValues[] = isset($rowValues[$sortColumn]) ? $rowValues[$sortColumn] : null;
                     }
@@ -349,7 +416,7 @@ class ArrayAdapter extends AbstractAdapter
         } else {
             if (isset($item[0])) {
 
-                $return = array();
+                $return = [];
                 foreach ($item as $it) {
                     if (isset($it[$identifier])) {
                         $return[] = $it[$identifier];

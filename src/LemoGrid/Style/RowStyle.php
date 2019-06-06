@@ -12,12 +12,12 @@ class RowStyle extends AbstractOptions
     /**
      * @var ColumnCondition[]
      */
-    protected $conditions = array();
+    protected $conditions = [];
 
     /**
      * @var Property[]
      */
-    protected $properties = array();
+    protected $properties = [];
 
     /**
      * @param  array|ColumnCondition $condition
@@ -71,7 +71,7 @@ class RowStyle extends AbstractOptions
      */
     public function clearConditions()
     {
-        $this->conditions = array();
+        $this->conditions = [];
 
         return $this;
     }
@@ -128,7 +128,7 @@ class RowStyle extends AbstractOptions
      */
     public function clearProperties()
     {
-        $this->properties = array();
+        $this->properties = [];
 
         return $this;
     }

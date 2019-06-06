@@ -16,13 +16,17 @@
         }
     ],
     "require": {
-        "php": "^7.0",
+        "doctrine/orm": "2.6.*",
+        "php": "^7.1",
         "zendframework/zend-eventmanager": "3.*",
         "zendframework/zend-i18n": "2.* || 3.*",
         "zendframework/zend-json": "3.*",
         "zendframework/zend-mvc": "3.*",
         "zendframework/zend-servicemanager": "3.*",
-        "zendframework/zend-stdlib": "3.*"
+        "zendframework/zend-stdlib": "3.*",
+        "ext-json": "*",
+        "ext-intl": "*",
+        "zendframework/zend-console": "^2.8"
     },
     "autoload": {
         "psr-0": {

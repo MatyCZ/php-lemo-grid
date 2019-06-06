@@ -174,12 +174,12 @@ class JqGridPlatformOptions extends AbstractOptions
     /**
      * @var array
      */
-    protected $filterToolbar = array(
+    protected $filterToolbar = [
         'enableClear' => true,
         'stringResult' => true,
         'searchOnEnter' => true,
         'searchOperators' => false,
-    );
+    ];
 
     /**
      * Is filter toolbat enabled?
@@ -431,7 +431,7 @@ class JqGridPlatformOptions extends AbstractOptions
      *
      * @var array
      */
-    protected $recordsPerPageList = array(5, 15, 25, 50);
+    protected $recordsPerPageList = [5, 15, 25, 50];
 
     /**
      * Column name to be used as rowId instead of row index ('id', 'uuid' etc.)
@@ -537,7 +537,7 @@ class JqGridPlatformOptions extends AbstractOptions
      *
      * @var array
      */
-    protected $sortingColumnsDefinition = array(true, 'vertical', true);
+    protected $sortingColumnsDefinition = [true, 'vertical', true];
 
     /**
      * @var string
@@ -587,7 +587,7 @@ class JqGridPlatformOptions extends AbstractOptions
      *
      * @var array
      */
-    protected $userData = array();
+    protected $userData = [];
 
     /**
      * When set to true we directly place the user data array userData in
@@ -885,7 +885,7 @@ class JqGridPlatformOptions extends AbstractOptions
     {
         $normalized = strtolower($dataType);
 
-        if(!in_array($normalized, array('xml', 'xmlstring', 'json', 'jsonstring', 'local', 'javascript'))) {
+        if(!in_array($normalized, ['xml', 'xmlstring', 'json', 'jsonstring', 'local', 'javascript'])) {
             throw new Exception\InvalidArgumentException("DataType must be 'xml', 'xmlstring', 'json', 'jsonstring', 'local' or 'javascript'");
         }
 
@@ -947,11 +947,11 @@ class JqGridPlatformOptions extends AbstractOptions
      */
     public function setFilterToolbar($searchOnEnter, $showOperators)
     {
-        $this->filterToolbar = array(
+        $this->filterToolbar = [
             'stringResult' => true,
             'searchOnEnter' => $searchOnEnter,
             'searchOperators' => $showOperators,
-        );
+        ];
 
         return $this;
     }
@@ -1783,7 +1783,7 @@ class JqGridPlatformOptions extends AbstractOptions
         $order = (string) $sortOrder;
         $order = strtolower($order);
 
-        if(!in_array($order, array(self::SORT_ORDER_ASC, self::SORT_ORDER_DESC))) {
+        if(!in_array($order, [self::SORT_ORDER_ASC, self::SORT_ORDER_DESC])) {
             throw new Exception\InvalidArgumentException("Order must by 'asc' or 'desc'");
         }
 
@@ -1890,11 +1890,11 @@ class JqGridPlatformOptions extends AbstractOptions
      */
     public function setTreeGridIcons($plus, $minus, $leaf)
     {
-        $this->treeGridIcons = array(
+        $this->treeGridIcons = [
             'plus' => $plus,
             'minus' => $minus,
             'leaf' => $leaf
-        );
+        ];
 
         return $this;
     }

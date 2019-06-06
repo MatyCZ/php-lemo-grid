@@ -63,7 +63,7 @@ class Concat extends AbstractColumn
     public function renderValue(AdapterInterface $adapter, array $item)
     {
         $value = null;
-        $patternValues = array();
+        $patternValues = [];
 
         foreach ($this->getOptions()->getIdentifiers() as $index => $identifier) {
             $valuesIdentifier = $adapter->findValue($identifier, $item);
@@ -71,7 +71,7 @@ class Concat extends AbstractColumn
             if (!empty($valuesIdentifier)) {
 
                 if (!is_array($valuesIdentifier)) {
-                    $valuesIdentifier = array($valuesIdentifier);
+                    $valuesIdentifier = [$valuesIdentifier];
                 }
 
                 foreach ($valuesIdentifier as $valueIndex => $valueIdentifier) {
@@ -110,7 +110,7 @@ class Concat extends AbstractColumn
         $value = '';
 
         if (!empty($patternValues)) {
-            $patternValuesToReplace = array();
+            $patternValuesToReplace = [];
 
             // Odstranime hodnoty casti patternu, ktere nemaji prazdnou hodnotu
             foreach ($patternValues as $key => $patternValue) {
@@ -146,7 +146,7 @@ class Concat extends AbstractColumn
             krsort($matches);
 
             // Najdeme si casti, ktere maji jen jednu cast k nahrazeni a nebyl nacten retezec
-            $partsValues = array();
+            $partsValues = [];
             foreach ($matches as $matchIndex => $match) {
                 $matchOriginal = $match;
 
@@ -196,7 +196,7 @@ class Concat extends AbstractColumn
                 }
 
                 // Odstranime z patternu znaky, ktere urciji neodlucitelny separator
-                $match = str_replace(array('{', '}'), '', $match);
+                $match = str_replace(['{', '}'], '', $match);
 
                 // Zjistime, zda ma cast zavorky a pokud ano, tak je odstranime
                 $partPattern = $match;
@@ -228,7 +228,7 @@ class Concat extends AbstractColumn
                     }
                 }
 
-                $partsValues = array_merge(array($matchOriginal => $value), $partsValues);
+                $partsValues = array_merge([$matchOriginal => $value], $partsValues);
             }
 
             $value = str_replace(array_keys($partsValues), array_values($partsValues), $pattern);
@@ -248,7 +248,7 @@ class Concat extends AbstractColumn
     {
         $currentPos = 0;
         $length     = strlen($def);
-        $parts      = array();
+        $parts      = [];
 
         while ($currentPos < $length) {
             preg_match('/(%s[0-9]{1,2})(.*?)(%s[0-9]{1,2})/', $def, $matches, 0, $currentPos);

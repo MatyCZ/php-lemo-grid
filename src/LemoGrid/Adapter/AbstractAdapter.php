@@ -54,7 +54,7 @@ abstract class AbstractAdapter implements AdapterInterface
         $pattern = $formatter->getPattern();
 
         // Zjistime zvoleny separator a poradi dne a mesice
-        $patternSeparators = array('.', '/', '-', ' ');
+        $patternSeparators = ['.', '/', '-', ' '];
         $separator = null;
         foreach ($patternSeparators as $patternSeparator) {
             if(strpos($pattern, $patternSeparator)){
@@ -72,7 +72,7 @@ abstract class AbstractAdapter implements AdapterInterface
         }
 
         if($separator){
-            $dateDb = array();
+            $dateDb = [];
 
             // Pokud je datumem
             // https://bugs.php.net/bug.php?id=68528

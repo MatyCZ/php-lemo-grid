@@ -25,21 +25,21 @@ abstract class AbstractColumn implements
      *
      * @var array
      */
-    protected $booleanAttributes = array(
-        'autocomplete' => array('on' => 'on',        'off' => 'off'),
-        'autofocus'    => array('on' => 'autofocus', 'off' => ''),
-        'checked'      => array('on' => 'checked',   'off' => ''),
-        'disabled'     => array('on' => 'disabled',  'off' => ''),
-        'multiple'     => array('on' => 'multiple',  'off' => ''),
-        'readonly'     => array('on' => 'readonly',  'off' => ''),
-        'required'     => array('on' => 'required',  'off' => ''),
-        'selected'     => array('on' => 'selected',  'off' => ''),
-    );
+    protected $booleanAttributes = [
+        'autocomplete' => ['on' => 'on', 'off' => 'off'],
+        'autofocus'    => ['on' => 'autofocus', 'off' => ''],
+        'checked'      => ['on' => 'checked', 'off' => ''],
+        'disabled'     => ['on' => 'disabled', 'off' => ''],
+        'multiple'     => ['on' => 'multiple', 'off' => ''],
+        'readonly'     => ['on' => 'readonly', 'off' => ''],
+        'required'     => ['on' => 'required', 'off' => ''],
+        'selected'     => ['on' => 'selected', 'off' => ''],
+    ];
 
     /**
      * @var ColumnCondition[]
      */
-    protected $conditions = array();
+    protected $conditions = [];
 
     /**
      * @var string
@@ -54,14 +54,14 @@ abstract class AbstractColumn implements
     /**
      * @var array
      */
-    protected $options = array();
+    protected $options = [];
 
     /**
      * Attributes globally valid for all tags
      *
      * @var array
      */
-    protected $validGlobalAttributes = array(
+    protected $validGlobalAttributes = [
         'accesskey'          => true,
         'class'              => true,
         'contenteditable'    => true,
@@ -132,7 +132,7 @@ abstract class AbstractColumn implements
         'xml:base'           => true,
         'xml:lang'           => true,
         'xml:space'          => true,
-    );
+    ];
 
     /**
      * Attributes valid for the tag represented by this helper
@@ -141,8 +141,8 @@ abstract class AbstractColumn implements
      *
      * @var array
      */
-    protected $validTagAttributes = array(
-    );
+    protected $validTagAttributes = [
+    ];
 
     /**
      * @var mixed
@@ -383,7 +383,7 @@ abstract class AbstractColumn implements
      */
     public function clearConditions()
     {
-        $this->conditions = array();
+        $this->conditions = [];
         return $this;
     }
 
@@ -589,7 +589,7 @@ abstract class AbstractColumn implements
     public function createAttributesString(array $attributes)
     {
         $attributes = $this->prepareAttributes($attributes);
-        $strings    = array();
+        $strings    = [];
         foreach ($attributes as $key => $value) {
             $key = strtolower($key);
             if (!$value && isset($this->booleanAttributes[$key])) {

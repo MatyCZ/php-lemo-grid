@@ -20,7 +20,7 @@ class Button extends AbstractColumn
      *
      * @var array
      */
-    protected $validTagAttributes = array(
+    protected $validTagAttributes = [
         'name'           => true,
         'autofocus'      => true,
         'disabled'       => true,
@@ -32,7 +32,7 @@ class Button extends AbstractColumn
         'formtarget'     => true,
         'type'           => true,
         'value'          => true,
-    );
+    ];
 
     /**
      * Set column options

@@ -10,7 +10,7 @@ class ButtonsOptions extends AbstractOptions
     /**
      * @var Button[]
      */
-    protected $buttons = array();
+    protected $buttons = [];
 
     /**
      * @var string
@@ -35,7 +35,7 @@ class ButtonsOptions extends AbstractOptions
                 $conditions = isset($button['conditions']) ? $button['conditions'] : null;
                 $class = 'LemoGrid\Column\\' . $type;
 
-                if (!in_array($type, array('Button', 'Route'))) {
+                if (!in_array($type, ['Button', 'Route'])) {
                     throw new Exception('Button type must be Button or Route');
                 }
                 $btn = new $class($name, $options, $attributes, $conditions);
@@ -60,7 +60,7 @@ class ButtonsOptions extends AbstractOptions
      */
     public function clearButtons()
     {
-        $this->buttons = array();
+        $this->buttons = [];
 
         return $this;
     }

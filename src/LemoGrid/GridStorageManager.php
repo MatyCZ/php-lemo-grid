@@ -18,10 +18,10 @@ class GridStorageManager extends AbstractPluginManager
      *
      * @var array
      */
-    protected $invokableClasses = array(
+    protected $invokableClasses = [
         'doctrine_entity' => Storage\Doctrine\EntityStorage::class,
         'php_session    ' => Storage\Php\SessionStorage::class,
-    );
+    ];
 
     /**
      * Plugins must be of this type.

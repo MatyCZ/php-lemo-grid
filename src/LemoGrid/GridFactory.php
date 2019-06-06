@@ -390,10 +390,10 @@ class GridFactory
                     $method
                 ));
             }
-            $adapterOptions = (isset($adapterOrName['options'])) ? $adapterOrName['options'] : array();
+            $adapterOptions = (isset($adapterOrName['options'])) ? $adapterOrName['options'] : [];
             $adapterOrName = $adapterOrName['type'];
         } else {
-            $adapterOptions = array();
+            $adapterOptions = [];
         }
 
         if (is_string($adapterOrName)) {
@@ -428,8 +428,8 @@ class GridFactory
         $columns = $this->validateSpecification($columns, $method);
 
         foreach ($columns as $columnSpecification) {
-            $flags = isset($columnSpecification['flags']) ? $columnSpecification['flags'] : array();
-            $spec  = isset($columnSpecification['spec'])  ? $columnSpecification['spec']  : array();
+            $flags = isset($columnSpecification['flags']) ? $columnSpecification['flags'] : [];
+            $spec  = isset($columnSpecification['spec'])  ? $columnSpecification['spec']  : [];
 
             if (!isset($spec['type'])) {
                 $spec['type'] = 'LemoGrid\Column';
@@ -466,10 +466,10 @@ class GridFactory
                     $method
                 ));
             }
-            $platformOptions = (isset($platformOrName['options'])) ? $platformOrName['options'] : array();
+            $platformOptions = (isset($platformOrName['options'])) ? $platformOrName['options'] : [];
             $platformOrName = $platformOrName['type'];
         } else {
-            $platformOptions = array();
+            $platformOptions = [];
         }
 
         if (is_string($platformOrName)) {

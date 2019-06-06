@@ -77,7 +77,7 @@ class SelectAdapter extends AbstractAdapter
         $this->countItems = $rowsCount;
         $this->countItemsTotal = $paginator->getTotalItemCount();
 
-        $data = array();
+        $data = [];
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = (array) $rows[$indexRow];
 
@@ -218,15 +218,15 @@ class SelectAdapter extends AbstractAdapter
 
         // WHERE
         if (!empty($filter['rules'])) {
-            $havingCol = array();
-            $whereCol = array();
+            $havingCol = [];
+            $whereCol = [];
             foreach($columns as $indexCol => $col) {
                 if (true === $col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
 
                     // Jsou definovane filtry pro sloupec
                     if (!empty($filter['rules'][$col->getName()])) {
 
-                        $whereColSub = array();
+                        $whereColSub = [];
                         foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
                             if (in_array($filterDefinition['operator'], ['~', '!~'])) {
 
@@ -254,10 +254,10 @@ class SelectAdapter extends AbstractAdapter
 
                                     $predicateColSub = new Predicate();
                                     foreach ($filterWords as $filterWord) {
-                                        $predicate = $this->buildWhereFromFilter($col, $concat, array(
+                                        $predicate = $this->buildWhereFromFilter($col, $concat, [
                                             'operator' => $filterDefinition['operator'],
                                             'value'    => $filterWord
-                                        ));
+                                        ]);
 
                                         // Urcime pomoci jakeho operatoru mame skladat jednotlive vyrazi hledani sloupce
                                         if ('and' == $col->getAttributes()->getSearchGroupOperator()) {
@@ -276,10 +276,10 @@ class SelectAdapter extends AbstractAdapter
 
                                     $predicateColSub = new Predicate();
                                     foreach ($filterWords as $filterWord) {
-                                        $predicate = $this->buildWhereFromFilter($col, $col->getIdentifier(), array(
+                                        $predicate = $this->buildWhereFromFilter($col, $col->getIdentifier(), [
                                             'operator' => $filterDefinition['operator'],
                                             'value'    => $filterWord,
-                                        ));
+                                        ]);
 
                                         if ('and' == $col->getAttributes()->getSearchGroupOperator()) {
                                             $predicateColSub->andPredicate($predicate);
@@ -458,7 +458,7 @@ class SelectAdapter extends AbstractAdapter
         } else {
             if (isset($item[0])) {
 
-                $return = array();
+                $return = [];
                 foreach ($item as $it) {
                     if (isset($it[$identifier])) {
                         $return[] = $it[$identifier];

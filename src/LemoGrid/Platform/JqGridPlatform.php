@@ -88,12 +88,12 @@ class JqGridPlatform extends AbstractPlatform
      */
     public function addButton($name, $label = null, $icon = null, $callback)
     {
-        $this->buttons[$name] = array(
+        $this->buttons[$name] = [
             'name' => $name,
             'label' => $label,
             'icon' => $icon,
             'callback' => $callback,
-        );
+        ];
 
         return $this;
     }
@@ -148,13 +148,13 @@ class JqGridPlatform extends AbstractPlatform
                 return $value;
             }
 
-            $value = array();
+            $value = [];
             $value['operator'] = strtolower($rules['groupOp']);
             foreach ($rules['rules'] as $rule) {
-                $value['rules'][$rule['field']][] = array(
+                $value['rules'][$rule['field']][] = [
                     'operator' => $this->getFilterOperator($rule['op']),
                     'value' => addcslashes(trim($rule['data']), "'_%\\\""),
-                );
+                ];
             }
         }
 
@@ -345,7 +345,7 @@ class JqGridPlatform extends AbstractPlatform
      */
     public function getSort()
     {
-        $sort = array();
+        $sort = [];
 
         // Nacteme vychozi razeni
         $column = $this->getOptions()->getSortName();

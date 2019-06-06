@@ -7,6 +7,7 @@ use Doctrine\ORM\Query;
 use Doctrine\ORM\Query\Expr;
 use Doctrine\ORM\QueryBuilder AS DoctrineQueryBuilder;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Generator;
 use LemoGrid\Adapter\AbstractAdapter;
 use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Column\Concat as ColumnConcat;
@@ -16,6 +17,7 @@ use LemoGrid\GridInterface;
 use LemoGrid\Platform\AbstractPlatform;
 use LemoGrid\Platform\JqGridPlatform as JqGridPlatform;
 use LemoGrid\Platform\JqGridPlatformOptions;
+use Throwable;
 
 class QueryBuilderAdapter extends AbstractAdapter
 {
@@ -33,6 +35,7 @@ class QueryBuilderAdapter extends AbstractAdapter
      * Prepare adapter
      *
      * @return $this
+     * @throws Throwable
      */
     public function prepareAdapter()
     {
@@ -84,7 +87,7 @@ class QueryBuilderAdapter extends AbstractAdapter
         $platformOptions = $this->getGrid()->getPlatform()->getOptions();
         $rowIdColumn = $platformOptions->getRowIdColumn();
 
-        $data = array();
+        $data = [];
         for ($indexRow = 0; $indexRow < $rowsCount; $indexRow++) {
             $item = $rows[$indexRow];
 
@@ -149,6 +152,83 @@ class QueryBuilderAdapter extends AbstractAdapter
         $this->getGrid()->getPlatform()->setResultSet($event->getResultSet());
 
         return $this;
+    }
+
+    /**
+     * @param  array $selectedRows
+     * @return Generator
+     */
+    public function getExportGenerator(array $selectedRows = []): Generator
+    {
+        try {
+
+            /** @var JqGridPlatformOptions $platformOptions */
+            $platformOptions = $this->getGrid()->getPlatform()->getOptions();
+            $rowIdColumn = $platformOptions->getRowIdColumn();
+            if (empty($rowIdColumn)) {
+                throw new \Exception('Grid identifier column is not set');
+            }
+
+            // fecth all ids or uuids
+            if (empty($selectedRows)) {
+                $qb = clone $this->getQueryBuilder();
+                $qb->select('ite.' . $rowIdColumn);
+                $qb->distinct(true);
+                $res = $qb->getQuery()->getScalarResult();
+                $selectedRows = array_column($res, 'id');
+                unset($qb, $res);
+            }
+
+            // return count of items
+            yield count($selectedRows);
+
+            $columns = $this->getGrid()->getIterator()->toArray();
+
+            foreach ($selectedRows as $id) {
+
+                $qb = clone $this->getQueryBuilder();
+                $qb->where($qb->expr()->eq('ite.' . $rowIdColumn, $id));
+                $item = $qb->getQuery()->getOneOrNullResult(Query::HYDRATE_ARRAY);
+                unset($qb);
+
+                if (null === $item) {
+                    continue;
+                }
+
+                if (isset($item[0])) {
+                    $item = $this->mergeSubqueryItem($item);
+                }
+
+                $result = [];
+                foreach ($columns as $indexCol => $column) {
+
+                    $colIdentifier = $column->getIdentifier();
+                    $colName = $column->getName();
+                    $result[$colName] = null;
+
+                    if (true === $column->isValid($this, $item)) {
+
+                        $value = $this->findValue($colIdentifier, $item);
+
+                        if ($value instanceof DateTime) {
+                            $value = $value->format('Y-m-d H:i:s');
+                        }
+
+                        $column->setValue($value);
+                        $value = $column->renderValue($this, $item);
+
+                        $result[$colName] = $value;
+                    }
+                }
+
+                unset($item);
+
+                yield $result;
+            }
+
+        } catch (Throwable $throwable) {
+            yield $throwable;
+        }
     }
 
     /**
@@ -229,20 +309,19 @@ class QueryBuilderAdapter extends AbstractAdapter
     protected function applyFilters()
     {
         $columns = $this->getGrid()->getIterator()->toArray();
-        $columnsCount = $this->getGrid()->getIterator()->count();
         $filter = $this->getGrid()->getParam('filters');
 
         // WHERE
         if (!empty($filter['rules'])) {
 
-            $whereCol = array();
+            $whereCol = [];
             foreach($columns as $indexCol => $col) {
                 if (true === $col->getAttributes()->getIsSearchable() && true !== $col->getAttributes()->getIsHidden()) {
 
                     // Jsou definovane filtry pro sloupec
                     if(!empty($filter['rules'][$col->getName()])) {
 
-                        $whereColSub = array();
+                        $whereColSub = [];
                         foreach ($filter['rules'][$col->getName()] as $filterDefinition) {
                             if (in_array($filterDefinition['operator'], ['~', '!~'])) {
 
@@ -260,7 +339,7 @@ class QueryBuilderAdapter extends AbstractAdapter
                                     $filterWords[] = $word;
                                 }
 
-                                $wheres = array();
+                                $wheres = [];
                                 if ($col instanceof ColumnConcat) {
                                     $concat = $this->buildConcat($col->getOptions()->getIdentifiers());
 
@@ -303,7 +382,7 @@ class QueryBuilderAdapter extends AbstractAdapter
                             } else {
 
                                 // Sestavime filtr pro jednu podminku sloupce
-                                $exprFilterColSub = array();
+                                $exprFilterColSub = [];
                                 if($col instanceof ColumnConcat) {
                                     foreach ($col->getOptions()->getIdentifiers() as $identifier) {
                                         $exprFilterColSub[] = $this->buildWhereFromFilter($col, $identifier, $filterDefinition);
@@ -658,9 +737,9 @@ class QueryBuilderAdapter extends AbstractAdapter
      * Set QueryBuilder
      *
      * @param  DoctrineQueryBuilder $queryBuilder
-     * @return DoctrineQueryBuilder
+     * @return self
      */
-    public function setQueryBuilder(DoctrineQueryBuilder $queryBuilder)
+    public function setQueryBuilder(DoctrineQueryBuilder $queryBuilder): self
     {
         $this->queryBuilder = $queryBuilder;
 

@@ -9,12 +9,12 @@ class RouteOptions extends AbstractOptions
     /**
      * @var array
      */
-    protected $options = array();
+    protected $options = [];
 
     /**
      * @var array
      */
-    protected $params = array();
+    protected $params = [];
 
     /**
      * @var bool
