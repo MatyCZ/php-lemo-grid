@@ -329,7 +329,10 @@ class JqGridPlatform extends AbstractPlatform
         if ($this->getGrid()->hasParam('rows')) {
             $param = $this->getGrid()->getParam('rows');
 
-            if (!empty($param)) {
+            if (
+                !empty($param)
+                && in_array($param, $this->getOptions()->getRecordsPerPageList())
+            ) {
                 $number = $param;
             }
         }
