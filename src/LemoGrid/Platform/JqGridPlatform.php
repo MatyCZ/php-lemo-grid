@@ -158,6 +158,13 @@ class JqGridPlatform extends AbstractPlatform
             }
         }
 
+        if ('rows' === $key) {
+            $options = $this->getOptions();
+            if (null !== $value && !in_array($value, $options->getRecordsPerPageList())) {
+                $value = $options->getRecordsPerPage();
+            }
+        }
+
         // Dont save grid name to Session
         if ('_name' == $key) {
             $this->isRendered = true;

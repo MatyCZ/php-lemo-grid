@@ -1881,9 +1881,7 @@ class JqGridPlatformOptions extends AbstractOptions
      *  - plus: ui-icon-triangle-1-e
      *  - minus: ui-icon-triangle-1-s
      *  - leaf: ui-icon-radio-off
-
-     *
-*@param string $plus
+     * @param string $plus
      * @param string $minus
      * @param string $leaf
      * @return JqGridPlatformOptions
