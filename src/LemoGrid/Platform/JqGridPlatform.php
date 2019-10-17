@@ -351,7 +351,6 @@ class JqGridPlatform extends AbstractPlatform
      * Return sort by column name => direct
      *
      * @return array
-     * @throws Exception\UnexpectedValueException
      */
     public function getSort()
     {
@@ -371,10 +370,6 @@ class JqGridPlatform extends AbstractPlatform
         if ($this->getGrid()->hasParam('sord')) {
             $sord = $this->getGrid()->getParam('sord');
             if (!empty($sord)) {
-                if (strtolower($sord) != 'asc' && strtolower($sord) != 'desc') {
-                    throw new Exception\UnexpectedValueException('Sort direct must be ' . 'ASC' . ' or ' . 'DESC' . '!');
-                }
-
                 $direct = $sord;
             }
         }
@@ -382,6 +377,13 @@ class JqGridPlatform extends AbstractPlatform
         // Osetrime vstup
         $column = trim($column);
         $direct = trim($direct);
+
+        if (
+            false === $this->getGrid()->has($column)
+            || !in_array(strtolower($direct), ['asc', 'desc'])
+        ) {
+            return $sort;
+        }
 
         // Sestavime shodne retezce ve formatu (sloupec smer)
         if (strpos($column, ', ')) {
