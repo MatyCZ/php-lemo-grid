@@ -633,7 +633,7 @@ class QueryBuilderAdapter extends AbstractAdapter
     {
         $expr = new Expr();
 
-        $value    = $filterDefinition['value'];
+        $value    = addcslashes($filterDefinition['value'], '%_');
         $operator = $filterDefinition['operator'];
 
         // Pravedeme neuplny string na DbDate
@@ -641,63 +641,79 @@ class QueryBuilderAdapter extends AbstractAdapter
             $value = $this->convertLocaleDateToDbDate($value);
         }
 
+        $param = uniqid('param');
+
         switch ($operator) {
             case AbstractPlatform::OPERATOR_EQUAL:
-                $where = $expr->eq($identifier, "'" . $value . "'");
+                $where = $expr->eq($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_NOT_EQUAL:
                 $where = $expr->orX(
-                    $expr->neq($identifier, "'" . $value . "'"),
+                    $expr->neq($identifier, ':' . $param),
                     $expr->isNull($identifier)
                 );
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_LESS:
-                $where = $expr->lt($identifier, "'" . $value . "'");
+                $where = $expr->lt($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_LESS_OR_EQUAL:
-                $where = $expr->lte($identifier, "'" . $value . "'");
+                $where = $expr->lte($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_GREATER:
-                $where = $expr->gt($identifier, "'" . $value . "'");
+                $where = $expr->gt($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_GREATER_OR_EQUAL:
-                $where = $expr->gte($identifier, "'" . $value . "'");
+                $where = $expr->gte($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_BEGINS_WITH:
-                $where = $expr->like($identifier, "'" . $value . "%'");
+                $where = $expr->like($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value . '%');
                 break;
             case AbstractPlatform::OPERATOR_NOT_BEGINS_WITH:
                 $where = $expr->orX(
-                    $expr->notLike($identifier, "'" . $value . "%'"),
+                    $expr->notLike($identifier, ':' . $param),
                     $expr->isNull($identifier)
                 );
+                $this->getQueryBuilder()->setParameter($param, $value . '%');
                 break;
             case AbstractPlatform::OPERATOR_IN:
-                $where = $expr->in($identifier, "'" . $value . "'");
+                $where = $expr->in($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_NOT_IN:
                 $where = $expr->orX(
-                    $expr->notIn($identifier, "'" . $value . "'"),
+                    $expr->notIn($identifier, ':' . $param),
                     $expr->isNull($identifier)
                 );
+                $this->getQueryBuilder()->setParameter($param, $value);
                 break;
             case AbstractPlatform::OPERATOR_ENDS_WITH:
-                $where = $expr->like($identifier, "'%" . $value . "'");
+                $where = $expr->like($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, '%' . $value);
                 break;
             case AbstractPlatform::OPERATOR_NOT_ENDS_WITH:
                 $where = $expr->orX(
-                    $expr->notLike($identifier, "'%" . $value . "'"),
+                    $expr->notLike($identifier, ':' . $param),
                     $expr->isNull($identifier)
                 );
+                $this->getQueryBuilder()->setParameter($param, '%' . $value);
                 break;
             case AbstractPlatform::OPERATOR_CONTAINS:
-                $where = $expr->like($identifier, "'%" . $value . "%'");
+                $where = $expr->like($identifier, ':' . $param);
+                $this->getQueryBuilder()->setParameter($param, '%' . $value . '%');
                 break;
             case AbstractPlatform::OPERATOR_NOT_CONTAINS:
                 $where = $expr->orX(
-                    $expr->notLike($identifier, "'%" . $value . "%'"),
+                    $expr->notLike($identifier, ':' . $param),
                     $expr->isNull($identifier)
                 );
+                $this->getQueryBuilder()->setParameter($param, '%' . $value . '%');
                 break;
             default:
                 throw new Exception\InvalidArgumentException('Invalid filter operator');

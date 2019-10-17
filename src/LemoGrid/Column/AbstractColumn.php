@@ -203,7 +203,7 @@ abstract class AbstractColumn implements
                 $value = $filterDefinition['value'];
 
                 $this->getAttributes()->setSearchDataInit("function(elem) {
-                    $(elem).val('{$value}');
+                    $(elem).val('" . addslashes($value) . "');
                     $(elem).parents('tr').find(\"[colname='{$name}']\").attr('soper', '{$operatorOutput}').text('{$operator}');
                 }");
             }

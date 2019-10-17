@@ -141,7 +141,7 @@ class JqGridPlatform extends AbstractPlatform
             if (is_array($value)) {
                 $rules = $value;
             } else {
-                $rules = $this->stripSlashesRecursive(Json\Decoder::decode($value, Json\Json::TYPE_ARRAY));
+                $rules = Json\Decoder::decode($value, Json\Json::TYPE_ARRAY);
             }
 
             if (empty($rules['groupOp'])) {
@@ -153,7 +153,7 @@ class JqGridPlatform extends AbstractPlatform
             foreach ($rules['rules'] as $rule) {
                 $value['rules'][$rule['field']][] = [
                     'operator' => $this->getFilterOperator($rule['op']),
-                    'value' => addcslashes(trim($rule['data']), "'_%\\\""),
+                    'value' => trim($rule['data']),
                 ];
             }
         }
@@ -406,27 +406,6 @@ class JqGridPlatform extends AbstractPlatform
         }
 
         return $sort;
-    }
-
-    /**
-     * Strip slashes from array or string.
-     *
-     * @param  array|string $data
-     * @return array|string
-     */
-    private function stripSlashesRecursive($data)
-    {
-        if (is_string($data)) {
-            return stripslashes($data);
-        }
-
-        if (is_array($data)) {
-            foreach ($data as $key => $value) {
-                $data[$key] = $this->stripSlashesRecursive($value);
-            }
-        }
-
-        return $data;
     }
 
     /**

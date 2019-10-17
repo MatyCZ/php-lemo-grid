@@ -10,6 +10,7 @@ use LemoGrid\GridInterface;
 use LemoGrid\Platform\JqGridPlatformOptions;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
+use Zend\Json;
 use Zend\Stdlib\AbstractOptions;
 
 class JqGrid extends AbstractHelper
@@ -257,8 +258,9 @@ class JqGrid extends AbstractHelper
                         'data'  => $searchOptions['defaultValue'],
                     ];
 
+                    /** @var \LemoGrid\Column\AbstractColumn $column */
                     $column->getAttributes()->setSearchDataInit("function(elem) {
-                        $(elem).val('{$searchOptions['defaultValue']}');
+                        $(elem).val('" . addslashes($searchOptions['defaultValue']) . "');
                         $(elem).parents('tr').find(\"[colname = '{$column->getName()}']\").attr('soper', '{$searchOperator}').text('{$searchOperatorMark}');
                     }");
                 }
@@ -281,7 +283,13 @@ class JqGrid extends AbstractHelper
         }
 
         if (!empty($rules)) {
-            $script[] = '        postData: {"filters":\'{"groupOp": "' . $groupOp . '", "rules": ' . json_encode($rules) . '}\'},' . PHP_EOL;
+            $postData = [
+                'filters' => [
+                    'groupOp' => $groupOp,
+                    'rules' => $rules,
+                ]
+            ];
+            $script[] = '        postData: ' . Json\Encoder::encode($postData) . ',' . PHP_EOL;
         }
 
         $script[] = '        colNames: [\'' . implode('\', \'', $colNames) . '\'],';
