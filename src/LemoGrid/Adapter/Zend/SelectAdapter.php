@@ -423,10 +423,10 @@ class SelectAdapter extends AbstractAdapter
                     if (false !== $this->getGrid()->get($sortColumn)->getAttributes()->getIsSortable() && true !== $this->getGrid()->get($sortColumn)->getAttributes()->getIsHidden()) {
                         if ($this->getGrid()->get($sortColumn) instanceof ColumnConcat) {
                             foreach($this->getGrid()->get($sortColumn)->getOptions()->getIdentifiers() as $identifier){
-                                $this->getSelect()->order($identifier . ' ASC');
+                                $this->getSelect()->order([$identifier => 'asc']);
                             }
                         } else {
-                            $this->getSelect()->order($this->getGrid()->get($sortColumn)->getIdentifier() . ' ' . $sortDirect);
+                            $this->getSelect()->order([$this->getGrid()->get($sortColumn)->getIdentifier() => $sortDirect]);
                         }
                     }
                 }
