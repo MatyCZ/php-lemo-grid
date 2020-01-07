@@ -8,7 +8,7 @@ use LemoGrid\Column\ColumnInterface;
 use LemoGrid\Platform\PlatformInterface;
 use LemoGrid\Storage\StorageInterface;
 use Traversable;
-use Zend\Stdlib\ArrayUtils;
+use Laminas\Stdlib\ArrayUtils;
 
 class GridFactory
 {

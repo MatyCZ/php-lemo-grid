@@ -2,7 +2,7 @@
 
 namespace LemoGrid\Column;
 
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 class RouteOptions extends AbstractOptions
 {

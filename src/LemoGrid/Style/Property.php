@@ -2,7 +2,7 @@
 
 namespace LemoGrid\Style;
 
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 class Property extends AbstractOptions
 {

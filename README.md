@@ -10,7 +10,7 @@ The LemoGrid module provides building of data grids similar to Zend Form quickly
 #### Supported data adapters
 
 * Doctrine\QueryBuilder ([doctrine-project.org](http://www.doctrine-project.org/))
-* Zend\Db\Sql ([framework.zend.com](http://framework.zend.com/))
+* Laminas\Db\Sql ([framework.zend.com](http://framework.zend.com/))
 
 Requirements
 ------------
@@ -62,8 +62,8 @@ Examples
 namespace Foo;
 
 use LemoGrid\ModuleManager\Feature\GridProviderInterface;
-use Zend\ModuleManager\Feature\ControllerProviderInterface;
-use Zend\ModuleManager\Feature\ServiceProviderInterface;
+use Laminas\ModuleManager\Feature\ControllerProviderInterface;
+use Laminas\ModuleManager\Feature\ServiceProviderInterface;
 
 class Module implements
     ControllerProviderInterface,
@@ -131,8 +131,8 @@ namespace Foo\Controller;
 
 use Foo\Grid\Bar as GridBar;
 use Foo\Service\Bar as ServiceBar;
-use Zend\Mvc\Controller\AbstractActionController;
-use Zend\View\Model\ViewModel;
+use Laminas\Mvc\Controller\AbstractActionController;
+use Laminas\View\Model\ViewModel;
 
 class BarController extends AbstractActionController
 {

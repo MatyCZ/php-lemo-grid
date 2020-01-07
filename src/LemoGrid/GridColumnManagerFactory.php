@@ -4,9 +4,9 @@ namespace LemoGrid;
 
 use Interop\Container\ContainerInterface;
 use LemoGrid\Column;
-use Zend\Mvc\Exception;
-use Zend\ServiceManager\FactoryInterface;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\Mvc\Exception;
+use Laminas\ServiceManager\FactoryInterface;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class GridColumnManagerFactory implements FactoryInterface
 {

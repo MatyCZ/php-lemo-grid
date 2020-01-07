@@ -5,7 +5,7 @@ namespace LemoGrid\Event;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\GridInterface;
 use LemoGrid\ResultSet\ResultSetInterface;
-use Zend\EventManager\Event;
+use Laminas\EventManager\Event;
 
 class RendererEvent extends Event
 {

@@ -3,7 +3,7 @@
 namespace LemoGrid\Platform;
 
 use LemoGrid\Exception;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 class JqGridPlatformOptions extends AbstractOptions
 {

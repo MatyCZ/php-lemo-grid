@@ -12,7 +12,7 @@ use LemoGrid\Storage\StorageInterface;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
 use Traversable;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 interface GridInterface extends
     Countable,

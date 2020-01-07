@@ -2,14 +2,14 @@
 
 namespace LemoGrid;
 
-use Zend\Loader\AutoloaderFactory;
-use Zend\Loader\StandardAutoloader;
-use Zend\ModuleManager\Feature\ViewHelperProviderInterface;
-use Zend\ModuleManager\ModuleManagerInterface;
-use Zend\ModuleManager\Feature\AutoloaderProviderInterface;
-use Zend\ModuleManager\Feature\ConfigProviderInterface;
-use Zend\ModuleManager\Feature\InitProviderInterface;
-use Zend\ModuleManager\Feature\ServiceProviderInterface;
+use Laminas\Loader\AutoloaderFactory;
+use Laminas\Loader\StandardAutoloader;
+use Laminas\ModuleManager\Feature\ViewHelperProviderInterface;
+use Laminas\ModuleManager\ModuleManagerInterface;
+use Laminas\ModuleManager\Feature\AutoloaderProviderInterface;
+use Laminas\ModuleManager\Feature\ConfigProviderInterface;
+use Laminas\ModuleManager\Feature\InitProviderInterface;
+use Laminas\ModuleManager\Feature\ServiceProviderInterface;
 
 class Module implements
     AutoloaderProviderInterface,
@@ -52,7 +52,7 @@ class Module implements
 
         // Add managers to listener
         $serviceListener->addServiceManager(
-            'Zend\ServiceManager\ServiceManager',
+            'Laminas\ServiceManager\ServiceManager',
             'grids',
             'LemoGrid\ModuleManager\Feature\GridProviderInterface',
             'getGridConfig'

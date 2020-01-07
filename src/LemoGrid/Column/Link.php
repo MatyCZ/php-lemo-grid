@@ -5,9 +5,9 @@ namespace LemoGrid\Column;
 use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\Exception;
 use Traversable;
-use Zend\Mvc\ModuleRouteListener;
-use Zend\Router\RouteMatch;
-use Zend\Router\RouteStackInterface;
+use Laminas\Mvc\ModuleRouteListener;
+use Laminas\Router\RouteMatch;
+use Laminas\Router\RouteStackInterface;
 
 class Link extends AbstractColumn
 {

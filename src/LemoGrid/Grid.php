@@ -13,11 +13,11 @@ use LemoGrid\Storage\StorageInterface;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
 use Traversable;
-use Zend\EventManager\EventManager;
-use Zend\EventManager\EventManagerAwareInterface;
-use Zend\EventManager\EventManagerInterface;
-use Zend\Mvc\MvcEvent;
-use Zend\Stdlib\PriorityQueue;
+use Laminas\EventManager\EventManager;
+use Laminas\EventManager\EventManagerAwareInterface;
+use Laminas\EventManager\EventManagerInterface;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Stdlib\PriorityQueue;
 
 class Grid implements
     GridInterface,

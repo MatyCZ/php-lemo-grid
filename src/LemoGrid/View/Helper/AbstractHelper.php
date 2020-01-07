@@ -4,7 +4,7 @@ namespace LemoGrid\View\Helper;
 
 use LemoGrid\Exception;
 use LemoGrid\GridInterface;
-use Zend\I18n\View\Helper\AbstractTranslatorHelper as BaseAbstractHelper;
+use Laminas\I18n\View\Helper\AbstractTranslatorHelper as BaseAbstractHelper;
 
 abstract class AbstractHelper extends BaseAbstractHelper
 {

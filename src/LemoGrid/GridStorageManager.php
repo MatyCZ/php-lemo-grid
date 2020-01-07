@@ -2,9 +2,9 @@
 
 namespace LemoGrid;
 
-use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\Exception\InvalidServiceException;
-use Zend\Stdlib\InitializableInterface;
+use Laminas\ServiceManager\AbstractPluginManager;
+use Laminas\ServiceManager\Exception\InvalidServiceException;
+use Laminas\Stdlib\InitializableInterface;
 
 /**
  * Plugin manager implementation for grid storages.

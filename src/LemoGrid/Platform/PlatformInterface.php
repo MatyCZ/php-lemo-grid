@@ -7,7 +7,7 @@ use LemoGrid\GridInterface;
 use LemoGrid\Renderer\RendererInterface;
 use LemoGrid\ResultSet\ResultSetInterface;
 use Traversable;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 interface PlatformInterface
 {

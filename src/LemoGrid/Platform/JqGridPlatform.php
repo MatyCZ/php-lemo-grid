@@ -9,7 +9,7 @@ use LemoGrid\Renderer\RendererInterface;
 use LemoGrid\ResultSet\JqGridResultSet;
 use LemoGrid\ResultSet\ResultSetInterface;
 use Traversable;
-use Zend\Json;
+use Laminas\Json;
 
 class JqGridPlatform extends AbstractPlatform
 {

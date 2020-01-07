@@ -3,7 +3,7 @@
 namespace LemoGrid\Column;
 
 use LemoGrid\Adapter\AdapterInterface;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 use Traversable;
 
 interface ColumnInterface

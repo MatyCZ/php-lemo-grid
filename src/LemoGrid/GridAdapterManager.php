@@ -3,9 +3,9 @@
 namespace LemoGrid;
 
 use LemoGrid\Adapter\AdapterInterface;
-use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\ConfigInterface;
-use Zend\Stdlib\InitializableInterface;
+use Laminas\ServiceManager\AbstractPluginManager;
+use Laminas\ServiceManager\ConfigInterface;
+use Laminas\Stdlib\InitializableInterface;
 
 /**
  * Plugin manager implementation for grid adapters.

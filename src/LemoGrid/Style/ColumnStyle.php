@@ -5,7 +5,7 @@ namespace LemoGrid\Style;
 use LemoGrid\Column\ColumnCondition;
 use LemoGrid\Exception;
 use Traversable;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 class ColumnStyle extends AbstractOptions
 {

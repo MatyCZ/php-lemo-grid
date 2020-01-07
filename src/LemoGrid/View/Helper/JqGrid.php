@@ -10,8 +10,8 @@ use LemoGrid\GridInterface;
 use LemoGrid\Platform\JqGridPlatformOptions;
 use LemoGrid\Style\ColumnStyle;
 use LemoGrid\Style\RowStyle;
-use Zend\Json;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Json;
+use Laminas\Stdlib\AbstractOptions;
 
 class JqGrid extends AbstractHelper
 {

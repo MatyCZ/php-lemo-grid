@@ -7,8 +7,8 @@ use LemoGrid\Adapter\AdapterInterface;
 use LemoGrid\GridInterface;
 use LemoGrid\Exception;
 use Traversable;
-use Zend\Stdlib\ArrayUtils;
-use Zend\Stdlib\InitializableInterface;
+use Laminas\Stdlib\ArrayUtils;
+use Laminas\Stdlib\InitializableInterface;
 
 abstract class AbstractColumn implements
     ColumnInterface,

@@ -3,7 +3,7 @@
 namespace LemoGrid\Column;
 
 use Exception;
-use Zend\Stdlib\AbstractOptions;
+use Laminas\Stdlib\AbstractOptions;
 
 class ButtonsOptions extends AbstractOptions
 {

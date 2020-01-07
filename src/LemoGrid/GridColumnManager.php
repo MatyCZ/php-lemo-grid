@@ -3,13 +3,13 @@
 namespace LemoGrid;
 
 use Interop\Container\ContainerInterface;
-use Zend\Console\Console;
-use Zend\I18n\Translator\TranslatorAwareInterface;
-use Zend\Router\RouteMatch;
-use Zend\ServiceManager\AbstractPluginManager;
-use Zend\ServiceManager\ServiceLocatorInterface;
-use Zend\ServiceManager\Exception\InvalidServiceException;
-use Zend\Stdlib\InitializableInterface;
+use Laminas\Console\Console;
+use Laminas\I18n\Translator\TranslatorAwareInterface;
+use Laminas\Router\RouteMatch;
+use Laminas\ServiceManager\AbstractPluginManager;
+use Laminas\ServiceManager\ServiceLocatorInterface;
+use Laminas\ServiceManager\Exception\InvalidServiceException;
+use Laminas\Stdlib\InitializableInterface;
 
 /**
  * Plugin manager implementation for grid columns.
@@ -166,8 +166,8 @@ class GridColumnManager extends AbstractPluginManager
             return;
         }
 
-        if ($container->has('Zend\I18n\Translator\TranslatorInterface')) {
-            $column->setTranslator($container->get('Zend\I18n\Translator\TranslatorInterface'));
+        if ($container->has('Laminas\I18n\Translator\TranslatorInterface')) {
+            $column->setTranslator($container->get('Laminas\I18n\Translator\TranslatorInterface'));
             return;
         }
 

@@ -6,8 +6,8 @@ use ArrayIterator;
 use Doctrine\ORM\EntityManagerInterface;
 use LemoGrid\Exception\InvalidArgumentException;
 use LemoGrid\Storage\StorageInterface;
-use Zend\Authentication\AuthenticationServiceInterface;
-use Zend\Json;
+use Laminas\Authentication\AuthenticationServiceInterface;
+use Laminas\Json;
 
 class EntityStorage implements StorageInterface
 {
@@ -79,7 +79,7 @@ class EntityStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @return bool
@@ -90,7 +90,7 @@ class EntityStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @return ArrayIterator
@@ -113,7 +113,7 @@ class EntityStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string        $key
      * @param  ArrayIterator $content
@@ -138,7 +138,7 @@ class EntityStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @return EntityStorage

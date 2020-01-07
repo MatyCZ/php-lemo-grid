@@ -3,9 +3,9 @@
 namespace LemoGrid;
 
 use Interop\Container\ContainerInterface;
-use Zend\Mvc\Exception;
-use Zend\Mvc\Service\AbstractPluginManagerFactory;
-use Zend\ServiceManager\ServiceLocatorInterface;
+use Laminas\Mvc\Exception;
+use Laminas\Mvc\Service\AbstractPluginManagerFactory;
+use Laminas\ServiceManager\ServiceLocatorInterface;
 
 class GridStorageManagerFactory extends AbstractPluginManagerFactory
 {

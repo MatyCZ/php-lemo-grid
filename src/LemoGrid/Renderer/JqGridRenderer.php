@@ -3,7 +3,7 @@
 namespace LemoGrid\Renderer;
 
 use LemoGrid\Event\RendererEvent;
-use Zend\Json\Encoder as JsonEncoder;
+use Laminas\Json\Encoder as JsonEncoder;
 
 class JqGridRenderer extends AbstractRenderer
 {

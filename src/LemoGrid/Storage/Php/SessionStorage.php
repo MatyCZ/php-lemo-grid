@@ -4,8 +4,8 @@ namespace LemoGrid\Storage\Php;
 
 use ArrayIterator;
 use LemoGrid\Storage\StorageInterface;
-use Zend\Session\Container as SessionContainer;
-use Zend\Session\ManagerInterface as SessionManager;
+use Laminas\Session\Container as SessionContainer;
+use Laminas\Session\ManagerInterface as SessionManager;
 
 class SessionStorage implements StorageInterface
 {
@@ -44,7 +44,7 @@ class SessionStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @return bool
@@ -55,7 +55,7 @@ class SessionStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @return ArrayIterator
@@ -66,7 +66,7 @@ class SessionStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @param  mixed  $content
@@ -80,7 +80,7 @@ class SessionStorage implements StorageInterface
     }
 
     /**
-     * Defined by Zend\Authentication\Storage\StorageInterface
+     * Defined by Laminas\Authentication\Storage\StorageInterface
      *
      * @param  string $key
      * @return SessionStorage
