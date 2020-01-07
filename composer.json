@@ -8,13 +8,6 @@
     ],
     "homepage": "https://github.com/MatyCZ/LemoGrid",
     "license": "BSD-3-Clause",
-    "authors": [
-        {
-            "name": "Matej Szendi",
-            "email": "matej.szendi@outlook.cz",
-            "homepage": "http://lemo.cz/"
-        }
-    ],
     "require": {
         "laminas/laminas-dependency-plugin": "^1.0",
         "laminas/laminas-eventmanager": "^3.0",
