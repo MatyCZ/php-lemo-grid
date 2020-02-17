@@ -26,6 +26,9 @@ class GridColumnManager extends AbstractPluginManager
     protected $aliases = [
         'button'       => Column\Button::class,
         'Button'       => Column\Button::class,
+        'buttonlink'       => Column\ButtonLink::class,
+        'buttonLink'       => Column\ButtonLink::class,
+        'ButtonLink'       => Column\ButtonLink::class,
         'buttons'      => Column\Buttons::class,
         'Buttons'      => Column\Buttons::class,
         'concat'       => Column\Concat::class,
@@ -39,6 +42,7 @@ class GridColumnManager extends AbstractPluginManager
         'text'         => Column\Text::class,
         'Text'         => Column\Text::class,
     ];
+
     /**
      * Aliases for default set of helpers
      *

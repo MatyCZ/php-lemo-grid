@@ -35,8 +35,8 @@ class ButtonsOptions extends AbstractOptions
                 $conditions = isset($button['conditions']) ? $button['conditions'] : null;
                 $class = 'LemoGrid\Column\\' . $type;
 
-                if (!in_array($type, ['Button', 'Route'])) {
-                    throw new Exception('Button type must be Button or Route');
+                if (!in_array($type, ['Button', 'Buttonlink', 'Route'])) {
+                    throw new Exception('Button type must be Button, ButtonLink or Route');
                 }
                 $btn = new $class($name, $options, $attributes, $conditions);
             }
