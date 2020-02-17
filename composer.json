@@ -6,7 +6,7 @@
         "laminas",
         "jqGrid"
     ],
-    "homepage": "https://github.com/MatyCZ/LemoGrid",
+    "homepage": "https://github.com/MatyCZ/php-lemo-grid",
     "license": "BSD-3-Clause",
     "require": {
         "laminas/laminas-dependency-plugin": "^1.0",
