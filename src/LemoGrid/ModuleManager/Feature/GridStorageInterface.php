@@ -2,7 +2,7 @@
 
 namespace LemoGrid\ModuleManager\Feature;
 
-interface GridStoragenterface
+interface GridStorageInterface
 {
     /**
      * Expected to return \Laminas\ServiceManager\Config object or array to
