@@ -187,6 +187,7 @@ class QueryBuilderAdapter extends AbstractAdapter
             foreach ($selectedRows as $id) {
 
                 $qb = clone $this->getQueryBuilder();
+                $qb->setParameters([]);
                 $qb->where($qb->expr()->eq('ite.' . $rowIdColumn, $id));
                 $item = $qb->getQuery()->getOneOrNullResult(Query::HYDRATE_ARRAY);
                 unset($qb);
