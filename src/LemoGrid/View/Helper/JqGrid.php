@@ -277,6 +277,9 @@ class JqGrid extends AbstractHelper
             }
         }
 
+        if (!is_array($filters) || !array_key_exists('operator', $filters)) {
+            $filters['operator'] = 'AND';
+        }
         $groupOp = strtoupper($filters['operator']);
         if (!in_array($filters['operator'], ['AND', 'OR'])) {
             $groupOp = 'AND';
