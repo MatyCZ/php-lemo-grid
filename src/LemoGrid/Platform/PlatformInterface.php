@@ -64,7 +64,7 @@ interface PlatformInterface
      * @param  mixed  $value
      * @return mixed
      */
-    public function modifyParam($key, $value);
+    public function modifyParam(string $key, $value);
 
     /**
      * Return converted filter operator
