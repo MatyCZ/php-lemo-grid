@@ -16,7 +16,7 @@ class JqGridPlatform extends AbstractPlatform
     /**
      * @var array
      */
-    protected $buttons;
+    protected $buttons = [];
 
     /**
      * @var JqGridPlatformOptions
@@ -47,7 +47,7 @@ class JqGridPlatform extends AbstractPlatform
      * @throws Exception\InvalidArgumentException
      * @return JqGridPlatform
      */
-    public function setOptions($options)
+    public function setOptions($options): self
     {
         if (!$options instanceof JqGridPlatformOptions) {
             if (is_object($options) && !$options instanceof Traversable) {
@@ -70,7 +70,7 @@ class JqGridPlatform extends AbstractPlatform
      *
      * @return JqGridPlatformOptions
      */
-    public function getOptions()
+    public function getOptions(): JqGridPlatformOptions
     {
         if (!$this->options) {
             $this->setOptions(new JqGridPlatformOptions());
@@ -84,9 +84,9 @@ class JqGridPlatform extends AbstractPlatform
      * @param  string|null $label
      * @param  string|null $icon
      * @param  string      $callback
-     * @return JqGridPlatform
+     * @return self
      */
-    public function addButton($name, $label = null, $icon = null, $callback)
+    public function addButton(string $name, string $callback, string $label = null, string $icon = null): self
     {
         $this->buttons[$name] = [
             'name' => $name,
@@ -102,7 +102,7 @@ class JqGridPlatform extends AbstractPlatform
      * @param  string $name
      * @return array|null
      */
-    public function getButton($name)
+    public function getButton($name): ?array
     {
         if (isset($this->buttons[$name])) {
             return $this->buttons[$name];
@@ -114,7 +114,7 @@ class JqGridPlatform extends AbstractPlatform
     /**
      * @return array
      */
-    public function getButtons()
+    public function getButtons(): array
     {
         return $this->buttons;
     }
@@ -124,7 +124,7 @@ class JqGridPlatform extends AbstractPlatform
      *
      * @return bool
      */
-    public function isRendered()
+    public function isRendered(): bool
     {
         return $this->isRendered;
     }
@@ -134,7 +134,7 @@ class JqGridPlatform extends AbstractPlatform
      * @param  mixed  $value
      * @return mixed
      */
-    public function modifyParam($key, $value)
+    public function modifyParam(string $key, $value)
     {
         // Modify params
         if ('filters' == $key) {
