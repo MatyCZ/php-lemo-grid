@@ -1,7 +1,7 @@
-LemoGrid Module for Zend Framework 2
+LemoGrid Module for Laminas
 ========
 
-The LemoGrid module provides building of data grids similar to Zend Form quickly and easily for many platforms.
+The LemoGrid module provides building of data grids similar to Laminas Form quickly and easily for many platforms.
 
 #### Supported plaforms
 
@@ -10,12 +10,7 @@ The LemoGrid module provides building of data grids similar to Zend Form quickly
 #### Supported data adapters
 
 * Doctrine\QueryBuilder ([doctrine-project.org](http://www.doctrine-project.org/))
-* Laminas\Db\Sql ([framework.zend.com](http://framework.zend.com/))
-
-Requirements
-------------
-
-* [Zend Framework 2](https://github.com/zendframework/zf2) (latest master)
+* Laminas\Db\Sql ([github.com/laminas/laminas-db](https://github.com/laminas/laminas-db))
 
 Features / Goals
 ----------------
