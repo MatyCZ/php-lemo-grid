@@ -16,7 +16,7 @@
         "laminas/laminas-mvc": "^3.0",
         "laminas/laminas-servicemanager": "^3.0",
         "laminas/laminas-stdlib": "^3.0",
-        "php": "^7.3"
+        "php": "^7.3 || ^8.0"
     },
     "autoload": {
         "psr-0": {
