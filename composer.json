@@ -1,29 +1,40 @@
 {
     "name": "matycz/lemo-grid",
-    "description": "",
+    "description": "jqGrid integration to Laminas",
+    "license": "BSD-3-Clause",
     "type": "library",
     "keywords": [
         "laminas",
         "jqGrid"
     ],
     "homepage": "https://github.com/MatyCZ/php-lemo-grid",
-    "license": "BSD-3-Clause",
+    "authors": [
+        {
+            "name": "Matej Szendi"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Lemo\\Grid\\": "src/"
+        }
+    },
     "require": {
+        "ext-intl": "*",
+        "ext-json": "*",
         "laminas/laminas-dependency-plugin": "^2.0",
         "laminas/laminas-eventmanager": "^3.0",
         "laminas/laminas-i18n": "^2.0",
         "laminas/laminas-json": "^3.0",
         "laminas/laminas-mvc": "^3.0",
+        "laminas/laminas-paginator": "^2.10",
         "laminas/laminas-servicemanager": "^3.0",
         "laminas/laminas-stdlib": "^3.0",
-        "php": "^7.3"
+        "php": "^7.4"
     },
-    "autoload": {
-        "psr-0": {
-            "LemoGrid": "src/"
-        },
-        "classmap": [
-            "./Module.php"
-        ]
+    "suggest": {
+        "doctrine/orm": "Needed to support Adapter\\Doctrine\\QueryBuilderAdapter",
+        "laminas/laminas-db": "Needed to support Adapter\\Laminas\\CombineAdapter or Adapter\\Laminas\\SelectAdapter",
+        "laminas/laminas-paginator-adapter-laminasdb": "Needed to support Adapter\\Laminas\\CombineAdapter or Adapter\\Laminas\\SelectAdapter",
+        "laminas/laminas-session": "Needed to support Storage\\Php\\SessionStorage"
     }
 }
