@@ -3,7 +3,6 @@
 namespace Lemo\Grid;
 
 use Interop\Container\ContainerInterface;
-use Laminas\Console\Console;
 use Laminas\I18n\Translator\TranslatorAwareInterface;
 use Laminas\Router\RouteMatch;
 use Laminas\ServiceManager\AbstractPluginManager;
@@ -66,13 +65,6 @@ class GridColumnManager extends AbstractPluginManager
     protected $sharedByDefault = false;
 
     /**
-     * Don't share form elements by default (v2)
-     *
-     * @var bool
-     */
-    protected $shareByDefault = false;
-
-    /**
      * Plugins must be of this type.
      *
      * @var string
@@ -104,10 +96,8 @@ class GridColumnManager extends AbstractPluginManager
             || $column instanceof Column\Link
             || $column instanceof Column\Route
         ) {
-            $router = Console::isConsole() ? 'HttpRouter' : 'Router';
-
-            if ($container instanceof ServiceLocatorInterface && $container->has($router)) {
-                $column->setRouter($container->get($router));
+            if ($container instanceof ServiceLocatorInterface && $container->has('Router')) {
+                $column->setRouter($container->get('Router'));
 
                 $match = $container->get('application')
                     ->getMvcEvent()
