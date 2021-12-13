@@ -85,12 +85,13 @@ class GridAbstractServiceFactory implements AbstractFactoryInterface
         }
 
         $config = $container->get('config');
-        if (! isset($config[$this->configKey]) || ! is_array($config[$this->configKey])) {
+        if (!isset($config[$this->configKey]) || !is_array($config[$this->configKey])) {
             $this->config = [];
             return $this->config;
         }
 
         $this->config = $config[$this->configKey];
+
         return $this->config;
     }
 

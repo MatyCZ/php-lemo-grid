@@ -4,6 +4,11 @@ namespace Lemo\Grid;
 
 use ArrayAccess;
 use ArrayIterator;
+use Laminas\EventManager\EventManager;
+use Laminas\EventManager\EventManagerAwareInterface;
+use Laminas\EventManager\EventManagerInterface;
+use Laminas\Mvc\MvcEvent;
+use Laminas\Stdlib\PriorityQueue;
 use Lemo\Grid\Adapter\AdapterInterface;
 use Lemo\Grid\Column\ColumnInterface;
 use Lemo\Grid\Column\ColumnPrepareAwareInterface;
@@ -13,11 +18,6 @@ use Lemo\Grid\Storage\StorageInterface;
 use Lemo\Grid\Style\ColumnStyle;
 use Lemo\Grid\Style\RowStyle;
 use Traversable;
-use Laminas\EventManager\EventManager;
-use Laminas\EventManager\EventManagerAwareInterface;
-use Laminas\EventManager\EventManagerInterface;
-use Laminas\Mvc\MvcEvent;
-use Laminas\Stdlib\PriorityQueue;
 
 class Grid implements
     GridInterface,
@@ -159,7 +159,7 @@ class Grid implements
      * @throws Exception\InvalidArgumentException
      * @return Grid
      */
-    public function add($column, array $flags = [])
+    public function add($column, array $flags = []): self
     {
         if (
             is_array($column) ||
@@ -220,7 +220,7 @@ class Grid implements
      * @param  string $column
      * @return bool
      */
-    public function has($column)
+    public function has($column): bool
     {
         return array_key_exists($column, $this->byName);
     }
@@ -229,9 +229,9 @@ class Grid implements
      * Retrieve a named column
      *
      * @param  string $column
-     * @return ColumnInterface
+     * @return ColumnInterface|null
      */
-    public function get($column)
+    public function get($column): ?ColumnInterface
     {
         if (!$this->has($column)) {
             return null;
@@ -246,14 +246,14 @@ class Grid implements
      * @param  string $column
      * @return Grid
      */
-    public function remove($column)
+    public function remove($column): self
     {
-        if(is_array($this->byName) && array_key_exists($column, $this->byName)) {
+        if (is_array($this->byName) && array_key_exists($column, $this->byName)) {
             $this->iterator->remove($this->byName[$column]);
             unset($this->byName[$column]);
         }
 
-        if(is_array($this->columns) && array_key_exists($column, $this->columns)) {
+        if (is_array($this->columns) && array_key_exists($column, $this->columns)) {
             unset($this->columns[$column]);
         }
 
@@ -265,7 +265,7 @@ class Grid implements
      *
      * @return Grid
      */
-    public function setColumns(array $columns)
+    public function setColumns(array $columns): self
     {
         $this->clear();
 
@@ -283,7 +283,7 @@ class Grid implements
      *
      * @return array
      */
-    public function getColumns()
+    public function getColumns(): array
     {
         return $this->columns;
     }
@@ -293,7 +293,7 @@ class Grid implements
      *
      * @return Grid
      */
-    public function clear()
+    public function clear(): self
     {
         $this->byName = [];
         $this->columns = [];
@@ -307,7 +307,7 @@ class Grid implements
      *
      * @return int
      */
-    public function count()
+    public function count(): int
     {
         return $this->iterator->count();
     }
@@ -315,9 +315,9 @@ class Grid implements
     /**
      * IteratorAggregate: return internal iterator
      *
-     * @return PriorityQueue
+     * @return Traversable
      */
-    public function getIterator()
+    public function getIterator(): Traversable
     {
         return $this->iterator;
     }
@@ -329,7 +329,7 @@ class Grid implements
      * @param  int    $priority
      * @return Grid
      */
-    public function setPriority($column, $priority)
+    public function setPriority($column, $priority): self
     {
         $column = $this->get($column);
         $this->remove($column);
@@ -344,7 +344,7 @@ class Grid implements
      * @param  AdapterInterface $adapter
      * @return Grid
      */
-    public function setAdapter(AdapterInterface $adapter)
+    public function setAdapter(AdapterInterface $adapter): self
     {
         $this->adapter = $adapter;
 
@@ -356,7 +356,7 @@ class Grid implements
      *
      * @return AdapterInterface|null
      */
-    public function getAdapter()
+    public function getAdapter(): ?AdapterInterface
     {
         $this->adapter->setGrid($this);
 
@@ -369,7 +369,7 @@ class Grid implements
      * @param  GridFactory $factory
      * @return Grid
      */
-    public function setGridFactory(GridFactory $factory)
+    public function setGridFactory(GridFactory $factory): self
     {
         $this->factory = $factory;
 
@@ -395,7 +395,7 @@ class Grid implements
      * @param  EventManagerInterface $eventManager
      * @return Grid
      */
-    public function setEventManager(EventManagerInterface $eventManager)
+    public function setEventManager(EventManagerInterface $eventManager): self
     {
         $this->eventManager = $eventManager;
 
@@ -405,7 +405,7 @@ class Grid implements
     /**
      * @return EventManagerInterface
      */
-    public function getEventManager()
+    public function getEventManager(): EventManagerInterface
     {
         if (null === $this->eventManager) {
             $this->eventManager = new EventManager();
@@ -418,7 +418,7 @@ class Grid implements
      * @param  MvcEvent $mvcEvent
      * @return Grid
      */
-    public function setMvcEvent(MvcEvent $mvcEvent)
+    public function setMvcEvent(MvcEvent $mvcEvent): self
     {
         $this->mvcEvent = $mvcEvent;
 
@@ -429,7 +429,7 @@ class Grid implements
      *
      * @return MvcEvent
      */
-    public function getMvcEvent()
+    public function getMvcEvent(): MvcEvent
     {
         return $this->mvcEvent;
     }
@@ -440,7 +440,7 @@ class Grid implements
      * @param  string $name
      * @return Grid
      */
-    public function setName($name)
+    public function setName($name): self
     {
         $this->name = (string) $name;
         return $this;
@@ -451,7 +451,7 @@ class Grid implements
      *
      * @return string
      */
-    public function getName()
+    public function getName(): string
     {
         return $this->name;
     }
@@ -463,7 +463,7 @@ class Grid implements
      * @param  mixed  $value
      * @return Grid
      */
-    public function setParam($key, $value)
+    public function setParam($key, $value): self
     {
         $content = $this->getStorage()->read($this->getName());
 
@@ -489,7 +489,7 @@ class Grid implements
      * @throws Exception\InvalidArgumentException
      * @return Grid
      */
-    public function setParams($params)
+    public function setParams($params): self
     {
         if (!is_array($params) && !$params instanceof Traversable) {
             throw new Exception\InvalidArgumentException(sprintf(
@@ -515,7 +515,7 @@ class Grid implements
      * @param  string $key
      * @return mixed
      */
-    public function getParam($key)
+    public function getParam($key): mixed
     {
         if ($this->hasParams() && $this->getStorage()->read($this->getName())->offsetExists($key)) {
             return $this->getStorage()->read($this->getName())->offsetGet($key);
@@ -540,7 +540,7 @@ class Grid implements
      * @param  string $key
      * @return bool
      */
-    public function hasParam($key)
+    public function hasParam($key): bool
     {
         if ($this->hasParams()) {
             return $this->getStorage()->read($this->getName())->offsetExists($key);
@@ -554,9 +554,9 @@ class Grid implements
      *
      * @return bool
      */
-    public function hasParams()
+    public function hasParams(): bool
     {
-        return (false === $this->getStorage()->isEmpty($this->getName())) ? true : false;
+        return false === $this->getStorage()->isEmpty($this->getName());
     }
 
     /**
@@ -565,7 +565,7 @@ class Grid implements
      * @param  PlatformInterface $platform
      * @return Grid
      */
-    public function setPlatform(PlatformInterface $platform)
+    public function setPlatform(PlatformInterface $platform): self
     {
         $this->platform = $platform;
 
@@ -577,7 +577,7 @@ class Grid implements
      *
      * @return PlatformInterface
      */
-    public function getPlatform()
+    public function getPlatform(): PlatformInterface
     {
         $this->platform->setGrid($this);
 
@@ -590,7 +590,7 @@ class Grid implements
      * @param  Storage\StorageInterface $storage
      * @return Grid
      */
-    public function setStorage(Storage\StorageInterface $storage)
+    public function setStorage(Storage\StorageInterface $storage): self
     {
         $this->storage = $storage;
 
@@ -604,7 +604,7 @@ class Grid implements
      *
      * @return Storage\StorageInterface
      */
-    public function getStorage()
+    public function getStorage(): Storage\StorageInterface
     {
         if (null === $this->storage) {
             $this->setStorage(new Storage\Php\SessionStorage());
@@ -617,7 +617,7 @@ class Grid implements
      * @param  array|ColumnStyle $style
      * @return $this
      */
-    public function addColumnStyle($style)
+    public function addColumnStyle($style): self
     {
         if ($style instanceof ColumnStyle) {
             $this->columnStyles[] = $style;
@@ -639,7 +639,7 @@ class Grid implements
      * @return Grid
      * @throws Exception\InvalidArgumentException
      */
-    public function setColumnStyles(array $styles)
+    public function setColumnStyles(array $styles): self
     {
         foreach ($styles as $style) {
             $this->addColumnStyle($style);
@@ -653,7 +653,7 @@ class Grid implements
      *
      * @return ColumnStyle[]
      */
-    public function getColumnStyles()
+    public function getColumnStyles(): array
     {
         return $this->columnStyles;
     }
@@ -663,7 +663,7 @@ class Grid implements
      *
      * @return Grid
      */
-    public function clearColumnStyles()
+    public function clearColumnStyles(): self
     {
         $this->columnStyles = [];
 
@@ -674,7 +674,7 @@ class Grid implements
      * @param  array|RowStyle $style
      * @return $this
      */
-    public function addRowStyle($style)
+    public function addRowStyle($style): self
     {
         if ($style instanceof RowStyle) {
             $this->rowStyles[] = $style;
@@ -690,13 +690,13 @@ class Grid implements
     }
 
     /**
-     * Set styles for an row.
+     * Set styles for a row.
      *
-     * @param  array|Traversable $styles
+     * @param  iterable $styles
      * @return Grid
      * @throws Exception\InvalidArgumentException
      */
-    public function setRowStyles(array $styles)
+    public function setRowStyles(iterable $styles): self
     {
         foreach ($styles as $style) {
             $this->addRowStyle($style);
@@ -710,7 +710,7 @@ class Grid implements
      *
      * @return RowStyle[]
      */
-    public function getRowStyles()
+    public function getRowStyles(): array
     {
         return $this->rowStyles;
     }
@@ -720,7 +720,7 @@ class Grid implements
      *
      * @return Grid
      */
-    public function clearRowStyles()
+    public function clearRowStyles(): self
     {
         $this->rowStyles = [];
 
@@ -763,7 +763,7 @@ class Grid implements
      *
      * @return bool
      */
-    public function isPrepared()
+    public function isPrepared(): bool
     {
         return $this->isPrepared;
     }
@@ -775,7 +775,7 @@ class Grid implements
      * @throws Exception\InvalidArgumentException
      * @return Grid
      */
-    public function prepare()
+    public function prepare(): self
     {
         if ($this->isPrepared) {
             return $this;

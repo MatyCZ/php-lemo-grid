@@ -2,10 +2,9 @@
 
 namespace Lemo\Grid;
 
-use Lemo\Grid\Adapter\AdapterInterface;
 use Laminas\ServiceManager\AbstractPluginManager;
-use Laminas\ServiceManager\ConfigInterface;
 use Laminas\Stdlib\InitializableInterface;
+use Lemo\Grid\Adapter\AdapterInterface;
 
 /**
  * Plugin manager implementation for grid adapters.
