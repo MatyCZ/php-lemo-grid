@@ -18,6 +18,11 @@
             "Lemo\\Grid\\": "src/"
         }
     },
+    "config": {
+        "allow-plugins": {
+            "laminas/laminas-dependency-plugin": true
+        }
+    },
     "require": {
         "ext-intl": "*",
         "ext-json": "*",
