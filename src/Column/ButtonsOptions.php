@@ -35,7 +35,7 @@ class ButtonsOptions extends AbstractOptions
                 $conditions = $button['conditions'] ?? null;
 
                 if (false !== strpos($type, 'Lemo\Grid\Column')) {
-                    if (!in_array($type, [Button::class, Buttonlink::class, Route::class])) {
+                    if (!in_array($type, [Button::class, ButtonLink::class, Route::class])) {
                         throw new Exception('Button type must be Button, ButtonLink or Route');
                     }
 
