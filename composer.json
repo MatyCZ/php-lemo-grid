@@ -26,7 +26,6 @@
     "require": {
         "ext-intl": "*",
         "ext-json": "*",
-        "laminas/laminas-dependency-plugin": "^2.0",
         "laminas/laminas-eventmanager": "^3.0",
         "laminas/laminas-i18n": "^2.0",
         "laminas/laminas-json": "^3.0",
@@ -34,7 +33,7 @@
         "laminas/laminas-paginator": "^2.10",
         "laminas/laminas-servicemanager": "^3.0",
         "laminas/laminas-stdlib": "^3.0",
-        "php": "^7.4 || ^8.0"
+        "php": "^8.0"
     },
     "suggest": {
         "doctrine/orm": "Needed to support Adapter\\Doctrine\\QueryBuilderAdapter",
